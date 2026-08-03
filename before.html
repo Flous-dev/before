@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>BEFORE — Le HUB des soirées</title>
+<style>
+  :root{
+    --bg:#0b0810;
+    --bg2:#15101c;
+    --violet:#ff3d7f;
+    --violet2:#ff8fb8;
+    --blue:#b81e5c;
+    --night:#17121f;
+    --accent:#ff4d8d;
+    --gold:#ffd166;
+    --txt:#f6f1f4;
+    --muted:#b59aab;
+    --card:rgba(255,255,255,.05);
+    --line:rgba(255,255,255,.10);
+    --good:#4ade80;
+    --bad:#fb7185;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
+    background:var(--bg);
+    color:var(--txt);overflow:hidden;
+  }
+  .stage{width:100%;height:100%;}
+
+  /* ===== plein écran (plus de cadre téléphone) ===== */
+  .phone{
+    position:relative;width:100%;height:100%;
+    background:transparent;border-radius:0;padding:0;box-shadow:none;
+  }
+  .screen{
+    position:relative;width:100%;height:100%;
+    background:radial-gradient(1200px 800px at 20% -10%,#3d1130 0%,#140a14 55%,#05040a 100%);
+    overflow:hidden;display:flex;flex-direction:column;
+    padding-top:env(safe-area-inset-top);
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+
+  /* ===== app viewport ===== */
+  #app{flex:1;position:relative;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
+  #app::-webkit-scrollbar{display:none;}
+  .view{min-height:100%;padding:8px 22px 30px;display:flex;flex-direction:column;animation:fade .35s ease;}
+  /* réserve l'espace en bas pour ne pas chevaucher le bouton photo flottant */
+  .view.has-cam{padding-bottom:92px;}
+  @keyframes fade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+  /* ===== typography & ui ===== */
+  h1{font-size:26px;margin:0;font-weight:800;letter-spacing:.5px;}
+  h2{font-size:21px;margin:0 0 4px;font-weight:800;}
+  h3{font-size:16px;margin:0;font-weight:700;}
+  p{margin:0;line-height:1.45;}
+  .muted{color:var(--muted);font-size:13.5px;}
+  .center{text-align:center;}
+
+  .logo{
+    font-weight:900;font-size:46px;letter-spacing:3px;
+    background:linear-gradient(120deg,#fff,var(--violet2) 45%,var(--accent));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-align:center;filter:drop-shadow(0 6px 24px rgba(255,77,141,.5));
+  }
+  .tag{text-align:center;color:var(--muted);font-size:12.5px;letter-spacing:3px;text-transform:uppercase;margin-top:2px;}
+
+  /* ===== intro / splash ===== */
+  .intro{
+    position:absolute;inset:0;z-index:60;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:radial-gradient(1200px 800px at 50% 38%,#3d1130 0%,#140a14 55%,#05040a 100%);
+    animation:introOut .55s cubic-bezier(.7,0,.84,0) 1.85s forwards;
+  }
+  .intro__glow{
+    position:absolute;width:340px;height:340px;border-radius:50%;
+    background:radial-gradient(circle,rgba(255,77,141,.45),rgba(255,77,141,0) 65%);
+    opacity:0;transform:scale(.6);filter:blur(8px);
+    animation:introGlow 1.7s cubic-bezier(.16,1,.3,1) .1s forwards;
+  }
+  .intro .logo{
+    position:relative;font-size:54px;opacity:0;
+    letter-spacing:18px;transform:scale(1.14);
+    filter:drop-shadow(0 8px 30px rgba(255,77,141,.55)) blur(16px);
+    animation:introLogo 1.4s cubic-bezier(.16,1,.3,1) .12s forwards;
+  }
+  .intro .tag{
+    opacity:0;transform:translateY(8px);
+    animation:introTag .8s cubic-bezier(.16,1,.3,1) .85s forwards;
+  }
+  @keyframes introLogo{
+    0%{opacity:0;letter-spacing:18px;transform:scale(1.14);filter:drop-shadow(0 8px 30px rgba(255,77,141,.55)) blur(16px);}
+    55%{opacity:1;}
+    100%{opacity:1;letter-spacing:6px;transform:scale(1);filter:drop-shadow(0 6px 24px rgba(255,77,141,.5)) blur(0);}
+  }
+  @keyframes introGlow{
+    0%{opacity:0;transform:scale(.6);}
+    50%{opacity:1;transform:scale(1);}
+    100%{opacity:.65;transform:scale(1.05);}
+  }
+  @keyframes introTag{to{opacity:1;transform:translateY(0);}}
+  @keyframes introOut{to{opacity:0;transform:scale(1.05);visibility:hidden;pointer-events:none;}}
+  @media (prefers-reduced-motion:reduce){
+    .intro{animation:introOut .4s ease 1.2s forwards;}
+    .intro__glow,.intro .logo,.intro .tag{animation:introFadeIn .5s ease both;}
+    @keyframes introFadeIn{from{opacity:0;}to{opacity:1;}}
+    .intro .logo{letter-spacing:6px;transform:none;filter:drop-shadow(0 6px 24px rgba(255,77,141,.5));}
+  }
+
+  .btn{
+    display:flex;align-items:center;gap:12px;width:100%;border:none;cursor:pointer;
+    padding:18px 20px;border-radius:20px;font-size:16px;font-weight:700;color:#fff;
+    background:linear-gradient(135deg,var(--violet),var(--blue));
+    box-shadow:0 12px 28px rgba(255,61,127,.3);transition:transform .12s ease,box-shadow .12s;
+    font-family:inherit;text-align:left;
+  }
+  .btn:active{transform:scale(.97);}
+  .btn.alt{background:linear-gradient(135deg,#241823,#17101a);box-shadow:none;border:1px solid var(--line);}
+  .btn.ghost{background:transparent;border:1px solid var(--line);box-shadow:none;color:var(--txt);}
+  .btn.accent{background:linear-gradient(135deg,var(--accent),#d6336c);box-shadow:0 12px 28px rgba(255,77,141,.3);}
+  .btn.good{background:linear-gradient(135deg,#ff5c9d,#e11d6b);box-shadow:0 12px 28px rgba(255,61,127,.3);}
+  .btn.game{background:linear-gradient(135deg,#1d141c,#120c14);box-shadow:none;border:1px solid var(--line);position:relative;overflow:hidden;}
+  .btn.game::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(var(--violet),var(--accent));}
+  .btn.game .ico{filter:drop-shadow(0 0 10px rgba(255,77,141,.55));}
+  .btn.sm{padding:13px 16px;font-size:14px;border-radius:15px;}
+  .btn .ico{font-size:24px;}
+  .btn .col{display:flex;flex-direction:column;gap:2px;}
+  .btn .col small{font-weight:500;font-size:12px;color:rgba(255,255,255,.75);}
+  .btn:disabled{opacity:.4;}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;}
+  .row{display:flex;gap:10px;align-items:center;}
+  .pill{padding:7px 13px;border-radius:999px;background:var(--night);border:1px solid var(--line);font-size:13px;font-weight:600;}
+
+  input,textarea{
+    width:100%;background:var(--night);border:1px solid var(--line);border-radius:14px;
+    color:#fff;padding:14px 16px;font-size:15px;font-family:inherit;outline:none;
+  }
+  input:focus{border-color:var(--violet);}
+
+  .topbar{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+  .back{width:40px;height:40px;flex:none;border-radius:13px;background:var(--card);border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;color:#fff;}
+
+  .prevention{
+    margin-top:auto;background:linear-gradient(135deg,rgba(255,209,102,.12),rgba(255,92,168,.08));
+    border:1px solid rgba(255,209,102,.3);border-radius:18px;padding:14px 16px;font-size:12.5px;
+    color:#ffe6a8;display:flex;gap:10px;align-items:center;line-height:1.4;
+  }
+
+  /* drink counter bar */
+  .counter{display:flex;gap:8px;overflow-x:auto;padding:4px 0 6px;}
+  .counter::-webkit-scrollbar{display:none;}
+  .chip{flex:none;background:var(--night);border:1px solid var(--line);border-radius:14px;padding:8px 12px;
+    display:flex;flex-direction:column;align-items:center;min-width:64px;}
+  .chip b{font-size:13px;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .chip span{font-size:18px;font-weight:800;color:var(--gold);}
+  .chip span small{font-size:11px;color:var(--muted);font-weight:500;}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .selcard{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:18px 14px;text-align:center;cursor:pointer;transition:.15s;}
+  .selcard.on{border-color:var(--violet);background:rgba(124,92,255,.18);}
+  .selcard .e{font-size:30px;}
+  .selcard div{font-weight:700;font-size:14px;margin-top:6px;}
+
+  .stepper{display:flex;align-items:center;gap:14px;justify-content:space-between;background:var(--night);border:1px solid var(--line);border-radius:16px;padding:10px 14px;}
+  .stepper button{width:38px;height:38px;border-radius:12px;border:none;background:var(--violet);color:#fff;font-size:22px;font-weight:700;cursor:pointer;}
+  .stepper button:disabled{opacity:.3;}
+  .stepper .val{font-size:24px;font-weight:800;}
+
+  /* reveal card (qui a la ref) */
+  .revealStage{position:relative;flex:1;border-radius:24px;overflow:hidden;border:1px solid var(--line);
+    background:linear-gradient(160deg,var(--night),#0c0a22);display:flex;align-items:center;justify-content:center;text-align:center;}
+  .revealWord{padding:30px;}
+  .cover{position:absolute;inset:0;background:linear-gradient(160deg,var(--violet),var(--blue));
+    display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:grab;
+    transition:transform .4s cubic-bezier(.2,.9,.2,1);touch-action:none;}
+  .cover .hint{position:absolute;bottom:26px;font-size:13px;opacity:.9;}
+  .cover .arrow{font-size:40px;animation:bob 1.4s infinite;}
+  @keyframes bob{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+
+  /* playing card */
+  .pcard{width:150px;height:210px;background:#fff;border-radius:18px;display:flex;flex-direction:column;
+    justify-content:space-between;padding:16px;color:#111;box-shadow:0 18px 40px rgba(0,0,0,.5);margin:0 auto;
+    animation:flip .4s ease;}
+  @keyframes flip{from{transform:rotateY(90deg);opacity:0;}to{transform:none;opacity:1;}}
+  .pcard .v{font-size:30px;font-weight:800;}
+  .pcard .s{font-size:54px;text-align:center;}
+  .pcard.red{color:#e11d48;}
+  .pcard .bot{transform:rotate(180deg);font-size:30px;font-weight:800;}
+
+  .floatCam{position:absolute;right:18px;bottom:18px;width:58px;height:58px;border-radius:50%;z-index:30;
+    background:linear-gradient(135deg,var(--accent),#d6336c);border:3px solid rgba(255,255,255,.2);
+    display:flex;align-items:center;justify-content:center;font-size:26px;cursor:pointer;
+    box-shadow:0 10px 30px rgba(255,77,141,.5);}
+  .floatCam:active{transform:scale(.92);}
+
+  .album{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .album img{width:100%;height:110px;object-fit:cover;border-radius:14px;border:1px solid var(--line);}
+  .ph{height:110px;border-radius:14px;border:1px dashed var(--line);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;}
+
+  .badge{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:700;}
+  .b-ref{background:rgba(74,222,128,.15);color:var(--good);}
+  .b-scam{background:rgba(251,113,133,.15);color:var(--bad);}
+  .b-pnj{background:rgba(167,139,250,.18);color:var(--violet2);}
+
+  .list-pick{display:flex;flex-direction:column;gap:8px;}
+  .pick{display:flex;justify-content:space-between;align-items:center;background:var(--card);border:1px solid var(--line);
+    border-radius:14px;padding:14px 16px;cursor:pointer;font-weight:600;}
+  .pick:active{background:rgba(124,92,255,.18);}
+  .pick.dead{opacity:.35;text-decoration:line-through;pointer-events:none;}
+
+  .toast{position:absolute;left:50%;bottom:80px;transform:translateX(-50%);background:#000;border:1px solid var(--line);
+    padding:12px 18px;border-radius:14px;font-size:13px;z-index:60;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap;}
+  .toast.show{opacity:1;}
+
+  .big{font-size:40px;font-weight:900;text-align:center;}
+  .rank{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:var(--card);border:1px solid var(--line);margin-bottom:8px;}
+  .rank .pos{font-size:20px;font-weight:800;width:30px;}
+  .rank .g{margin-left:auto;font-weight:800;color:var(--gold);}
+  .spacer{flex:1;}
+  .gap{height:12px;}
+  .gap-s{height:8px;}
+</style>
+</head>
+<body>
+  <div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div id="app"></div>
+      <div class="toast" id="toast"></div>
+      <div class="intro" id="intro">
+        <div class="intro__glow"></div>
+        <div class="logo">BEFORE</div>
+        <div class="tag">Le HUB des soirées</div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+<input type="file" id="camInput" accept="image/*" capture="environment" style="display:none">
+
+<script>
+/* ============================================================
+   BEFORE — prototype interactif
+   ============================================================ */
+const state = {
+  players: [],            // {name, drinks}
+  album: { name:null, photos:[] },
+  ratio:{ref:1,scam:1,pnj:0},
+  randomRoles:false,
+  theme:null,
+  randomTheme:false,
+};
+
+/* ---------- contenu placeholder (à compléter par tes soins) ---------- */
+const THEMES = {
+  celeb:{label:'Les célébrités',e:'🌟',pairs:[
+    {ref:'Michael Jordan',scam:'LeBron James'},
+    {ref:'Beyoncé',scam:'Rihanna'},
+    {ref:'Squeezie',scam:'Cyprien'},
+  ]},
+  trend:{label:'Les trends du moment',e:'🔥',pairs:[
+    {ref:'Tralalero Tralala',scam:'Ballerina Cappuccina'},
+    {ref:'Skibidi Toilet',scam:'Gangnam Style'},
+    {ref:'Labubu',scam:'Sonny Angel'},
+  ]},
+  pays:{label:'Les pays',e:'🌍',pairs:[
+    {ref:'France',scam:'Italie'},
+    {ref:'Japon',scam:'Corée du Sud'},
+    {ref:'Brésil',scam:'Argentine'},
+  ]},
+  marque:{label:'Les marques',e:'🛍️',pairs:[
+    {ref:'Nike',scam:'Adidas'},
+    {ref:'Apple',scam:'Samsung'},
+    {ref:'Coca-Cola',scam:'Pepsi'},
+  ]},
+};
+const SNIPER_Q = [
+  "Qui est le plus capable de finir la soirée le premier ?",
+  "Qui enverrait un message à son ex à 3h du mat ?",
+  "Qui est le plus susceptible de danser sur la table ?",
+  "Qui raconte les meilleures (ou pires) blagues ?",
+  "Qui serait le plus capable de se perdre en rentrant ?",
+  "Qui ne se souviendra de rien demain matin ?",
+];
+const REVANCHE = [
+  "Fais 10 pompes maintenant 💪",
+  "Imite quelqu'un dans la pièce 🎭",
+  "Chante le refrain de ta chanson préférée 🎤",
+  "Parle avec l'accent d'un autre pays pendant 1 min 🗣️",
+  "Fais ton meilleur pas de danse 🕺",
+  "Raconte ta pire honte de soirée 🙈",
+];
+
+/* ---------- utils ---------- */
+const $ = (s,el=document)=>el.querySelector(s);
+const app = $('#app');
+const shuffle = a => a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(v=>v[1]);
+const rnd = a => a[Math.floor(Math.random()*a.length)];
+let toastT;
+function toast(msg){
+  const t=$('#toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2200);
+}
+function addDrinks(name,n){
+  const p=state.players.find(p=>p.name===name); if(p) p.drinks+=n;
+}
+function counterBar(){
+  if(!state.players.length) return '';
+  return `<div class="counter">${state.players.map(p=>
+    `<div class="chip"><b>${p.name}</b><span>${p.drinks}<small> 🍺</small></span></div>`).join('')}</div>`;
+}
+function floatCam(){ return `<div class="floatCam" onclick="openCam()">📸</div>`; }
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+function render(html, withCam=false){
+  app.innerHTML = `<div class="view${withCam?' has-cam':''}">${html}</div>${withCam?floatCam():''}`;
+  app.scrollTop=0;
+}
+
+/* ---------- HOME ---------- */
+function home(){
+  render(`
+    <div class="spacer"></div>
+    <div class="logo">BEFORE</div>
+    <div style="height:54px"></div>
+    <button class="btn" onclick="setup()">
+      <span class="col">La soirée commence<small>Ajoute tes joueurs et choisis un jeu</small></span>
+    </button>
+    <div class="gap"></div>
+    <button class="btn alt" onclick="hangoverHome()">
+      <span class="col">HANGOVER<small>Tes albums & le classement des gorgées</small></span>
+    </button>
+    <div class="spacer"></div>
+    <div class="prevention">
+      <span style="font-size:22px">🍻</span>
+      <span style="font-weight:700">L'abus d'alcool est dangereux pour ta dignité (et ta santé). Bois de l'eau, garde tes potes en vie, et appelle un taxi — ton lit t'attend, pas le caniveau.</span>
+    </div>
+    <div style="height:10px"></div>
+  `);
+}
+
+/* ---------- PLAYER SETUP ---------- */
+function setup(){
+  if(!state.players.length) state.players=[{name:'',drinks:0},{name:'',drinks:0},{name:'',drinks:0}];
+  drawSetup();
+}
+function drawSetup(returnTo){
+  render(`
+    <div class="topbar"><div class="back" onclick="${returnTo||'home'}()">‹</div><h2>Les joueurs</h2></div>
+    <p class="muted">Qui participe à la soirée ? (min. 3)</p>
+    <div class="gap"></div>
+    <div id="plist"></div>
+    <div class="gap-s"></div>
+    <button class="btn ghost sm" onclick="addPlayer()">＋ Ajouter un joueur</button>
+    <div class="spacer"></div>
+    <button class="btn good" onclick="confirmPlayers('${returnTo||''}')">Valider →</button>
+    <div style="height:8px"></div>
+  `);
+  drawPlist();
+}
+function drawPlist(){
+  const el=$('#plist');
+  el.innerHTML = state.players.map((p,i)=>`
+    <div class="row" style="margin-bottom:8px">
+      <input value="${p.name.replace(/"/g,'&quot;')}" placeholder="Joueur ${i+1}" oninput="state.players[${i}].name=this.value">
+      <div class="back" onclick="rmPlayer(${i})" style="background:rgba(251,113,133,.12);border-color:rgba(251,113,133,.3)">✕</div>
+    </div>`).join('');
+}
+function addPlayer(){ state.players.push({name:'',drinks:0}); drawPlist(); }
+function rmPlayer(i){ if(state.players.length>1){state.players.splice(i,1);drawPlist();} }
+function confirmPlayers(returnTo){
+  state.players=state.players.filter(p=>p.name.trim()!=='').map(p=>({name:p.name.trim(),drinks:p.drinks||0}));
+  if(state.players.length<3){ toast('Il faut au moins 3 joueurs 🙃'); if(state.players.length<1)state.players=[{name:'',drinks:0},{name:'',drinks:0},{name:'',drinks:0}]; drawSetup(returnTo); return; }
+  if(returnTo){ gameSelect(); return; }   // édition des joueurs en cours de partie → retour au hub
+  beforePhotoPrompt();                     // première mise en place → propose la photo de début
+}
+function beforePhotoPrompt(){
+  render(`
+    <div class="topbar"><h2 style="margin:auto">Photo de début</h2></div>
+    <div class="spacer"></div>
+    <div class="card center">
+      <div class="big">📸</div>
+      <div class="gap"></div>
+      <p>Immortalise le début de soirée ! Cette première photo ouvre ton album Hangover.</p>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn good" onclick="startBeforePhoto()">Prendre la photo 📸</button>
+    <div class="gap-s"></div>
+    <button class="btn ghost sm" onclick="gameSelect()">Passer cette étape</button>
+    <div style="height:8px"></div>
+  `);
+}
+function startBeforePhoto(){
+  if(!state.album.name){ state.album={name:'Hangover Chez nous',photos:[]}; }
+  camPurpose='avant';
+  openCam();
+}
+function startEndPhoto(){
+  if(!state.album.name){ state.album={name:'Hangover Chez nous',photos:[]}; }
+  camPurpose='apres';
+  openCam();
+}
+
+/* ---------- GAME SELECT (hub) ---------- */
+function gameSelect(){
+  render(`
+    <div class="topbar"><div class="back" onclick="home()">‹</div><h2>Choisis un jeu</h2></div>
+    ${counterBar()}
+    <div class="gap"></div>
+    <button class="btn game" onclick="qarConfig()">
+      <span class="ico">🕵️</span><span class="col">QUI A LA REF ?<small>La ref, les scamers et les pnj</small></span>
+    </button>
+    <div class="gap"></div>
+    <button class="btn game" onclick="sniperRound()">
+      <span class="ico">🎯</span><span class="col">SNIPER<small>Pointe le plus capable de…</small></span>
+    </button>
+    <div class="gap"></div>
+    <button class="btn game" onclick="bjStart()">
+      <span class="ico">🃏</span><span class="col">BLACK(OUT) JACK<small>Plus ou moins ? Bonne chance.</small></span>
+    </button>
+    <div class="spacer"></div>
+    <button class="btn accent sm" onclick="endGame()">Fin de la partie</button>
+    <div class="gap-s"></div>
+    <button class="btn ghost sm" onclick="drawSetup('gameSelect')">👥 Modifier les joueurs</button>
+    <div style="height:6px"></div>
+  `, true);
+}
+function endGame(){
+  render(`
+    <div class="topbar"><div class="back" onclick="gameSelect()">‹</div><h2>Fin de la partie</h2></div>
+    <div class="spacer"></div>
+    <div class="card center">
+      <div class="big">📸</div>
+      <div class="gap"></div>
+      <p>La soirée est finie ? Prends la photo de fin pour compléter ton album Hangover.</p>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn good" onclick="startEndPhoto()">Prendre la photo de fin 📸</button>
+    <div class="gap-s"></div>
+    <button class="btn ghost sm" onclick="hangoverHome()">Passer</button>
+    <div style="height:8px"></div>
+  `, true);
+}
+
+/* ============================================================
+   JEU 1 — QUI A LA REF ?
+   ============================================================ */
+let qar = {};
+function qarConfig(){
+  const n = state.players.length;
+  state.randomRoles=false;
+  if(state.ratio.ref+state.ratio.scam+state.ratio.pnj>n){ state.ratio={ref:1,scam:1,pnj:0}; }
+  render(`
+    <div class="topbar"><div class="back" onclick="gameSelect()">‹</div><h2>Qui a la ref ?</h2></div>
+    ${counterBar()}
+    <div class="gap"></div>
+    <p class="muted">Répartition des rôles sur <b>${n}</b> joueurs. Tu peux mettre 0 partout pour un chaos total.</p>
+    <div class="gap"></div>
+    <div id="ratios"></div>
+    <div class="gap"></div>
+    <button class="btn alt sm" onclick="state.randomRoles=true;qarThemeSelect()">🎲 Mode aléatoire</button>
+    <div class="spacer"></div>
+    <button class="btn good" onclick="qarThemeSelect()">Continuer →</button>
+    <div style="height:8px"></div>
+  `, true);
+  drawRatios();
+}
+function stepRow(label,key,clr){
+  return `<div class="card" style="margin-bottom:10px">
+    <div class="row" style="justify-content:space-between;margin-bottom:8px"><h3 style="color:${clr}">${label}</h3></div>
+    <div class="stepper">
+      <button onclick="ratioChg('${key}',-1)">−</button>
+      <span class="val" id="r-${key}">${state.ratio[key]}</span>
+      <button onclick="ratioChg('${key}',1)">＋</button>
+    </div></div>`;
+}
+function drawRatios(){
+  $('#ratios').innerHTML =
+    stepRow('🟢 ONT LA REF','ref','var(--good)')+
+    stepRow('🔴 LES SCAMERS','scam','var(--bad)')+
+    stepRow('🟣 LES PNJ','pnj','var(--violet2)')+
+    `<p class="muted center" id="rsum"></p>`;
+  ratioSum();
+}
+function ratioChg(k,d){
+  const v=state.ratio[k]+d; if(v<0)return;
+  const n=state.players.length;
+  const others=['ref','scam','pnj'].filter(x=>x!==k).reduce((s,x)=>s+state.ratio[x],0);
+  if(v+others>n){toast('Trop de joueurs assignés');return;}
+  // les détenteurs de la ref (assignés + non-assignés) doivent toujours être majoritaires face aux scamers
+  const sim={...state.ratio,[k]:v};
+  const effRef=n-sim.scam-sim.pnj;        // les joueurs non assignés deviennent "ont la ref"
+  if(effRef<=sim.scam){ toast('Les détenteurs de la ref doivent rester majoritaires'); return; }
+  state.ratio[k]=v; $('#r-'+k).textContent=v; ratioSum();
+}
+function ratioSum(){
+  const a=state.ratio,tot=a.ref+a.scam+a.pnj,n=state.players.length;
+  $('#rsum').innerHTML = `${tot}/${n} assignés${tot<n?` · ${n-tot} joueur(s) seront aussi "ont la ref" 🟢`:''}`;
+}
+function qarThemeSelect(){
+  state.theme=null;state.randomTheme=false;
+  render(`
+    <div class="topbar"><div class="back" onclick="qarConfig()">‹</div><h2>Le thème</h2></div>
+    <p class="muted">Choisis l'univers des mots (paires gérées par tes soins plus tard).</p>
+    <div class="gap"></div>
+    <div class="grid2" id="themes">
+      ${Object.entries(THEMES).map(([k,t])=>`<div class="selcard" data-k="${k}" onclick="pickTheme('${k}')"><div class="e">${t.e}</div><div>${t.label}</div></div>`).join('')}
+    </div>
+    <div class="gap"></div>
+    <button class="btn alt sm" onclick="state.randomTheme=true;state.theme=null;qarBuild()">🎲 Thème aléatoire (révélé avec ton mot)</button>
+    <div class="spacer"></div>
+    <button class="btn good" id="goTheme" onclick="qarBuild()" disabled>Lancer la distribution →</button>
+    <div style="height:8px"></div>
+  `, true);
+}
+function pickTheme(k){
+  state.theme=k;state.randomTheme=false;
+  document.querySelectorAll('#themes .selcard').forEach(c=>c.classList.toggle('on',c.dataset.k===k));
+  $('#goTheme').disabled=false;
+}
+function qarBuild(){
+  const n=state.players.length;
+  let ref,scam,pnj;
+  if(state.randomRoles){
+    // aléatoire : tirage plausible
+    scam=Math.max(1,Math.round(n*(0.2+Math.random()*0.2)));
+    pnj=Math.random()<0.6?Math.max(0,Math.round(Math.random()*(n*0.2))):0;
+    ref=n-scam-pnj; if(ref<0){ref=0;scam=n-pnj;}
+  }else{
+    ref=state.ratio.ref;scam=state.ratio.scam;pnj=state.ratio.pnj;
+    const assigned=ref+scam+pnj;
+    if(assigned<n) ref+=n-assigned;        // reste = ont la ref
+    if(assigned>n){toast('Répartition invalide');return;}
+  }
+  const themeKey = state.randomTheme ? rnd(Object.keys(THEMES)) : state.theme;
+  const pair = rnd(THEMES[themeKey].pairs);
+  // rôles
+  let roles=[];
+  for(let i=0;i<ref;i++)roles.push('ref');
+  for(let i=0;i<scam;i++)roles.push('scam');
+  for(let i=0;i<pnj;i++)roles.push('pnj');
+  while(roles.length<n)roles.push('ref');
+  roles=shuffle(roles).slice(0,n);
+  qar={
+    players: state.players.map((p,i)=>({name:p.name,role:roles[i],alive:true})),
+    word:{ref:pair.ref,scam:pair.scam},
+    themeKey, idx:0, revealMode:true,
+  };
+  qarReveal();
+}
+function qarReveal(){
+  const pl=qar.players[qar.idx];
+  render(`
+    <div class="topbar"><h2 style="margin:auto">Carte ${qar.idx+1}/${qar.players.length}</h2></div>
+    <p class="center" style="font-size:22px;font-weight:800;margin:6px 0">${pl.name}</p>
+    <p class="muted center">Prends le téléphone, puis glisse vers le haut 👆</p>
+    <div class="gap"></div>
+    <div class="revealStage">
+      <div class="revealWord" id="word"></div>
+      <div class="cover" id="cover">
+        <div class="arrow">↑</div>
+        <div style="font-weight:800;font-size:18px">Glisse pour révéler</div>
+        <div class="hint">Que ${pl.name} regarde seul·e</div>
+      </div>
+    </div>
+    <div class="gap"></div>
+    <button class="btn good" id="nextBtn" style="display:none" onclick="qarNextReveal()">${qar.idx+1<qar.players.length?'Joueur suivant →':'Tout le monde a vu → débat'}</button>
+    <div style="height:6px"></div>
+  `);
+  // contenu de la carte
+  let inner;
+  if(pl.role==='ref') inner=`<div class="big">${qar.word.ref}</div>`;
+  else if(pl.role==='scam') inner=`<div class="big">${qar.word.scam}</div>`;
+  else inner=`<div class="badge b-pnj">🟣 Tu es PNJ</div><div class="gap"></div><div class="big">🤷</div><p class="muted">Aucun mot. Bluffe.</p>`;
+  if(state.randomTheme) inner+=`<div class="gap-s"></div><p class="muted">Thème : ${THEMES[qar.themeKey].e} ${THEMES[qar.themeKey].label}</p>`;
+  $('#word').innerHTML=inner;
+  setupCover();
+}
+function setupCover(){
+  const cover=$('#cover'); let startY=null,dy=0,revealed=false;
+  const max=-360;
+  const onDown=e=>{startY=(e.touches?e.touches[0].clientY:e.clientY);cover.style.transition='none';};
+  const onMove=e=>{ if(startY===null)return; const y=(e.touches?e.touches[0].clientY:e.clientY); dy=Math.min(0,y-startY); cover.style.transform=`translateY(${dy}px)`; };
+  const onUp=()=>{ if(startY===null)return; cover.style.transition='transform .4s'; if(dy<-90){reveal();}else{cover.style.transform='translateY(0)';} startY=null;dy=0; };
+  function reveal(){ revealed=true; cover.style.transform=`translateY(${max}px)`; cover.style.pointerEvents='none'; $('#nextBtn').style.display='flex'; }
+  cover.addEventListener('mousedown',onDown);window.addEventListener('mousemove',onMove);window.addEventListener('mouseup',onUp);
+  cover.addEventListener('touchstart',onDown,{passive:true});cover.addEventListener('touchmove',onMove,{passive:true});cover.addEventListener('touchend',onUp);
+  cover.addEventListener('click',()=>{ if(!revealed && dy===0) reveal(); });
+}
+function qarNextReveal(){
+  qar.idx++;
+  if(qar.idx<qar.players.length) qarReveal();
+  else qarOrder();
+}
+function qarOrder(){
+  qar.order=shuffle(qar.players.map(p=>p.name));
+  render(`
+    <div class="topbar"><h2 style="margin:auto">Ordre de passage</h2></div>
+    <p class="muted center">Ordre tiré au sort pour lancer le débat 🎲</p>
+    <div class="gap"></div>
+    <div>${qar.order.map((n,i)=>`<div class="rank"><div class="pos">${i+1}</div><h3>${n}</h3></div>`).join('')}</div>
+    <div class="spacer"></div>
+    <p class="prevention" style="margin:0 0 12px"><span>💬</span><span>Débattez, accusez, bluffez… puis passez au vote quand vous êtes prêts.</span></p>
+    <button class="btn accent" onclick="qarVote()">Passer au vote →</button>
+    <div style="height:6px"></div>
+  `, true);
+}
+function qarVote(){
+  const alive=qar.players.filter(p=>p.alive);
+  render(`
+    <div class="topbar"><div class="back" onclick="qarOrder()">‹</div><h2>Qui éliminer ?</h2></div>
+    ${counterBar()}
+    <div class="gap"></div>
+    <p class="muted">Sélectionnez le joueur que le groupe veut éliminer.</p>
+    <div class="gap"></div>
+    <div class="list-pick">
+      ${qar.players.map((p,i)=>`<div class="pick ${p.alive?'':'dead'}" onclick="qarEliminate(${i})">${p.name}<span>›</span></div>`).join('')}
+    </div>
+    <div style="height:14px"></div>
+  `, true);
+}
+function qarEliminate(i){
+  const p=qar.players[i]; if(!p.alive)return; p.alive=false;
+  if(p.role==='scam'){ resultScreen('🔴 Scamer démasqué !',`${p.name} était un scamer. Bien joué.`,'b-scam',qarCheckEnd); }
+  else if(p.role==='ref'){ addDrinks(p.name,1); resultScreen('🟢 Raté…',`${p.name} avait la ref ! Il/elle boit une gorgée. Le groupe perd un allié.`,'b-ref',qarCheckEnd); }
+  else { qarPnjGuess(p); }
+}
+function qarPnjGuess(p){
+  render(`
+    <div class="topbar"><h2 style="margin:auto">PNJ démasqué 🟣</h2></div>
+    <div class="gap"></div>
+    <div class="card center"><div class="badge b-pnj">🟣 ${p.name} était un PNJ</div>
+      <div class="gap"></div>
+      <p>Devine le mot de ceux qui ont la ref pour te racheter :</p>
+      <div class="gap"></div>
+      <input id="guess" placeholder="Tape le mot…" autocomplete="off">
+    </div>
+    <div class="spacer"></div>
+    <button class="btn good" onclick="qarPnjCheck('${p.name.replace(/'/g,"\\'")}')">Valider ma réponse</button>
+    <div style="height:8px"></div>
+  `);
+}
+function qarPnjCheck(name){
+  const g=$('#guess').value.trim().toLowerCase();
+  const ok = g && g===qar.word.ref.toLowerCase();
+  if(ok){
+    // peut voter pour un scamer
+    qarPnjVote(name);
+  }else{
+    addDrinks(name,2);
+    resultScreen('❌ Mauvais mot',`Le mot était « ${qar.word.ref} ». ${name} boit 2 gorgées.`,'b-pnj',qarCheckEnd);
+  }
+}
+function qarPnjVote(name){
+  render(`
+    <div class="topbar"><h2 style="margin:auto">✅ Bon mot !</h2></div>
+    <p class="center muted">Bien vu ${name}. Maintenant, démasque un scamer :</p>
+    <div class="gap"></div>
+    <div class="list-pick">
+      ${qar.players.filter(p=>p.name!==name).map(p=>`<div class="pick" onclick="qarPnjVoteDone('${name.replace(/'/g,"\\'")}','${p.name.replace(/'/g,"\\'")}')">${p.name}<span>›</span></div>`).join('')}
+    </div>
+  `);
+}
+function qarPnjVoteDone(pnjName,target){
+  const t=qar.players.find(p=>p.name===target);
+  if(t.role==='scam'){
+    addDrinks(pnjName,1); addDrinks(target,1);
+    resultScreen('🎯 Touché !',`${target} était bien un scamer. ${pnjName} et ${target} boivent 1 gorgée chacun.`,'b-scam',qarCheckEnd);
+  }else{
+    addDrinks(pnjName,2);
+    resultScreen('😬 Loupé',`${target} n'était pas un scamer. ${pnjName} boit 2 gorgées.`,'b-pnj',qarCheckEnd);
+  }
+}
+function qarCheckEnd(){
+  const remain=qar.players.filter(p=>p.alive && (p.role==='scam'||p.role==='pnj'));
+  if(remain.length===0){
+    // ceux qui restent (ref) gagnent ; perdants déjà comptés. Fin de manche.
+    qarEndRound();
+  }else{
+    qarVote();
+  }
+}
+function qarEndRound(){
+  render(`
+    <div class="topbar"><h2 style="margin:auto">Manche terminée 🏁</h2></div>
+    ${counterBar()}
+    <div class="gap"></div>
+    <div class="card center">
+      <div class="big">🟢</div>
+      <p>Tous les scamers et pnj ont été démasqués !</p>
+      <div class="gap-s"></div>
+      <p class="muted">Le mot ref était : <b>${qar.word.ref}</b> · scamer : <b>${qar.word.scam}</b></p>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn" onclick="qarConfig()">↻ Nouvelle manche</button>
+    <div class="gap-s"></div>
+    <button class="btn ghost sm" onclick="gameSelect()">Changer de jeu</button>
+    <div style="height:6px"></div>
+  `, true);
+}
+function resultScreen(title,desc,badge,next){
+  render(`
+    <div style="height:30px"></div>
+    <div class="card center">
+      <div class="badge ${badge}">${title}</div>
+      <div class="gap"></div>
+      <p style="font-size:16px">${desc}</p>
+    </div>
+    ${counterBar()}
+    <div class="spacer"></div>
+    <button class="btn good" onclick="(${next.name})()">Continuer →</button>
+    <div style="height:6px"></div>
+  `, true);
+}
+
+/* ============================================================
+   JEU 2 — SNIPER
+   ============================================================ */
+function sniperRound(){
+  const q=rnd(SNIPER_Q);
+  render(`
+    <div class="topbar"><div class="back" onclick="gameSelect()">‹</div><h2>🎯 Sniper</h2></div>
+    ${counterBar()}
+    <div class="gap"></div>
+    <div class="card center" style="padding:30px 20px">
+      <p class="muted">À 3, pointez du doigt…</p>
+      <div class="gap"></div>
+      <p style="font-size:22px;font-weight:800;line-height:1.3">${q}</p>
+    </div>
+    <div class="gap"></div>
+    <p class="muted center">Qui a été le plus visé ?</p>
+    <div class="gap-s"></div>
+    <div class="list-pick">
+      ${state.players.map(p=>`<div class="pick" onclick="sniperPicked('${p.name.replace(/'/g,"\\'")}')">${p.name}<span>›</span></div>`).join('')}
+    </div>
+    <div class="gap"></div>
+    <button class="btn ghost sm" onclick="gameSelect()">Arrêter le jeu</button>
+    <div style="height:6px"></div>
+  `, true);
+}
+function sniperPicked(name){
+  render(`
+    <div class="topbar"><h2 style="margin:auto">Visé : ${name}</h2></div>
+    <div class="gap"></div>
+    <div class="card center">
+      <div class="big">🎯</div>
+      <p><b>${name}</b> a été désigné. Tu peux assumer… ou tenter ta revanche.</p>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn accent" onclick="sniperRevanche('${name.replace(/'/g,"\\'")}')">⚔️ Tenter la revanche</button>
+    <div class="gap-s"></div>
+    <button class="btn alt" onclick="addDrinks('${name.replace(/'/g,"\\'")}',1);toast('${name} boit 1 gorgée');sniperRound()">😔 J'assume (1 gorgée)</button>
+    <div style="height:6px"></div>
+  `, true);
+}
+function sniperRevanche(name){
+  const action=rnd(REVANCHE);
+  render(`
+    <div class="topbar"><h2 style="margin:auto">Revanche de ${name}</h2></div>
+    <div class="gap"></div>
+    <div class="card center" style="padding:28px 20px">
+      <p class="muted">Ton défi :</p><div class="gap"></div>
+      <p style="font-size:20px;font-weight:800">${action}</p>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn good" onclick="sniperWin('${name.replace(/'/g,"\\'")}')">✅ Réussi</button>
+    <div class="gap-s"></div>
+    <button class="btn" style="background:linear-gradient(135deg,#fb7185,#f43f5e)" onclick="addDrinks('${name.replace(/'/g,"\\'")}',2);toast('${name} boit double 🍺🍺');sniperRound()">❌ Raté (double gorgée)</button>
+    <div style="height:6px"></div>
+  `, true);
+}
+function sniperWin(name){
+  render(`
+    <div class="topbar"><h2 style="margin:auto">✅ Réussi !</h2></div>
+    <p class="center muted">${name} choisit qui boit avec lui/elle (1 gorgée chacun) :</p>
+    <div class="gap"></div>
+    <div class="list-pick">
+      ${state.players.filter(p=>p.name!==name).map(p=>`<div class="pick" onclick="addDrinks('${name.replace(/'/g,"\\'")}',1);addDrinks('${p.name.replace(/'/g,"\\'")}',1);toast('${name} & ${p.name} : 1 gorgée');sniperRound()">${p.name}<span>›</span></div>`).join('')}
+    </div>
+  `, true);
+}
+
+/* ============================================================
+   JEU 3 — BLACK(OUT) JACK
+   ============================================================ */
+let bj={};
+const SUITS=[{s:'♠',r:false},{s:'♥',r:true},{s:'♦',r:true},{s:'♣',r:false}];
+const RANKS=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+function newDeck(){
+  let d=[]; SUITS.forEach(su=>RANKS.forEach((r,i)=>d.push({r,v:i+1,s:su.s,red:su.r}))); return shuffle(d);
+}
+function bjStart(){
+  bj={ deck:newDeck(), idx:0, turn:0, streak:0, current:null };
+  bj.current=bj.deck[bj.idx++];
+  bjTurn();
+}
+function bjTurn(){
+  if(bj.deck.length-bj.idx<2){ bj.deck=newDeck(); bj.idx=0; bj.current=bj.deck[bj.idx++]; }
+  const player=state.players[bj.turn%state.players.length];
+  bj.player=player.name;
+  render(`
+    <div class="topbar"><div class="back" onclick="gameSelect()">‹</div><h2>🃏 Black(out) Jack</h2></div>
+    ${counterBar()}
+    <div class="gap"></div>
+    <p class="center"><b style="font-size:18px">${player.name}</b> · série : <b style="color:var(--gold)">${bj.streak}</b> 🔥</p>
+    <div class="gap"></div>
+    ${cardHTML(bj.current)}
+    <div class="gap"></div>
+    <p class="muted center">La prochaine carte sera…</p>
+    <div class="gap-s"></div>
+    <div class="row">
+      <button class="btn good" onclick="bjGuess('up')">⬆️ Plus</button>
+      <button class="btn" style="background:linear-gradient(135deg,#fb7185,#f43f5e)" onclick="bjGuess('down')">⬇️ Moins</button>
+    </div>
+    <div class="gap-s"></div>
+    <button class="btn ghost sm" onclick="gameSelect()">Arrêter le jeu</button>
+    <div style="height:6px"></div>
+  `, true);
+}
+function cardHTML(c){
+  return `<div class="pcard ${c.red?'red':''}"><div class="v">${c.r} ${c.s}</div><div class="s">${c.s}</div><div class="bot">${c.r} ${c.s}</div></div>`;
+}
+function bjGuess(dir){
+  const next=bj.deck[bj.idx++];
+  const correct = dir==='up' ? next.v>=bj.current.v : next.v<=bj.current.v; // égalité = bon (clémence)
+  const prev=bj.current; bj.current=next;
+  if(correct){
+    bj.streak++;
+    if(bj.streak>=7){ bjJackpot(); return; }
+    bjReveal(prev,next,true);
+  }else{
+    const drinks=bj.streak+1; // 1ère erreur = 1 gorgée, 2e = 2…
+    addDrinks(bj.player,drinks);
+    bjReveal(prev,next,false,drinks);
+  }
+}
+function bjReveal(prev,next,correct,drinks){
+  const player=bj.player;
+  render(`
+    <div class="topbar"><h2 style="margin:auto">${correct?'✅ Bien vu !':'❌ Perdu'}</h2></div>
+    ${counterBar()}
+    <div class="gap"></div>
+    <div class="row" style="justify-content:center;gap:18px;align-items:center">
+      ${cardMini(prev)}<span style="font-size:24px">→</span>${cardMini(next)}
+    </div>
+    <div class="gap"></div>
+    <p class="center" style="font-size:16px">${correct
+      ? `${player} continue ! Série de <b style="color:var(--gold)">${bj.streak}</b> 🔥`
+      : `${player} s'est trompé·e et boit <b style="color:var(--gold)">${drinks}</b> gorgée(s) 🍺`}</p>
+    <div class="spacer"></div>
+    ${correct
+      ? `<button class="btn good" onclick="bjTurn()">Carte suivante →</button>`
+      : `<button class="btn" onclick="bj.streak=0;bj.turn++;bj.current=bj.deck[bj.idx++];bjTurn()">Joueur suivant →</button>`}
+    <div style="height:6px"></div>
+  `, true);
+}
+function cardMini(c){
+  return `<div class="pcard ${c.red?'red':''}" style="width:90px;height:126px;padding:10px"><div class="v" style="font-size:18px">${c.r}${c.s}</div><div class="s" style="font-size:30px">${c.s}</div><div class="bot" style="font-size:18px">${c.r}${c.s}</div></div>`;
+}
+function bjJackpot(){
+  bj.toGive=7; bj.give={};
+  bjDistribute();
+}
+function bjDistribute(){
+  const given=Object.values(bj.give||{}).reduce((a,b)=>a+b,0);
+  const left=7-given;
+  render(`
+    <div class="topbar"><h2 style="margin:auto">🎰 JACKPOT — 7 d'affilée !</h2></div>
+    <p class="center muted"><b>${bj.player}</b> distribue <b style="color:var(--gold)">7 gorgées</b> comme il/elle veut. Reste : <b style="color:var(--gold)">${left}</b></p>
+    <div class="gap"></div>
+    <div class="list-pick">
+      ${state.players.map(p=>`<div class="pick" onclick="bjGive('${p.name.replace(/'/g,"\\'")}')">${p.name}<span style="color:var(--gold)">${bj.give[p.name]||0} 🍺</span></div>`).join('')}
+    </div>
+    <div class="spacer"></div>
+    <button class="btn good" ${left>0?'disabled':''} onclick="bjJackpotDone()">${left>0?`Distribue encore ${left}`:'Valider le partage →'}</button>
+    <div style="height:8px"></div>
+  `, true);
+}
+function bjGive(name){
+  const given=Object.values(bj.give).reduce((a,b)=>a+b,0);
+  if(given>=7){toast('7 gorgées déjà distribuées');return;}
+  bj.give[name]=(bj.give[name]||0)+1; bjDistribute();
+}
+function bjJackpotDone(){
+  Object.entries(bj.give).forEach(([n,v])=>addDrinks(n,v));
+  toast('Partage enregistré 🍺');
+  bj.streak=0; bj.turn++; bj.current=bj.deck[bj.idx++]; bjTurn();
+}
+
+/* ============================================================
+   HANGOVER — photos & classement
+   ============================================================ */
+function hangoverHome(){
+  render(`
+    <div class="topbar"><div class="back" onclick="home()">‹</div><h2>🥴 Hangover</h2></div>
+    <p class="muted">Tes albums de soirée et le classement des gorgées.</p>
+    <div class="gap"></div>
+    ${state.album.name
+      ? `<button class="btn" onclick="albumView()"><span class="ico">📔</span><span class="col">${state.album.name}<small>${state.album.photos.length} photo(s) · ${state.players.length} joueurs</small></span></button>`
+      : `<div class="card center"><div class="big">📭</div><p class="muted">Aucun album pour l'instant.</p></div>`}
+    <div class="gap"></div>
+    ${state.players.length? `<button class="btn alt" onclick="rankingView()"><span class="ico">🏆</span><span class="col">Classement des gorgées<small>Soirée en cours</small></span></button>`:''}
+    <div class="spacer"></div>
+    <div style="height:10px"></div>
+  `);
+}
+function newAlbum(){
+  render(`
+    <div class="topbar"><div class="back" onclick="hangoverHome()">‹</div><h2>Nouvel album</h2></div>
+    <div class="gap"></div>
+    <div class="card">
+      <p class="muted">Donne un nom à ton album :</p><div class="gap-s"></div>
+      <div class="row"><span style="font-weight:800;white-space:nowrap">Hangover Chez</span><input id="albName" placeholder="…" autocomplete="off"></div>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn good" onclick="createAlbum()">Créer & prendre la photo AVANT 📸</button>
+    <div style="height:8px"></div>
+  `);
+}
+function createAlbum(){
+  const v=$('#albName').value.trim();
+  if(!v){toast('Complète le nom de l\'album');return;}
+  state.album={name:'Hangover Chez '+v,photos:[]};
+  camPurpose='avant';
+  openCam();
+}
+let camPurpose=null;
+function openCam(){
+  if(!state.album.name && state.players.length){
+    // créer un album à la volée si on prend une photo en pleine partie
+    camPurpose='live';
+  }
+  $('#camInput').click();
+}
+$('#camInput').addEventListener('change',function(e){
+  const f=e.target.files[0]; if(!f)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    if(!state.album.name) state.album={name:'Hangover Chez nous',photos:[]};
+    const label = camPurpose==='avant'?'AVANT':camPurpose==='apres'?'APRÈS':'';
+    state.album.photos.push({src:ev.target.result,label});
+    toast('Photo ajoutée à l\'album 📸');
+    if(camPurpose==='avant'){ camPurpose=null; gameSelect(); }
+    else if(camPurpose==='apres'){ camPurpose=null; albumView(); }
+    camPurpose=null;
+  };
+  reader.readAsDataURL(f);
+  this.value='';
+});
+function albumView(){
+  const a=state.album;
+  render(`
+    <div class="topbar"><div class="back" onclick="hangoverHome()">‹</div><h2 style="font-size:18px">${a.name}</h2></div>
+    <div class="gap-s"></div>
+    <div class="album">
+      ${a.photos.length? a.photos.map(p=>`<div style="position:relative"><img src="${p.src}">${p.label?`<span class="pill" style="position:absolute;top:6px;left:6px;font-size:10px;padding:3px 8px">${p.label}</span>`:''}</div>`).join('')
+        : `<div class="ph">Pas encore de photo</div><div class="ph">Appuie sur 📸</div>`}
+    </div>
+    <div class="gap"></div>
+    <div class="row">
+      <button class="btn accent sm" onclick="camPurpose='apres';openCam()">📸 Photo APRÈS</button>
+      <button class="btn ghost sm" onclick="shareAlbum()">↗ Partager</button>
+    </div>
+    <div class="gap"></div>
+    <h3>🏆 Classement de la soirée</h3>
+    <div class="gap-s"></div>
+    ${rankingList()}
+    <div style="height:20px"></div>
+  `, true);
+}
+function rankingView(){
+  render(`
+    <div class="topbar"><div class="back" onclick="hangoverHome()">‹</div><h2>🏆 Classement</h2></div>
+    <p class="muted">${state.album.name||'Soirée en cours'}</p>
+    <div class="gap"></div>
+    ${rankingList()}
+    <div style="height:20px"></div>
+  `, true);
+}
+function rankingList(){
+  const sorted=[...state.players].sort((a,b)=>b.drinks-a.drinks);
+  const medals=['🥇','🥈','🥉'];
+  return sorted.map((p,i)=>`<div class="rank"><div class="pos">${medals[i]||i+1}</div><h3>${p.name}</h3><div class="g">${p.drinks} 🍺</div></div>`).join('')||'<p class="muted">Aucun joueur.</p>';
+}
+function shareAlbum(){
+  if(navigator.share){ navigator.share({title:state.album.name,text:'Regarde notre soirée ! 🥴'}).catch(()=>{}); }
+  else toast('Lien copié pour tes amis ↗ (démo)');
+}
+
+/* ---------- plein écran : plus de mise à l'échelle ---------- */
+
+/* ---------- boot ---------- */
+home();
+
+/* retire le splash d'ouverture une fois l'animation terminée */
+(function(){
+  const intro = document.getElementById('intro');
+  if(!intro) return;
+  intro.addEventListener('animationend', e=>{ if(e.animationName==='introOut') intro.remove(); });
+  setTimeout(()=>intro.remove(), 3000); // filet de sécurité
+})();
+</script>
+</body>
+</html>

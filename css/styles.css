@@ -1,0 +1,398 @@
+/* =========================================
+   BEFORE - Design Tokens & Setup
+   ========================================= */
+   :root {
+    /* Colors */
+    --bg-dark: #0B0410;
+    --text-main: #FFFFFF;
+    --text-muted: rgba(255, 255, 255, 0.6);
+    
+    /* Neons */
+    --neon-violet: #8A2BE2;
+    --neon-cyan: #00FFFF;
+    --neon-red: #FF3366;
+    
+    /* Glassmorphism */
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-highlight: rgba(255, 255, 255, 0.15);
+    
+    /* Layout */
+    --border-radius: 24px;
+    --spacing: 20px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    font-family: 'Outfit', sans-serif;
+    overflow-x: hidden;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    background-image: 
+        radial-gradient(circle at 15% 50%, rgba(138, 43, 226, 0.08), transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(0, 255, 255, 0.05), transparent 25%);
+}
+
+#app-container {
+    width: 100%;
+    max-width: 500px; /* Mobile first / Pass & Play centered */
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    padding: var(--spacing);
+}
+
+/* =========================================
+   Typography
+   ========================================= */
+h1, h2, h3 {
+    font-weight: 900;
+    letter-spacing: -0.02em;
+}
+
+h2 {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.1;
+}
+
+p {
+    font-weight: 300;
+    color: var(--text-muted);
+    font-size: 1rem;
+}
+
+/* =========================================
+   Glassmorphism & Components
+   ========================================= */
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.glass-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border-radius: var(--border-radius);
+    padding: 1px;
+    background: linear-gradient(135deg, var(--glass-highlight) 0%, transparent 50%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+}
+
+/* Buttons */
+button {
+    font-family: 'Outfit', sans-serif;
+    border: none;
+    cursor: pointer;
+    outline: none;
+}
+
+.btn-primary, .btn-secondary, .btn-alert {
+    width: 100%;
+    padding: 1.2rem;
+    border-radius: 100px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: transform 0.2s, opacity 0.2s;
+}
+
+.btn-primary:active, .btn-secondary:active, .btn-alert:active, .game-card:active {
+    transform: scale(0.97);
+}
+
+.btn-primary {
+    background: var(--text-main);
+    color: var(--bg-dark);
+}
+
+.btn-secondary {
+    background: transparent;
+    border: 1px solid var(--text-muted);
+    color: var(--text-main);
+}
+
+.btn-alert {
+    background: var(--neon-red);
+    color: white;
+    box-shadow: 0 0 20px rgba(255, 51, 102, 0.4);
+    animation: pulseRed 2s infinite;
+}
+
+.btn-glass {
+    width: 100%;
+    padding: 1.5rem;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    color: var(--text-main);
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.2s;
+}
+
+.btn-glass span {
+    font-size: 0.85rem;
+    font-weight: 300;
+    color: var(--text-muted);
+    margin-top: 0.2rem;
+}
+
+.btn-glass.soft:hover { border-color: rgba(255,255,255, 0.5); }
+.btn-glass.sans-filtre:hover { border-color: var(--neon-cyan); box-shadow: 0 0 15px rgba(0, 255, 255, 0.2); }
+.btn-glass.piratage:hover { border-color: var(--neon-violet); box-shadow: 0 0 15px rgba(138, 43, 226, 0.2); }
+
+/* =========================================
+   Layout & Views
+   ========================================= */
+.hidden {
+    display: none !important;
+}
+
+.view {
+    flex: 1;
+    display: none;
+    flex-direction: column;
+    animation: fadeIn 0.4s ease forwards;
+}
+
+.view.active {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Header */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+}
+
+.icon-btn {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: white;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#header-title {
+    font-size: 1.2rem;
+    letter-spacing: 0.2em;
+}
+
+.header-spacer {
+    width: 44px; /* balance the header */
+}
+
+/* =========================================
+   Home View (The Hub)
+   ========================================= */
+.home-header {
+    text-align: center;
+    margin: 2rem 0 3rem;
+}
+
+.logo-text {
+    font-size: 3rem;
+    letter-spacing: 0.15em;
+    background: linear-gradient(to right, #fff, var(--text-muted));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.games-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.game-card {
+    text-align: left;
+    padding: 0;
+    display: flex;
+    color: white;
+}
+
+.game-card .card-content {
+    padding: 2rem;
+    flex: 1;
+}
+
+.game-card .neon-accent {
+    width: 6px;
+    background: white;
+}
+
+.neon-accent.violet { background: var(--neon-violet); box-shadow: -2px 0 15px var(--neon-violet); }
+.neon-accent.cyan { background: var(--neon-cyan); box-shadow: -2px 0 15px var(--neon-cyan); }
+.neon-accent.red { background: var(--neon-red); box-shadow: -2px 0 15px var(--neon-red); }
+
+/* =========================================
+   Game Specifics
+   ========================================= */
+.game-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* QUI A LA RÉF */
+#role-card-press {
+    height: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: background 0.3s, border-color 0.3s;
+}
+
+#role-card-press.revealed {
+    background: rgba(138, 43, 226, 0.1);
+    border-color: var(--neon-violet);
+    box-shadow: 0 0 30px rgba(138, 43, 226, 0.2);
+}
+
+.countdown {
+    font-size: 6rem;
+    font-weight: 900;
+    text-align: center;
+    margin: 2rem 0;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+}
+
+@keyframes pulseRed {
+    0% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0.7); }
+    70% { box-shadow: 0 0 0 20px rgba(255, 51, 102, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0); }
+}
+
+/* ACTION OU VÉRITÉ */
+.badge {
+    display: inline-block;
+    padding: 0.3rem 0.8rem;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    margin-bottom: 1rem;
+    background: rgba(255,255,255,0.1);
+}
+
+#aov-badge.piratage { background: var(--neon-violet); color: white; }
+#aov-badge.sans-filtre { background: var(--neon-cyan); color: black; }
+#aov-badge.soft { background: white; color: black; }
+
+.prompt-card {
+    min-height: 250px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+}
+
+.prompt-card h3 {
+    font-size: 1.5rem;
+    line-height: 1.4;
+}
+
+/* BLACK(OUT)JACK */
+.center-stage {
+    align-items: center;
+}
+
+.playing-card {
+    width: 260px;
+    height: 380px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.deck-top {
+    cursor: pointer;
+    background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
+    border: 2px solid rgba(255,255,255,0.1);
+}
+
+.deck-top:hover {
+    border-color: rgba(255,255,255,0.3);
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+}
+
+.card-back .logo-sm {
+    font-size: 2rem;
+    font-weight: 900;
+    letter-spacing: 0.2em;
+    opacity: 0.3;
+    margin-bottom: 1rem;
+}
+
+.family-badge {
+    font-size: 0.8rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    padding: 0.3rem 1rem;
+    border-radius: 100px;
+    border: 1px solid currentColor;
+    margin-bottom: 1.5rem;
+}
+
+.drawn h3 {
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+}
+
+.drawn .punishment {
+    color: var(--neon-red);
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+/* Utilities */
+.mt-4 { margin-top: 1.5rem; }

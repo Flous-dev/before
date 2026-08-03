@@ -6,16 +6,16 @@
 <title>BEFORE — Le HUB des soirées</title>
 <style>
   :root{
-    --bg:#0b0810;
-    --bg2:#15101c;
-    --violet:#ff3d7f;
-    --violet2:#ff8fb8;
-    --blue:#b81e5c;
-    --night:#17121f;
-    --accent:#ff4d8d;
+    --bg:#080814;
+    --bg2:#12132b;
+    --violet:#7c5cff;
+    --violet2:#a78bfa;
+    --blue:#3a2eb0;
+    --night:#15162e;
+    --accent:#8b5cf6;
     --gold:#ffd166;
-    --txt:#f6f1f4;
-    --muted:#b59aab;
+    --txt:#f4f2ff;
+    --muted:#a6a1c8;
     --card:rgba(255,255,255,.05);
     --line:rgba(255,255,255,.10);
     --good:#4ade80;
@@ -37,7 +37,7 @@
   }
   .screen{
     position:relative;width:100%;height:100%;
-    background:radial-gradient(1200px 800px at 20% -10%,#3d1130 0%,#140a14 55%,#05040a 100%);
+    background:radial-gradient(1200px 800px at 20% -10%,#241a52 0%,#0e0d22 55%,#050414 100%);
     overflow:hidden;display:flex;flex-direction:column;
     padding-top:env(safe-area-inset-top);
     padding-bottom:env(safe-area-inset-bottom);
@@ -63,7 +63,7 @@
     font-weight:900;font-size:46px;letter-spacing:3px;
     background:linear-gradient(120deg,#fff,var(--violet2) 45%,var(--accent));
     -webkit-background-clip:text;background-clip:text;color:transparent;
-    text-align:center;filter:drop-shadow(0 6px 24px rgba(255,77,141,.5));
+    text-align:center;filter:drop-shadow(0 6px 24px rgba(124,92,255,.5));
   }
   .tag{text-align:center;color:var(--muted);font-size:12.5px;letter-spacing:3px;text-transform:uppercase;margin-top:2px;}
 
@@ -71,19 +71,19 @@
   .intro{
     position:absolute;inset:0;z-index:60;
     display:flex;flex-direction:column;align-items:center;justify-content:center;
-    background:radial-gradient(1200px 800px at 50% 38%,#3d1130 0%,#140a14 55%,#05040a 100%);
+    background:radial-gradient(1200px 800px at 50% 38%,#241a52 0%,#0e0d22 55%,#050414 100%);
     animation:introOut .55s cubic-bezier(.7,0,.84,0) 1.85s forwards;
   }
   .intro__glow{
     position:absolute;width:340px;height:340px;border-radius:50%;
-    background:radial-gradient(circle,rgba(255,77,141,.45),rgba(255,77,141,0) 65%);
+    background:radial-gradient(circle,rgba(124,92,255,.45),rgba(124,92,255,0) 65%);
     opacity:0;transform:scale(.6);filter:blur(8px);
     animation:introGlow 1.7s cubic-bezier(.16,1,.3,1) .1s forwards;
   }
   .intro .logo{
     position:relative;font-size:54px;opacity:0;
     letter-spacing:18px;transform:scale(1.14);
-    filter:drop-shadow(0 8px 30px rgba(255,77,141,.55)) blur(16px);
+    filter:drop-shadow(0 8px 30px rgba(124,92,255,.55)) blur(16px);
     animation:introLogo 1.4s cubic-bezier(.16,1,.3,1) .12s forwards;
   }
   .intro .tag{
@@ -91,9 +91,9 @@
     animation:introTag .8s cubic-bezier(.16,1,.3,1) .85s forwards;
   }
   @keyframes introLogo{
-    0%{opacity:0;letter-spacing:18px;transform:scale(1.14);filter:drop-shadow(0 8px 30px rgba(255,77,141,.55)) blur(16px);}
+    0%{opacity:0;letter-spacing:18px;transform:scale(1.14);filter:drop-shadow(0 8px 30px rgba(124,92,255,.55)) blur(16px);}
     55%{opacity:1;}
-    100%{opacity:1;letter-spacing:6px;transform:scale(1);filter:drop-shadow(0 6px 24px rgba(255,77,141,.5)) blur(0);}
+    100%{opacity:1;letter-spacing:6px;transform:scale(1);filter:drop-shadow(0 6px 24px rgba(124,92,255,.5)) blur(0);}
   }
   @keyframes introGlow{
     0%{opacity:0;transform:scale(.6);}
@@ -106,24 +106,24 @@
     .intro{animation:introOut .4s ease 1.2s forwards;}
     .intro__glow,.intro .logo,.intro .tag{animation:introFadeIn .5s ease both;}
     @keyframes introFadeIn{from{opacity:0;}to{opacity:1;}}
-    .intro .logo{letter-spacing:6px;transform:none;filter:drop-shadow(0 6px 24px rgba(255,77,141,.5));}
+    .intro .logo{letter-spacing:6px;transform:none;filter:drop-shadow(0 6px 24px rgba(124,92,255,.5));}
   }
 
   .btn{
     display:flex;align-items:center;gap:12px;width:100%;border:none;cursor:pointer;
     padding:18px 20px;border-radius:20px;font-size:16px;font-weight:700;color:#fff;
     background:linear-gradient(135deg,var(--violet),var(--blue));
-    box-shadow:0 12px 28px rgba(255,61,127,.3);transition:transform .12s ease,box-shadow .12s;
+    box-shadow:0 12px 28px rgba(124,92,255,.3);transition:transform .12s ease,box-shadow .12s;
     font-family:inherit;text-align:left;
   }
   .btn:active{transform:scale(.97);}
   .btn.alt{background:linear-gradient(135deg,#241823,#17101a);box-shadow:none;border:1px solid var(--line);}
   .btn.ghost{background:transparent;border:1px solid var(--line);box-shadow:none;color:var(--txt);}
-  .btn.accent{background:linear-gradient(135deg,var(--accent),#d6336c);box-shadow:0 12px 28px rgba(255,77,141,.3);}
-  .btn.good{background:linear-gradient(135deg,#ff5c9d,#e11d6b);box-shadow:0 12px 28px rgba(255,61,127,.3);}
+  .btn.accent{background:linear-gradient(135deg,var(--accent),#5b3fd6);box-shadow:0 12px 28px rgba(124,92,255,.3);}
+  .btn.good{background:linear-gradient(135deg,#9b7bff,#6d4be0);box-shadow:0 12px 28px rgba(124,92,255,.35);}
   .btn.game{background:linear-gradient(135deg,#1d141c,#120c14);box-shadow:none;border:1px solid var(--line);position:relative;overflow:hidden;}
   .btn.game::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(var(--violet),var(--accent));}
-  .btn.game .ico{filter:drop-shadow(0 0 10px rgba(255,77,141,.55));}
+  .btn.game .ico{filter:drop-shadow(0 0 10px rgba(124,92,255,.55));}
   .btn.sm{padding:13px 16px;font-size:14px;border-radius:15px;}
   .btn .ico{font-size:24px;}
   .btn .col{display:flex;flex-direction:column;gap:2px;}
@@ -145,7 +145,7 @@
     display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;color:#fff;}
 
   .prevention{
-    margin-top:auto;background:linear-gradient(135deg,rgba(255,209,102,.12),rgba(255,92,168,.08));
+    margin-top:auto;background:linear-gradient(135deg,rgba(255,209,102,.12),rgba(124,92,255,.10));
     border:1px solid rgba(255,209,102,.3);border-radius:18px;padding:14px 16px;font-size:12.5px;
     color:#ffe6a8;display:flex;gap:10px;align-items:center;line-height:1.4;
   }
@@ -192,14 +192,31 @@
   .pcard .bot{transform:rotate(180deg);font-size:30px;font-weight:800;}
 
   .floatCam{position:absolute;right:18px;bottom:18px;width:58px;height:58px;border-radius:50%;z-index:30;
-    background:linear-gradient(135deg,var(--accent),#d6336c);border:3px solid rgba(255,255,255,.2);
+    background:linear-gradient(135deg,var(--accent),#5b3fd6);border:3px solid rgba(255,255,255,.2);
     display:flex;align-items:center;justify-content:center;font-size:26px;cursor:pointer;
-    box-shadow:0 10px 30px rgba(255,77,141,.5);}
+    box-shadow:0 10px 30px rgba(124,92,255,.5);}
   .floatCam:active{transform:scale(.92);}
 
   .album{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
   .album img{width:100%;height:110px;object-fit:cover;border-radius:14px;border:1px solid var(--line);}
   .ph{height:110px;border-radius:14px;border:1px dashed var(--line);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;}
+
+  /* ===== album "carnet" (Hangover) ===== */
+  .albumbook{background:linear-gradient(160deg,#1c1846,#12122a);border:1px solid var(--line);border-radius:22px;
+    padding:16px 14px;box-shadow:0 18px 40px rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,255,255,.03);}
+  .albumbook__cover{display:flex;flex-direction:column;gap:2px;padding:2px 6px 12px;
+    border-bottom:1px dashed var(--line);margin-bottom:14px;}
+  .albumbook__title{font-weight:800;font-size:16px;}
+  .albumbook__meta{font-size:12px;color:var(--muted);}
+  .albumbook__pages{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .polaroid{margin:0;background:#f7f5ef;padding:8px 8px 4px;border-radius:6px;
+    transform:rotate(-1.5deg);box-shadow:0 8px 18px rgba(0,0,0,.4);transition:transform .15s;}
+  .polaroid:nth-child(even){transform:rotate(1.7deg);}
+  .polaroid:active{transform:rotate(0) scale(1.02);}
+  .polaroid img{width:100%;height:120px;object-fit:cover;border-radius:3px;display:block;}
+  .polaroid figcaption{color:#3a3730;font-size:11px;font-weight:800;text-align:center;
+    padding:6px 2px 4px;letter-spacing:.5px;text-transform:uppercase;min-height:14px;}
+  .album-empty{grid-column:1/-1;text-align:center;padding:26px 0;color:var(--muted);}
 
   .badge{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:700;}
   .b-ref{background:rgba(74,222,128,.15);color:var(--good);}
@@ -234,7 +251,6 @@
       <div class="intro" id="intro">
         <div class="intro__glow"></div>
         <div class="logo">BEFORE</div>
-        <div class="tag">Le HUB des soirées</div>
       </div>
     </div>
   </div>
@@ -253,6 +269,7 @@ const state = {
   randomRoles:false,
   theme:null,
   randomTheme:false,
+  partyEnded:false,       // true quand la soirée est terminée (masque le classement "en cours")
 };
 
 /* ---------- contenu placeholder (à compléter par tes soins) ---------- */
@@ -378,6 +395,7 @@ function confirmPlayers(returnTo){
   state.players=state.players.filter(p=>p.name.trim()!=='').map(p=>({name:p.name.trim(),drinks:p.drinks||0}));
   if(state.players.length<3){ toast('Il faut au moins 3 joueurs 🙃'); if(state.players.length<1)state.players=[{name:'',drinks:0},{name:'',drinks:0},{name:'',drinks:0}]; drawSetup(returnTo); return; }
   if(returnTo){ gameSelect(); return; }   // édition des joueurs en cours de partie → retour au hub
+  state.partyEnded=false;                  // nouvelle soirée → le classement "en cours" redevient visible
   beforePhotoPrompt();                     // première mise en place → propose la photo de début
 }
 function beforePhotoPrompt(){
@@ -405,6 +423,35 @@ function startEndPhoto(){
   if(!state.album.name){ state.album={name:'Hangover Chez nous',photos:[]}; }
   camPurpose='apres';
   openCam();
+}
+/* ---------- nommer le Hangover (après la photo de fin) ---------- */
+function nameHangover(){
+  const cur=(state.album.name||'').replace(/^Hangover Chez /,'');
+  const pre=(cur && cur!=='nous')?cur:'';
+  render(`
+    <div class="topbar"><h2 style="margin:auto">Nomme ton Hangover</h2></div>
+    <div class="gap"></div>
+    <div class="card center">
+      <div class="big">🥴</div>
+      <div class="gap"></div>
+      <p class="muted">Comment s'appelait cette soirée ? Ton album sera enregistré sous ce nom.</p>
+    </div>
+    <div class="gap"></div>
+    <div class="card">
+      <div class="row"><span style="font-weight:800;white-space:nowrap;font-size:16px">Hangover Chez</span><input id="hgName" placeholder="…" autocomplete="off" value="${pre.replace(/"/g,'&quot;')}"></div>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn good" onclick="saveHangoverName()">Valider mon album →</button>
+    <div style="height:8px"></div>
+  `);
+  const inp=$('#hgName'); if(inp) inp.focus();
+}
+function saveHangoverName(){
+  const v=$('#hgName').value.trim();
+  if(!v){ toast('Complète le nom de la soirée'); return; }
+  state.album.name='Hangover Chez '+v;
+  state.partyEnded=true;
+  albumView();
 }
 
 /* ---------- GAME SELECT (hub) ---------- */
@@ -443,7 +490,7 @@ function endGame(){
     <div class="spacer"></div>
     <button class="btn good" onclick="startEndPhoto()">Prendre la photo de fin 📸</button>
     <div class="gap-s"></div>
-    <button class="btn ghost sm" onclick="hangoverHome()">Passer</button>
+    <button class="btn ghost sm" onclick="state.partyEnded=true;hangoverHome()">Passer</button>
     <div style="height:8px"></div>
   `, true);
 }
@@ -455,18 +502,17 @@ let qar = {};
 function qarConfig(){
   const n = state.players.length;
   state.randomRoles=false;
-  if(state.ratio.ref+state.ratio.scam+state.ratio.pnj>n){ state.ratio={ref:1,scam:1,pnj:0}; }
+  // répartition complète et valide par défaut : 1 scamer, le reste "ont la ref"
+  if(state.ratio.ref+state.ratio.scam+state.ratio.pnj!==n){ state.ratio={ref:Math.max(1,n-1),scam:1,pnj:0}; }
   render(`
     <div class="topbar"><div class="back" onclick="gameSelect()">‹</div><h2>Qui a la ref ?</h2></div>
     ${counterBar()}
-    <div class="gap"></div>
-    <p class="muted">Répartition des rôles sur <b>${n}</b> joueurs. Tu peux mettre 0 partout pour un chaos total.</p>
     <div class="gap"></div>
     <div id="ratios"></div>
     <div class="gap"></div>
     <button class="btn alt sm" onclick="state.randomRoles=true;qarThemeSelect()">🎲 Mode aléatoire</button>
     <div class="spacer"></div>
-    <button class="btn good" onclick="qarThemeSelect()">Continuer →</button>
+    <button class="btn good" id="qarGo" onclick="qarContinue()">Continuer →</button>
     <div style="height:8px"></div>
   `, true);
   drawRatios();
@@ -482,9 +528,9 @@ function stepRow(label,key,clr){
 }
 function drawRatios(){
   $('#ratios').innerHTML =
-    stepRow('🟢 ONT LA REF','ref','var(--good)')+
-    stepRow('🔴 LES SCAMERS','scam','var(--bad)')+
-    stepRow('🟣 LES PNJ','pnj','var(--violet2)')+
+    stepRow('Ont la réf','ref','var(--good)')+
+    stepRow('Les scamers','scam','var(--bad)')+
+    stepRow('Les PNJ','pnj','var(--violet2)')+
     `<p class="muted center" id="rsum"></p>`;
   ratioSum();
 }
@@ -501,7 +547,17 @@ function ratioChg(k,d){
 }
 function ratioSum(){
   const a=state.ratio,tot=a.ref+a.scam+a.pnj,n=state.players.length;
-  $('#rsum').innerHTML = `${tot}/${n} assignés${tot<n?` · ${n-tot} joueur(s) seront aussi "ont la ref" 🟢`:''}`;
+  const complete = tot===n;
+  const el=$('#rsum'); const go=$('#qarGo');
+  if(el) el.innerHTML = complete
+    ? `${n}/${n} joueurs répartis ✅`
+    : `${tot}/${n} joueurs répartis · donne un rôle à chacun pour continuer`;
+  if(go) go.disabled=!complete;
+}
+function qarContinue(){
+  const a=state.ratio,tot=a.ref+a.scam+a.pnj,n=state.players.length;
+  if(tot!==n){ toast('Chaque joueur doit avoir un rôle'); return; }
+  qarThemeSelect();
 }
 function qarThemeSelect(){
   state.theme=null;state.randomTheme=false;
@@ -905,7 +961,7 @@ function hangoverHome(){
       ? `<button class="btn" onclick="albumView()"><span class="ico">📔</span><span class="col">${state.album.name}<small>${state.album.photos.length} photo(s) · ${state.players.length} joueurs</small></span></button>`
       : `<div class="card center"><div class="big">📭</div><p class="muted">Aucun album pour l'instant.</p></div>`}
     <div class="gap"></div>
-    ${state.players.length? `<button class="btn alt" onclick="rankingView()"><span class="ico">🏆</span><span class="col">Classement des gorgées<small>Soirée en cours</small></span></button>`:''}
+    ${state.players.length && !state.partyEnded ? `<button class="btn alt" onclick="rankingView()"><span class="ico">🏆</span><span class="col">Classement des gorgées<small>Soirée en cours</small></span></button>`:''}
     <div class="spacer"></div>
     <div style="height:10px"></div>
   `);
@@ -947,7 +1003,8 @@ $('#camInput').addEventListener('change',function(e){
     state.album.photos.push({src:ev.target.result,label});
     toast('Photo ajoutée à l\'album 📸');
     if(camPurpose==='avant'){ camPurpose=null; gameSelect(); }
-    else if(camPurpose==='apres'){ camPurpose=null; albumView(); }
+    else if(camPurpose==='apres'){ camPurpose=null; nameHangover(); }
+    else if(camPurpose==='album'){ camPurpose=null; albumView(); }
     camPurpose=null;
   };
   reader.readAsDataURL(f);
@@ -955,22 +1012,29 @@ $('#camInput').addEventListener('change',function(e){
 });
 function albumView(){
   const a=state.album;
+  const pages = a.photos.length
+    ? a.photos.map(p=>`<figure class="polaroid"><img src="${p.src}"><figcaption>${p.label||'&nbsp;'}</figcaption></figure>`).join('')
+    : `<div class="album-empty"><div class="big">📷</div><p>Aucune photo pour l'instant</p></div>`;
   render(`
     <div class="topbar"><div class="back" onclick="hangoverHome()">‹</div><h2 style="font-size:18px">${a.name}</h2></div>
     <div class="gap-s"></div>
-    <div class="album">
-      ${a.photos.length? a.photos.map(p=>`<div style="position:relative"><img src="${p.src}">${p.label?`<span class="pill" style="position:absolute;top:6px;left:6px;font-size:10px;padding:3px 8px">${p.label}</span>`:''}</div>`).join('')
-        : `<div class="ph">Pas encore de photo</div><div class="ph">Appuie sur 📸</div>`}
+    <div class="albumbook">
+      <div class="albumbook__cover">
+        <span class="albumbook__title">${a.name}</span>
+        <span class="albumbook__meta">${a.photos.length} photo(s) · ${state.players.length} joueurs</span>
+      </div>
+      <div class="albumbook__pages">${pages}</div>
     </div>
     <div class="gap"></div>
     <div class="row">
-      <button class="btn accent sm" onclick="camPurpose='apres';openCam()">📸 Photo APRÈS</button>
+      <button class="btn accent sm" onclick="camPurpose='album';openCam()">📸 Ajouter une photo</button>
       <button class="btn ghost sm" onclick="shareAlbum()">↗ Partager</button>
     </div>
+    ${!state.partyEnded ? `
     <div class="gap"></div>
     <h3>🏆 Classement de la soirée</h3>
     <div class="gap-s"></div>
-    ${rankingList()}
+    ${rankingList()}` : ''}
     <div style="height:20px"></div>
   `, true);
 }

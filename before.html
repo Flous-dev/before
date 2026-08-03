@@ -218,6 +218,35 @@
     padding:6px 2px 4px;letter-spacing:.5px;text-transform:uppercase;min-height:14px;}
   .album-empty{grid-column:1/-1;text-align:center;padding:26px 0;color:var(--muted);}
 
+  /* ===== pochette / dossier de photos empilées ===== */
+  .photostack{position:relative;height:210px;margin:8px auto 6px;max-width:280px;cursor:pointer;
+    transition:transform .15s;}
+  .photostack:active{transform:scale(.97);}
+  .photostack__card{position:absolute;left:50%;top:50%;width:150px;height:170px;margin:-85px 0 0 -75px;
+    background:#f7f5ef;padding:8px 8px 24px;border-radius:6px;box-shadow:0 12px 26px rgba(0,0,0,.5);
+    display:flex;align-items:center;justify-content:center;}
+  .photostack__card img{width:100%;height:100%;object-fit:cover;border-radius:3px;display:block;}
+  .photostack__card.s1{transform:rotate(-9deg) translateX(-20px);z-index:1;}
+  .photostack__card.s2{transform:rotate(6deg) translateX(20px);z-index:2;}
+  .photostack__card.s3{transform:rotate(-1.5deg);z-index:3;}
+  .photostack__count{position:absolute;right:6px;bottom:2px;z-index:5;background:linear-gradient(135deg,var(--violet),var(--accent));
+    color:#fff;font-weight:800;font-size:12px;padding:6px 14px;border-radius:999px;
+    box-shadow:0 8px 18px rgba(124,92,255,.55);pointer-events:none;}
+  .photostack__hint{text-align:center;color:var(--muted);font-size:12px;margin-top:2px;}
+
+  /* ===== carte d'une soirée dans la liste Hangover ===== */
+  .soiree{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);
+    border-radius:16px;padding:12px 14px;cursor:pointer;text-align:left;width:100%;transition:background .15s;}
+  .soiree:active{background:rgba(124,92,255,.16);}
+  .soiree__thumb{position:relative;width:56px;height:56px;flex:0 0 56px;border-radius:12px;overflow:hidden;
+    background:#0e0e1e;border:1px solid var(--line);}
+  .soiree__thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+  .soiree__thumb .ph{position:absolute;inset:0;border:0;font-size:22px;}
+  .soiree__body{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+  .soiree__name{font-weight:800;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .soiree__meta{font-size:12px;color:var(--muted);}
+  .soiree__chev{color:var(--muted);font-size:20px;flex:0 0 auto;}
+
   .badge{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:700;}
   .b-ref{background:rgba(74,222,128,.15);color:var(--good);}
   .b-scam{background:rgba(251,113,133,.15);color:var(--bad);}
@@ -237,6 +266,45 @@
   .rank{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:var(--card);border:1px solid var(--line);margin-bottom:8px;}
   .rank .pos{font-size:20px;font-weight:800;width:30px;}
   .rank .g{margin-left:auto;font-weight:800;color:var(--gold);}
+  /* ===== AFTER — où continuer la soirée ===== */
+  .filters{display:flex;gap:7px;overflow-x:auto;padding:1px 0 9px;}
+  .filters::-webkit-scrollbar{display:none;}
+  .flabel{font-size:10px;text-transform:uppercase;letter-spacing:1.1px;color:var(--muted);font-weight:800;margin-bottom:4px;}
+  .chipf{flex:none;padding:7px 13px;border-radius:999px;background:var(--card);border:1px solid var(--line);
+    font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;transition:.15s;white-space:nowrap;}
+  .chipf.on{background:linear-gradient(135deg,var(--violet),var(--blue));color:#fff;border-color:transparent;
+    box-shadow:0 6px 18px rgba(124,92,255,.35);}
+  .chipf:active{transform:scale(.95);}
+  .fsep{flex:none;width:1px;background:var(--line);margin:4px 2px;}
+
+  .venue{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:15px 16px;margin-bottom:10px;
+    cursor:pointer;transition:transform .12s,border-color .15s;animation:vIn .32s cubic-bezier(.16,1,.3,1) both;}
+  .venue:active{transform:scale(.985);border-color:var(--violet);}
+  @keyframes vIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+  .venue__top{display:flex;align-items:flex-start;gap:11px;}
+  .venue__e{font-size:26px;flex:none;line-height:1.1;}
+  .venue__n{font-weight:800;font-size:16.5px;line-height:1.2;}
+  .venue__r{margin-left:auto;font-weight:800;color:var(--gold);font-size:14px;white-space:nowrap;flex:none;}
+  .venue__meta{color:var(--muted);font-size:12.5px;margin-top:3px;}
+  .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;align-items:center;}
+  .vtag{font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px;background:rgba(124,92,255,.16);
+    color:var(--violet2);border:1px solid rgba(124,92,255,.25);}
+  .vtag.price{background:rgba(255,209,102,.13);color:var(--gold);border-color:rgba(255,209,102,.26);}
+  .status{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:999px;}
+  .st-open{background:rgba(74,222,128,.14);color:var(--good);}
+  .st-soon{background:rgba(255,209,102,.15);color:var(--gold);}
+  .st-closed{background:rgba(255,255,255,.06);color:var(--muted);}
+
+  .facts{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .fact{background:var(--night);border:1px solid var(--line);border-radius:14px;padding:11px 13px;}
+  .fact small{display:block;color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;font-weight:800;margin-bottom:2px;}
+  .fact b{font-size:15px;}
+  .review{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:8px;}
+  .review .rh{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;margin-bottom:4px;}
+  .review .rh em{margin-left:auto;color:var(--gold);font-size:12px;font-style:normal;}
+  .review p{font-size:13.5px;color:var(--muted);line-height:1.45;}
+  .demoNote{font-size:11.5px;color:var(--muted);text-align:center;opacity:.75;line-height:1.4;}
+
   .spacer{flex:1;}
   .gap{height:12px;}
   .gap-s{height:8px;}
@@ -265,12 +333,29 @@
 const state = {
   players: [],            // {name, drinks}
   album: { name:null, photos:[] },
+  albums: [],             // soirées terminées : {id, name, photos:[{src,label}], ranking:[{name,drinks}], date}
   ratio:{ref:1,scam:1,pnj:0},
   randomRoles:false,
   theme:null,
   randomTheme:false,
   partyEnded:false,       // true quand la soirée est terminée (masque le classement "en cours")
+  after:{city:'paris',type:'all',theme:'all',price:'all',openOnly:'open',sort:'dist'},
 };
+
+/* ---------- persistance des soirées terminées ---------- */
+const ALBUMS_KEY='before.albums';
+function loadAlbums(){
+  try{ const raw=localStorage.getItem(ALBUMS_KEY); if(raw) state.albums=JSON.parse(raw)||[]; }
+  catch(e){ state.albums=[]; }
+}
+function saveAlbums(){
+  try{ localStorage.setItem(ALBUMS_KEY, JSON.stringify(state.albums)); }catch(e){}
+}
+function getAlbum(id){ return state.albums.find(a=>String(a.id)===String(id)); }
+function fmtDate(ts){
+  try{ return new Date(ts).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}); }
+  catch(e){ return ''; }
+}
 
 /* ---------- contenu placeholder (à compléter par tes soins) ---------- */
 const THEMES = {
@@ -352,6 +437,10 @@ function home(){
     <div class="gap"></div>
     <button class="btn alt" onclick="hangoverHome()">
       <span class="col">HANGOVER<small>Tes albums & le classement des gorgées</small></span>
+    </button>
+    <div class="gap"></div>
+    <button class="btn alt" onclick="afterHome()">
+      <span class="col">AFTER<small>Les bars & clubs encore ouverts près de toi</small></span>
     </button>
     <div class="spacer"></div>
     <div class="prevention">
@@ -451,7 +540,21 @@ function saveHangoverName(){
   if(!v){ toast('Complète le nom de la soirée'); return; }
   state.album.name='Hangover Chez '+v;
   state.partyEnded=true;
-  albumView();
+  // fige la soirée : photos + classement final, et l'ajoute à la liste Hangover
+  const ranking=[...state.players].sort((a,b)=>b.drinks-a.drinks).map(p=>({name:p.name,drinks:p.drinks}));
+  const rec={
+    id: 'sr'+Date.now(),
+    name: state.album.name,
+    photos: state.album.photos.map(p=>({src:p.src,label:p.label})),
+    ranking,
+    players: state.players.length,
+    date: Date.now(),
+  };
+  state.albums.unshift(rec);
+  saveAlbums();
+  // repart sur une soirée vierge pour la prochaine fois
+  state.album={ name:null, photos:[] };
+  soireeView(rec.id);
 }
 
 /* ---------- GAME SELECT (hub) ---------- */
@@ -953,17 +1056,94 @@ function bjJackpotDone(){
    HANGOVER — photos & classement
    ============================================================ */
 function hangoverHome(){
+  // soirée en cours (pas encore terminée) → carte "live" en haut
+  const live = (state.album.name && !state.partyEnded)
+    ? `<button class="btn" onclick="albumView()"><span class="ico">📔</span><span class="col">${state.album.name}<small>Soirée en cours · ${state.album.photos.length} photo(s)</small></span></button>
+       <div class="gap"></div>`
+    : '';
+  // liste de toutes les soirées terminées
+  const soirees = state.albums.length
+    ? state.albums.map(a=>{
+        const cover = a.photos.find(p=>p.src);
+        const thumb = cover
+          ? `<img src="${cover.src}" alt="">`
+          : `<div class="ph">🥴</div>`;
+        return `<button class="soiree" onclick="soireeView('${a.id}')">
+          <div class="soiree__thumb">${thumb}</div>
+          <div class="soiree__body">
+            <span class="soiree__name">${a.name}</span>
+            <span class="soiree__meta">${a.photos.length} photo(s) · ${a.players||a.ranking.length} joueurs${a.date?' · '+fmtDate(a.date):''}</span>
+          </div>
+          <span class="soiree__chev">›</span>
+        </button>`;
+      }).join('<div class="gap-s"></div>')
+    : `<div class="card center"><div class="big">📭</div><p class="muted">Aucune soirée enregistrée pour l'instant.<br>Termine une partie pour créer ton premier Hangover !</p></div>`;
   render(`
     <div class="topbar"><div class="back" onclick="home()">‹</div><h2>🥴 Hangover</h2></div>
-    <p class="muted">Tes albums de soirée et le classement des gorgées.</p>
+    <p class="muted">Toutes tes soirées, leurs photos et leur classement final.</p>
     <div class="gap"></div>
-    ${state.album.name
-      ? `<button class="btn" onclick="albumView()"><span class="ico">📔</span><span class="col">${state.album.name}<small>${state.album.photos.length} photo(s) · ${state.players.length} joueurs</small></span></button>`
-      : `<div class="card center"><div class="big">📭</div><p class="muted">Aucun album pour l'instant.</p></div>`}
-    <div class="gap"></div>
-    ${state.players.length && !state.partyEnded ? `<button class="btn alt" onclick="rankingView()"><span class="ico">🏆</span><span class="col">Classement des gorgées<small>Soirée en cours</small></span></button>`:''}
+    ${live}
+    ${state.players.length && !state.partyEnded ? `<button class="btn alt" onclick="rankingView()"><span class="ico">🏆</span><span class="col">Classement des gorgées<small>Soirée en cours</small></span></button><div class="gap"></div>`:''}
+    ${soirees}
     <div class="spacer"></div>
     <div style="height:10px"></div>
+  `);
+}
+
+/* ---------- vue d'une soirée terminée : pochette photos + classement ---------- */
+function soireeView(id){
+  const a=getAlbum(id);
+  if(!a){ hangoverHome(); return; }
+  const pics=a.photos.filter(p=>p.src).slice(0,3);
+  const cards = pics.length
+    ? pics.map((p,i)=>`<div class="photostack__card s${i+1}"><img src="${p.src}" alt=""></div>`).join('')
+    : `<div class="photostack__card s3"><span style="font-size:40px">📷</span></div>`;
+  render(`
+    <div class="topbar"><div class="back" onclick="hangoverHome()">‹</div><h2 style="font-size:18px">${a.name}</h2></div>
+    ${a.date?`<p class="muted">${fmtDate(a.date)}</p>`:''}
+    <div class="gap"></div>
+    <div class="photostack" onclick="albumPhotos('${a.id}')">
+      ${cards}
+      <span class="photostack__count">${a.photos.length} 📷</span>
+    </div>
+    <p class="photostack__hint">Touche la pochette pour voir toutes les photos</p>
+    <div class="gap"></div>
+    <div class="row">
+      <button class="btn accent sm" onclick="albumPhotos('${a.id}')">📔 Ouvrir l'album</button>
+      <button class="btn ghost sm" onclick="shareSaved('${a.id}')">↗ Partager</button>
+    </div>
+    <div class="gap"></div>
+    <h3>🏆 Classement final</h3>
+    <div class="gap-s"></div>
+    ${rankingListFrom(a.ranking)}
+    <div class="gap"></div>
+    <button class="btn" onclick="afterHome()">
+      <span class="ico">🌙</span><span class="col">La soirée continue ?<small>Les bars & clubs encore ouverts près de toi</small></span>
+    </button>
+    <div style="height:20px"></div>
+  `);
+}
+
+/* ---------- toutes les photos d'une soirée terminée ---------- */
+function albumPhotos(id){
+  const a=getAlbum(id);
+  if(!a){ hangoverHome(); return; }
+  const pages = a.photos.length
+    ? a.photos.map(p=>`<figure class="polaroid"><img src="${p.src}"><figcaption>${p.label||'&nbsp;'}</figcaption></figure>`).join('')
+    : `<div class="album-empty"><div class="big">📷</div><p>Aucune photo</p></div>`;
+  render(`
+    <div class="topbar"><div class="back" onclick="soireeView('${a.id}')">‹</div><h2 style="font-size:18px">${a.name}</h2></div>
+    <div class="gap-s"></div>
+    <div class="albumbook">
+      <div class="albumbook__cover">
+        <span class="albumbook__title">${a.name}</span>
+        <span class="albumbook__meta">${a.photos.length} photo(s) · ${a.players||a.ranking.length} joueurs</span>
+      </div>
+      <div class="albumbook__pages">${pages}</div>
+    </div>
+    <div class="gap"></div>
+    <button class="btn ghost sm" onclick="shareSaved('${a.id}')">↗ Partager l'album</button>
+    <div style="height:20px"></div>
   `);
 }
 function newAlbum(){
@@ -1049,17 +1229,261 @@ function rankingView(){
 }
 function rankingList(){
   const sorted=[...state.players].sort((a,b)=>b.drinks-a.drinks);
+  return rankingListFrom(sorted);
+}
+function rankingListFrom(list){
   const medals=['🥇','🥈','🥉'];
-  return sorted.map((p,i)=>`<div class="rank"><div class="pos">${medals[i]||i+1}</div><h3>${p.name}</h3><div class="g">${p.drinks} 🍺</div></div>`).join('')||'<p class="muted">Aucun joueur.</p>';
+  return (list||[]).map((p,i)=>`<div class="rank"><div class="pos">${medals[i]||i+1}</div><h3>${p.name}</h3><div class="g">${p.drinks} 🍺</div></div>`).join('')||'<p class="muted">Aucun joueur.</p>';
 }
 function shareAlbum(){
   if(navigator.share){ navigator.share({title:state.album.name,text:'Regarde notre soirée ! 🥴'}).catch(()=>{}); }
   else toast('Lien copié pour tes amis ↗ (démo)');
 }
+function shareSaved(id){
+  const a=getAlbum(id); if(!a) return;
+  if(navigator.share){ navigator.share({title:a.name,text:'Regarde notre soirée ! 🥴'}).catch(()=>{}); }
+  else toast('Lien copié pour tes amis ↗ (démo)');
+}
+
+/* ============================================================
+   AFTER — où continuer la soirée
+   ------------------------------------------------------------
+   Données de DÉMO (lieux fictifs). À remplacer plus tard par une
+   vraie source (Google Places / Foursquare) : il suffira de
+   fournir des objets au même format à CITIES[x].venues.
+   ============================================================ */
+const CITIES = {
+  paris:{label:'Paris',venues:[
+    {id:'p1',name:'Le Souterrain',type:'club',e:'🎧',themes:['Techno','House'],price:2,entry:12,drink:9,rating:4.6,nrev:284,open:23,close:6,dist:0.8,
+      desc:"Cave voûtée, gros son et zéro chichi. Le repaire de ceux qui ne veulent pas rentrer.",
+      reviews:[{n:'Sofia',r:5,t:"Le son est dingue et l'ambiance ne retombe jamais. Restés jusqu'à la fermeture."},{n:'Malik',r:4,t:"Très bien, mais prévois du liquide pour le vestiaire."}]},
+    {id:'p2',name:'Bar Néon',type:'bar',e:'🍸',themes:['Cocktails','Chill'],price:2,entry:0,drink:11,rating:4.4,nrev:512,open:18,close:2,dist:0.3,
+      desc:"Cocktails soignés, lumière tamisée et musique assez basse pour s'entendre parler.",
+      reviews:[{n:'Camille',r:5,t:"Parfait pour souffler après une grosse soirée. Les barmen sont adorables."},{n:'Yanis',r:4,t:"Un poil cher mais les cocktails valent le coup."}]},
+    {id:'p3',name:'Rooftop Zénith',type:'bar',e:'🌇',themes:['Rooftop','House'],price:3,entry:0,drink:14,rating:4.7,nrev:198,open:19,close:2,dist:1.2,
+      desc:"Vue dégagée sur les toits, DJ set en douceur et plaids quand ça caille.",
+      reviews:[{n:'Lina',r:5,t:"La vue au lever du soleil, imbattable. À faire au moins une fois."},{n:'Thomas',r:4,t:"Réserve avant de venir, ça se remplit très vite le week-end."}]},
+    {id:'p4',name:'La Cave à Vinyles',type:'bar',e:'🎷',themes:['Hip-hop','Funk'],price:1,entry:0,drink:7,rating:4.2,nrev:341,open:20,close:4,dist:0.6,
+      desc:"Sélection 100 % vinyle, pinte accessible et petite piste au fond.",
+      reviews:[{n:'Nour',r:4,t:"Les meilleurs prix du quartier et une prog aux petits oignons."},{n:'Hugo',r:4,t:"Ça devient vite plein, viens tôt si tu veux t'asseoir."}]},
+    {id:'p5',name:'Tropicana Club',type:'club',e:'💃',themes:['Latino','Reggaeton'],price:2,entry:15,drink:10,rating:4.5,nrev:427,open:23,close:6,dist:1.9,
+      desc:"Reggaeton, salsa et une piste qui ne désemplit jamais. Initiation offerte en début de soirée.",
+      reviews:[{n:'Elena',r:5,t:"Même en venant seule je me suis sentie hyper bien accueillie."},{n:'Rayan',r:4,t:"Entrée un peu chère mais la conso est correcte."}]},
+    {id:'p6',name:'Le Dernier Métro',type:'bar',e:'🍺',themes:['Généraliste','Bières'],price:1,entry:0,drink:6,rating:4.0,nrev:876,open:17,close:5,dist:0.4,
+      desc:"Le troquet qui ferme en dernier. Baby-foot, bières pas chères, ambiance garantie.",
+      reviews:[{n:'Jules',r:4,t:"Rien d'exceptionnel mais c'est ouvert quand tout est fermé. Sauveur."},{n:'Awa',r:4,t:"Le baby-foot est devenu notre rituel de fin de soirée."}]},
+    {id:'p7',name:'Warehouse 12',type:'club',e:'🏭',themes:['Techno'],price:3,entry:20,drink:12,rating:4.8,nrev:156,open:0,close:8,dist:3.4,
+      desc:"Ancien entrepôt, line-up pointu et after officiel jusqu'au petit matin.",
+      reviews:[{n:'Théo',r:5,t:"Le meilleur son de la ville, sans discussion. Prévois des bouchons."},{n:'Maya',r:5,t:"Ça commence vraiment à 3h. Parfait pour un after."}]},
+  ]},
+  lyon:{label:'Lyon',venues:[
+    {id:'l1',name:'Le Quai Rouge',type:'club',e:'🚢',themes:['House','Disco'],price:2,entry:12,drink:9,rating:4.5,nrev:233,open:23,close:6,dist:1.1,
+      desc:"Péniche amarrée sur les quais, terrasse au bord de l'eau et house ensoleillée.",
+      reviews:[{n:'Chloé',r:5,t:"Danser au bord de l'eau à 4h du mat, il n'y a pas mieux."},{n:'Sami',r:4,t:"La terrasse est top, l'intérieur chauffe vite."}]},
+    {id:'l2',name:'Comptoir Lumière',type:'bar',e:'🍹',themes:['Cocktails','Chill'],price:2,entry:0,drink:10,rating:4.6,nrev:389,open:18,close:2,dist:0.5,
+      desc:"Comptoir en zinc, cocktails maison et playlist soul qui met tout le monde d'accord.",
+      reviews:[{n:'Manon',r:5,t:"Les cocktails signature valent vraiment le détour."},{n:'Idris',r:4,t:"Service impeccable même quand c'est blindé."}]},
+    {id:'l3',name:'Sous-Sol 69',type:'club',e:'⚡',themes:['Techno'],price:2,entry:10,drink:8,rating:4.3,nrev:174,open:0,close:7,dist:2.2,
+      desc:"Sous-sol brut, murs qui suent et techno sans compromis jusqu'au matin.",
+      reviews:[{n:'Bilal',r:4,t:"Pour les vrais amateurs de techno. Ambiance sans prise de tête."},{n:'Zoé',r:4,t:"Ça ouvre tard, ne viens pas avant 1h."}]},
+    {id:'l4',name:'La Guinguette',type:'bar',e:'🌿',themes:['Chill','Terrasse'],price:1,entry:0,drink:6,rating:4.1,nrev:604,open:17,close:1,dist:0.9,
+      desc:"Guinguette en plein air, guirlandes, planches à partager et prix doux.",
+      reviews:[{n:'Léo',r:4,t:"Parfait pour commencer la soirée tranquille à plusieurs."},{n:'Farah',r:4,t:"Super cadre, dommage que ça ferme tôt."}]},
+    {id:'l5',name:'Salsa Croix',type:'club',e:'🌶️',themes:['Latino','Salsa'],price:2,entry:10,drink:9,rating:4.4,nrev:212,open:22,close:4,dist:1.6,
+      desc:"Cours de salsa jusqu'à minuit puis piste libre. Ambiance bon enfant.",
+      reviews:[{n:'Paula',r:5,t:"On y va débutant, on repart en sachant danser. Génial."},{n:'Marc',r:4,t:"Très convivial, public de tous âges."}]},
+  ]},
+  marseille:{label:'Marseille',venues:[
+    {id:'m1',name:'Le Phare Bleu',type:'bar',e:'⚓',themes:['Rooftop','Chill'],price:2,entry:0,drink:11,rating:4.7,nrev:301,open:18,close:3,dist:0.7,
+      desc:"Toit-terrasse face à la mer, spritz au coucher du soleil et DJ en fin de soirée.",
+      reviews:[{n:'Naïma',r:5,t:"Le coucher de soleil depuis la terrasse, magique."},{n:'Victor',r:4,t:"Arrive avant 20h si tu veux une place assise."}]},
+    {id:'m2',name:'Cabanon Club',type:'club',e:'🏖️',themes:['House','Deep'],price:2,entry:12,drink:9,rating:4.4,nrev:187,open:23,close:6,dist:2.0,
+      desc:"Esprit cabanon revisité, sable au sol et deep house jusqu'à l'aube.",
+      reviews:[{n:'Ines',r:4,t:"Concept sympa et le son est vraiment bon."},{n:'Karim',r:5,t:"Ambiance décontractée, personne ne se prend au sérieux."}]},
+    {id:'m3',name:'Vieux Port Bar',type:'bar',e:'🍻',themes:['Généraliste','Bières'],price:1,entry:0,drink:5,rating:4.0,nrev:942,open:16,close:2,dist:0.3,
+      desc:"L'incontournable du port. Pas de chichi, des pintes et du monde tous les soirs.",
+      reviews:[{n:'Ludo',r:4,t:"Le rapport qualité-prix imbattable du coin."},{n:'Sarah',r:4,t:"Bruyant mais c'est ce qu'on vient chercher."}]},
+    {id:'m4',name:'Calanque Sound',type:'club',e:'🌊',themes:['Techno'],price:3,entry:18,drink:12,rating:4.6,nrev:143,open:0,close:7,dist:4.1,
+      desc:"Club en bord de falaise, gros système son et after face au large.",
+      reviews:[{n:'Antoine',r:5,t:"Sortir à 7h avec vue sur la mer, expérience inoubliable."},{n:'Rita',r:4,t:"Un peu loin du centre, pense au retour à l'avance."}]},
+    {id:'m5',name:'Tapas & Beats',type:'bar',e:'🎤',themes:['Hip-hop','Funk'],price:2,entry:0,drink:8,rating:4.2,nrev:266,open:19,close:3,dist:1.1,
+      desc:"Tapas à partager, DJ set hip-hop et petite scène ouverte le jeudi.",
+      reviews:[{n:'Océane',r:4,t:"On mange bien et on finit par danser entre les tables."},{n:'Ahmed',r:4,t:"La scène ouverte du jeudi vaut le déplacement."}]},
+  ]},
+};
+
+/* ---------- helpers AFTER ---------- */
+function afterCityVenues(){ return CITIES[state.after.city].venues; }
+function fmtHour(h){ return (h===0?'minuit':h+'h'); }
+function fmtDist(km){ return km<1 ? Math.round(km*1000)+' m' : String(km).replace('.',',')+' km'; }
+function fmtDur(min){ const h=Math.floor(min/60),m=min%60; return h?`${h}h${m?String(m).padStart(2,'0'):''}`:`${m} min`; }
+
+/* statut d'ouverture calculé sur l'heure réelle du téléphone */
+function venueStatus(v){
+  const now=new Date(), cur=now.getHours()*60+now.getMinutes();
+  const o=v.open*60, c=v.close*60;
+  const isOpen = (c<=o) ? (cur>=o||cur<c) : (cur>=o&&cur<c);
+  if(isOpen){
+    let left=(c-cur+1440)%1440; if(left===0) left=1440;
+    return left<=60
+      ? {open:true,cls:'st-soon',txt:`Ferme dans ${fmtDur(left)}`}
+      : {open:true,cls:'st-open',txt:`Ouvert jusqu'à ${fmtHour(v.close)}`};
+  }
+  return {open:false,cls:'st-closed',txt:`Ouvre à ${fmtHour(v.open)}`};
+}
+
+function afterVenues(){
+  const f=state.after;
+  let list=afterCityVenues().filter(v=>{
+    if(f.type!=='all' && v.type!==f.type) return false;
+    if(f.theme!=='all' && !v.themes.includes(f.theme)) return false;
+    if(f.price!=='all' && String(v.price)!==f.price) return false;
+    if(f.openOnly==='open' && !venueStatus(v).open) return false;
+    return true;
+  });
+  const s=f.sort;
+  list.sort((a,b)=> s==='rating' ? b.rating-a.rating
+                  : s==='price'  ? (a.price-b.price)||(a.entry+a.drink)-(b.entry+b.drink)
+                  : a.dist-b.dist);
+  return list;
+}
+
+/* ---------- écran principal AFTER ---------- */
+function afterHome(){
+  const themes=[...new Set(afterCityVenues().flatMap(v=>v.themes))].sort();
+  const chip=(k,v,label)=>`<div class="chipf${state.after[k]===v?' on':''}" data-k="${k}" data-v="${v}" onclick="afterSet('${k}','${v}')">${label}</div>`;
+  render(`
+    <div class="topbar"><div class="back" onclick="home()">‹</div><h2>🌙 After</h2></div>
+    <div class="row" style="justify-content:space-between;margin:-6px 0 12px">
+      <p class="muted">Encore ouvert à <b style="color:var(--txt)">${CITIES[state.after.city].label}</b> · <span id="afterCount"></span></p>
+      <div class="chipf" onclick="afterCityPick()">📍 Changer</div>
+    </div>
+    <div id="afterFilters">
+      <div class="flabel">Type</div>
+      <div class="filters">${chip('type','all','Tout')}${chip('type','bar','🍸 Bars')}${chip('type','club','🎧 Clubs')}</div>
+      <div class="flabel">Ambiance</div>
+      <div class="filters">${chip('theme','all','Toutes')}${themes.map(t=>chip('theme',t,t)).join('')}</div>
+      <div class="flabel">Budget</div>
+      <div class="filters">${chip('price','all','Tous')}${chip('price','1','€')}${chip('price','2','€€')}${chip('price','3','€€€')}</div>
+      <div class="flabel">Affichage & tri</div>
+      <div class="filters">${chip('openOnly','open','🟢 Ouvert maintenant')}${chip('openOnly','all','Tout afficher')}
+        <div class="fsep"></div>${chip('sort','dist','Au plus près')}${chip('sort','rating','Mieux notés')}${chip('sort','price','Moins cher')}</div>
+    </div>
+    <div class="gap-s"></div>
+    <div id="afterList"></div>
+    <div class="gap"></div>
+    <p class="prevention" style="margin:0"><span style="font-size:20px">🚕</span><span>Avant de repartir : désignez qui rentre comment. Taxi, VTC ou nuit chez un pote — jamais au volant.</span></p>
+    <div class="gap-s"></div>
+    <p class="demoNote">Lieux fictifs de démonstration — la connexion aux vrais établissements viendra plus tard.</p>
+    <div style="height:16px"></div>
+  `);
+  afterRefresh();
+}
+
+function afterSet(k,v){ state.after[k]=v; afterRefresh(); }
+
+function afterRefresh(){
+  document.querySelectorAll('#afterFilters .chipf').forEach(c=>{
+    if(c.dataset.k) c.classList.toggle('on', state.after[c.dataset.k]===c.dataset.v);
+  });
+  const list=afterVenues();
+  const cnt=$('#afterCount'); if(cnt) cnt.textContent=`${list.length} spot${list.length>1?'s':''}`;
+  const box=$('#afterList'); if(!box) return;
+  box.innerHTML = list.length ? list.map((v,i)=>{
+    const st=venueStatus(v);
+    return `<div class="venue" style="animation-delay:${Math.min(i,8)*35}ms" onclick="afterVenue('${v.id}')">
+      <div class="venue__top">
+        <span class="venue__e">${v.e}</span>
+        <div style="min-width:0">
+          <div class="venue__n">${v.name}</div>
+          <div class="venue__meta">${v.type==='club'?'Club':'Bar'} · ${fmtDist(v.dist)} · ${Math.round(v.dist*12)} min à pied</div>
+        </div>
+        <span class="venue__r">★ ${v.rating.toFixed(1).replace('.',',')}</span>
+      </div>
+      <div class="tags">
+        <span class="status ${st.cls}">${st.txt}</span>
+        ${v.themes.map(t=>`<span class="vtag">${t}</span>`).join('')}
+        <span class="vtag price">${'€'.repeat(v.price)}</span>
+      </div>
+    </div>`;
+  }).join('') : `<div class="card center">
+      <div class="big">🔍</div><div class="gap-s"></div>
+      <p class="muted">Aucun spot avec ces filtres.</p><div class="gap"></div>
+      <button class="btn ghost sm" onclick="afterReset()">Réinitialiser les filtres</button>
+    </div>`;
+}
+
+function afterReset(){
+  state.after={...state.after,type:'all',theme:'all',price:'all',openOnly:'all',sort:'dist'};
+  afterHome();
+}
+
+function afterCityPick(){
+  render(`
+    <div class="topbar"><div class="back" onclick="afterHome()">‹</div><h2>Ta ville</h2></div>
+    <p class="muted">Où êtes-vous ce soir ?</p>
+    <div class="gap"></div>
+    <div class="list-pick">
+      ${Object.entries(CITIES).map(([k,c])=>`<div class="pick" onclick="afterSetCity('${k}')">${c.label}<span>${state.after.city===k?'✓':'›'}</span></div>`).join('')}
+    </div>
+    <div class="spacer"></div>
+    <p class="demoNote">D'autres villes seront ajoutées quand l'app sera connectée à une vraie base de lieux.</p>
+    <div style="height:14px"></div>
+  `);
+}
+function afterSetCity(k){ state.after.city=k; state.after.theme='all'; afterHome(); }
+
+/* ---------- fiche d'un lieu ---------- */
+function afterVenue(id){
+  const v=afterCityVenues().find(x=>x.id===id); if(!v) return;
+  const st=venueStatus(v);
+  render(`
+    <div class="topbar"><div class="back" onclick="afterHome()">‹</div><h2 style="font-size:18px">${v.name}</h2></div>
+    <div class="card">
+      <div class="row" style="align-items:flex-start">
+        <span style="font-size:38px">${v.e}</span>
+        <div style="min-width:0">
+          <h3>${v.type==='club'?'Club':'Bar'} · ${fmtDist(v.dist)}</h3>
+          <div class="muted" style="font-size:13px;margin-top:2px">★ ${v.rating.toFixed(1).replace('.',',')} · ${v.nrev} avis</div>
+        </div>
+      </div>
+      <div class="gap-s"></div>
+      <span class="status ${st.cls}">${st.txt}</span>
+      <div class="gap-s"></div>
+      <p class="muted" style="font-size:14px">${v.desc}</p>
+      <div class="tags">${v.themes.map(t=>`<span class="vtag">${t}</span>`).join('')}<span class="vtag price">${'€'.repeat(v.price)}</span></div>
+    </div>
+    <div class="gap"></div>
+    <div class="facts">
+      <div class="fact"><small>Entrée</small><b>${v.entry?v.entry+' €':'Gratuite'}</b></div>
+      <div class="fact"><small>Verre / conso</small><b>≈ ${v.drink} €</b></div>
+      <div class="fact"><small>Horaires</small><b>${fmtHour(v.open)} – ${fmtHour(v.close)}</b></div>
+      <div class="fact"><small>À pied</small><b>${Math.round(v.dist*12)} min</b></div>
+    </div>
+    <div class="gap"></div>
+    <h3>Ce qu'en disent les autres</h3>
+    <div class="gap-s"></div>
+    ${v.reviews.map(r=>`<div class="review"><div class="rh">${r.n}<em>${'★'.repeat(r.r)}</em></div><p>${r.t}</p></div>`).join('')}
+    <div class="gap-s"></div>
+    <button class="btn good" onclick="afterShare('${v.name.replace(/'/g,"\\'")}')">↗ Proposer au groupe</button>
+    <div class="gap-s"></div>
+    <button class="btn ghost sm" onclick="afterHome()">← Voir d'autres spots</button>
+    <div class="gap"></div>
+    <p class="demoNote">Lieu fictif de démonstration.</p>
+    <div style="height:16px"></div>
+  `);
+}
+
+function afterShare(name){
+  const txt=`On continue au ${name} ? 🌙`;
+  if(navigator.share){ navigator.share({title:'BEFORE — After',text:txt}).catch(()=>{}); }
+  else toast('Proposition copiée pour le groupe ↗ (démo)');
+}
 
 /* ---------- plein écran : plus de mise à l'échelle ---------- */
 
 /* ---------- boot ---------- */
+loadAlbums();
 home();
 
 /* retire le splash d'ouverture une fois l'animation terminée */

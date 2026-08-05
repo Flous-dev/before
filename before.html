@@ -123,6 +123,16 @@
     text-align:center;filter:drop-shadow(0 10px 30px rgba(109,91,208,.35));
   }
   .tag{text-align:center;color:var(--muted);font-size:12.5px;letter-spacing:3px;text-transform:uppercase;margin-top:2px;}
+  /* slogan : serif italique pour contraster avec le logo, compact mais lisible */
+  .slogan{
+    text-align:center;margin-top:7px;line-height:1.4;
+    font-family:Georgia,"Iowan Old Style","Times New Roman",serif;
+    font-style:italic;font-size:13px;letter-spacing:.1px;
+    color:var(--muted);opacity:.8;
+    text-wrap:balance;                 /* si ça passe à la ligne, les deux lignes restent équilibrées */
+  }
+  @media (max-width:360px){ .slogan{font-size:12px;} }
+  .slogan b{font-weight:600;font-style:italic;color:var(--violet2);opacity:.85;letter-spacing:.4px;}
 
   /* ===== intro / splash ===== */
   .intro{
@@ -657,7 +667,7 @@ function home(){
   render(`
     <div class="spacer"></div>
     <div class="logo">BEFORE</div>
-    <div class="eyebrow center" style="margin-top:8px">Votre soirée, de A à Z</div>
+    <div class="slogan">Ce qui se passe sur <b>BEFORE</b> reste sur <b>BEFORE</b>.</div>
     <div style="height:44px"></div>
     <button class="btn good" onclick="setup()">
       <span class="ico">🥂</span>

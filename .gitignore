@@ -3,3 +3,6 @@
 node_modules/
 .vscode/
 .idea/
+
+# QR codes : usage perso, pas besoin de les publier
+qr-before*.png

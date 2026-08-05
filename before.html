@@ -139,7 +139,7 @@
     position:absolute;inset:0;z-index:60;
     display:flex;flex-direction:column;align-items:center;justify-content:center;
     background:radial-gradient(1200px 800px at 50% 38%,#1d1841 0%,#0c0b1e 55%,#050410 100%);
-    animation:introOut .55s cubic-bezier(.7,0,.84,0) 1.85s forwards;
+    animation:introOut .55s cubic-bezier(.7,0,.84,0) 2.4s forwards;
   }
   .intro__glow{
     position:absolute;width:340px;height:340px;border-radius:50%;
@@ -154,6 +154,12 @@
     animation:introLogo 1.4s cubic-bezier(.16,1,.3,1) .12s forwards;
   }
   .intro .tag{opacity:0;transform:translateY(8px);animation:introTag .8s cubic-bezier(.16,1,.3,1) .85s forwards;}
+  .intro .slogan{
+    margin-top:16px;padding:0 26px;
+    opacity:0;transform:translateY(8px);
+    animation:introSlogan .7s cubic-bezier(.16,1,.3,1) .85s forwards;
+  }
+  @keyframes introSlogan{to{opacity:.8;transform:translateY(0);}}
   @keyframes introLogo{
     0%{opacity:0;letter-spacing:18px;transform:scale(1.14);filter:drop-shadow(0 8px 30px rgba(109,91,208,.4)) blur(16px);}
     55%{opacity:1;}
@@ -165,7 +171,7 @@
   @media (prefers-reduced-motion:reduce){
     .screen::before{animation:none;}
     .intro{animation:introOut .4s ease 1.2s forwards;}
-    .intro__glow,.intro .logo,.intro .tag{animation:introFadeIn .5s ease both;}
+    .intro__glow,.intro .logo,.intro .tag,.intro .slogan{animation:introFadeIn .5s ease both;}
     @keyframes introFadeIn{from{opacity:0;}to{opacity:1;}}
     .intro .logo{letter-spacing:6px;transform:none;filter:drop-shadow(0 10px 30px rgba(109,91,208,.35));}
   }
@@ -556,6 +562,7 @@
       <div class="intro" id="intro">
         <div class="intro__glow"></div>
         <div class="logo">BEFORE</div>
+        <div class="slogan">Ce qui se passe sur <b>BEFORE</b>, reste sur <b>BEFORE</b>.</div>
       </div>
     </div>
   </div>
@@ -667,7 +674,7 @@ function home(){
   render(`
     <div class="spacer"></div>
     <div class="logo">BEFORE</div>
-    <div class="slogan">Ce qui se passe sur <b>BEFORE</b> reste sur <b>BEFORE</b>.</div>
+    <div class="slogan">Ce qui se passe sur <b>BEFORE</b>, reste sur <b>BEFORE</b>.</div>
     <div style="height:44px"></div>
     <button class="btn good" onclick="setup()">
       <span class="ico">🥂</span>
@@ -1740,7 +1747,7 @@ home();
   const intro = document.getElementById('intro');
   if(!intro) return;
   intro.addEventListener('animationend', e=>{ if(e.animationName==='introOut') intro.remove(); });
-  setTimeout(()=>intro.remove(), 3000); // filet de sécurité
+  setTimeout(()=>intro.remove(), 4000); // filet de sécurité
 })();
 </script>
 </body>

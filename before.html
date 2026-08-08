@@ -324,6 +324,8 @@
 
   /* ===== sélection ===== */
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+  /* nombre impair de cartes : la dernière prend toute la largeur au lieu de rester orpheline */
+  .grid2 > :last-child:nth-child(odd){grid-column:1/-1;}
   .selcard{
     background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.018));
     border:1px solid var(--line);border-radius:var(--r-lg);padding:18px 12px;text-align:center;
@@ -595,6 +597,7 @@ const state = {
   randomRoles:false,
   theme:null,
   randomTheme:false,
+  pairDecks:null,         // paquets de paires mélangés, un par thème (voir drawPair)
   partyEnded:false,       // true quand la soirée est terminée (masque le classement "en cours")
   after:{city:'paris',type:'all',theme:'all',price:'all',openOnly:'open',sort:'dist'},
 };
@@ -614,28 +617,172 @@ function fmtDate(ts){
   catch(e){ return ''; }
 }
 
-/* ---------- contenu placeholder (à compléter par tes soins) ---------- */
+/* ---------- contenu des thèmes ----------
+   Une paire par ligne, au format « mot REF / mot SCAMER ».
+   Pour en ajouter : colle simplement une nouvelle ligne dans le bloc du thème. */
+function parsePairs(txt){
+  return txt.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{
+    const i=l.indexOf('/');
+    return {ref:l.slice(0,i).trim(), scam:l.slice(i+1).trim()};
+  });
+}
 const THEMES = {
-  celeb:{label:'Les célébrités',e:'🌟',pairs:[
-    {ref:'Michael Jordan',scam:'LeBron James'},
-    {ref:'Beyoncé',scam:'Rihanna'},
-    {ref:'Squeezie',scam:'Cyprien'},
-  ]},
-  trend:{label:'Les trends du moment',e:'🔥',pairs:[
-    {ref:'Tralalero Tralala',scam:'Ballerina Cappuccina'},
-    {ref:'Skibidi Toilet',scam:'Gangnam Style'},
-    {ref:'Labubu',scam:'Sonny Angel'},
-  ]},
-  pays:{label:'Les pays',e:'🌍',pairs:[
-    {ref:'France',scam:'Italie'},
-    {ref:'Japon',scam:'Corée du Sud'},
-    {ref:'Brésil',scam:'Argentine'},
-  ]},
-  marque:{label:'Les marques',e:'🛍️',pairs:[
-    {ref:'Nike',scam:'Adidas'},
-    {ref:'Apple',scam:'Samsung'},
-    {ref:'Coca-Cola',scam:'Pepsi'},
-  ]},
+  celeb:{label:'Les célébrités',e:'🌟',pairs:parsePairs(`
+    Jeffrey Epstein / P Diddy
+    Lamine Yamal / Kylian Mbappé
+    Emmanuel Macron / Donald Trump
+    Squeezie / Inoxtag
+    Lionel Messi / Cristiano Ronaldo
+    Pablo Escobar / Oussama Ben Laden
+    Vladimir Putin / Kim Jong-Un
+    Jesus / Benjamin Netanyahu
+    iShowSpeed / Kai Cenat
+    Bernard Arnault / Nasdas
+    Ad Laurent / Maeva Ghennam
+    MrBeast / Logan Paul
+    Elon Musk / Jeff Bezos
+    Mark Zuckerberg / Bill Gates
+    Andrew Tate / Khabib Nurmagomedov
+    Kim Kardashian / Paris Hilton
+    Rihanna / Beyoncé
+    Taylor Swift / Ariana Grande
+    Justin Bieber / The Weeknd
+    Drake / Kanye West
+    Travis Scott / Kendrick Lamar
+    Eminem / 50 Cent
+    Jul / SCH
+    Ninho / Gazo
+    Booba / Kaaris
+    Nekfeu / Orelsan
+    Damso / Hamza
+    Aya Nakamura / Wejdene
+    Léna Situations / Maghla
+    Amixem / Michou
+    Cyprien / Norman
+    McFly / Carlito
+    Gotaga / Kameto
+    Mastu / Joyca
+    Tibo InShape / Seb la Frite
+    Neymar / Ronaldinho
+    Zinedine Zidane / Thierry Henry
+    Erling Haaland / Vinícius Jr.
+    Karim Benzema / Olivier Giroud
+    Paul Pogba / N'Golo Kanté
+    LeBron James / Michael Jordan
+    Stephen Curry / Kevin Durant
+    Conor McGregor / Mike Tyson
+    Usain Bolt / Michael Phelps
+    Diego Maradona / Pelé
+    Lewis Hamilton / Max Verstappen
+    Barack Obama / Joe Biden
+    Marine Le Pen / Éric Zemmour
+    Nicolas Sarkozy / François Hollande
+    Volodymyr Zelensky / Recep Tayyip Erdoğan
+    Adolf Hitler / Benito Mussolini
+    Saddam Hussein / Mouammar Kadhafi
+    Fidel Castro / Che Guevara
+    Napoléon Bonaparte / Jules César
+    Albert Einstein / Stephen Hawking
+    Steve Jobs / Sam Altman
+    Michael Jackson / Freddie Mercury
+    Elvis Presley / Prince
+    Lady Gaga / Madonna
+    Britney Spears / Christina Aguilera
+    Brad Pitt / Leonardo DiCaprio
+    Tom Cruise / Johnny Depp
+    Dwayne Johnson / Jason Statham
+    Will Smith / Chris Rock
+    Jim Carrey / Adam Sandler
+    Omar Sy / Jamel Debbouze
+    Jean Dujardin / Dany Boon
+    Kev Adams / Gad Elmaleh
+    Cyril Hanouna / Arthur
+    Zendaya / Timothée Chalamet
+  `)},
+  pays:{label:'Les pays',e:'🌍',pairs:parsePairs(`
+    France / Italie
+    Espagne / Portugal
+    Maroc / Algérie
+    États-Unis / Chine
+    Brésil / Argentine
+    Royaume-Uni / Irlande
+    Allemagne / Autriche
+    Japon / Corée du Sud
+    Russie / Ukraine
+    Israël / Palestine
+    Inde / Pakistan
+    Turquie / Grèce
+    Arabie saoudite / Émirats arabes unis
+    Belgique / Pays-Bas
+    Suisse / Luxembourg
+    Suède / Norvège
+    Danemark / Finlande
+    Pologne / République tchèque
+    Hongrie / Roumanie
+    Croatie / Serbie
+    Mexique / Colombie
+    Cuba / Jamaïque
+    Chili / Pérou
+    Uruguay / Paraguay
+    Canada / Australie
+    Nouvelle-Zélande / Afrique du Sud
+    Égypte / Tunisie
+    Sénégal / Côte d'Ivoire
+    Nigeria / Ghana
+    Kenya / Tanzanie
+    Thaïlande / Vietnam
+    Indonésie / Philippines
+    Iran / Irak
+    Liban / Jordanie
+    Népal / Bhoutan
+    Qatar / Koweït
+    Monaco / Vatican
+    Islande / Groenland
+    Seychelles / Maldives
+    Zambie / Zimbabwe
+  `)},
+  marque:{label:'Les marques',e:'🛍️',pairs:parsePairs(`
+    Apple / Samsung
+    Nike / Adidas
+    Coca-Cola / Pepsi
+    McDonald's / Burger King
+    Starbucks / Costa Coffee
+    KFC / Popeyes
+    Red Bull / Monster
+    Nutella / Oreo
+    Kinder / Haribo
+    Levi's / Diesel
+    Lacoste / Ralph Lauren
+    Louis Vuitton / Gucci
+    Chanel / Dior
+    Prada / Versace
+    Rolex / Patek Philippe
+    New Balance / ASICS
+    Converse / Vans
+    Zara / H&M
+    The North Face / Columbia
+    Ferrari / Lamborghini
+    BMW / Mercedes-Benz
+    Porsche / Aston Martin
+    Tesla / Porsche
+    Red Bull Racing / Ferrari
+    Microsoft / Google
+    Huawei / Xiaomi
+    PlayStation / Xbox
+    Nintendo / Sega
+    Canon / Nikon
+    AirPods / Galaxy Buds
+    Instagram / Snapchat
+    Spotify / Deezer
+    Netflix / Disney+
+    Uber / Bolt
+    Domino's / Pizza Hut
+    Subway / Five Guys
+    Puma / Reebok
+    Quiksilver / Billabong
+    Visa / Mastercard
+    Amazon / AliExpress
+  `)},
 };
 const SNIPER_Q = [
   "Qui est le plus capable de finir la soirée le premier ?",
@@ -657,8 +804,24 @@ const REVANCHE = [
 /* ---------- utils ---------- */
 const $ = (s,el=document)=>el.querySelector(s);
 const app = $('#app');
-const shuffle = a => a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(v=>v[1]);
+// Fisher-Yates : chaque ordre a exactement la même probabilité de sortir
+const shuffle = a => { const r=a.slice(); for(let i=r.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [r[i],r[j]]=[r[j],r[i]]; } return r; };
 const rnd = a => a[Math.floor(Math.random()*a.length)];
+
+/* ---------- tirage des paires, sans doublon dans la soirée ----------
+   Un paquet mélangé par thème : on pioche dedans jusqu'à l'épuiser.
+   Une paire ne peut donc pas retomber tant que tout le thème n'est pas passé. */
+function resetPairDecks(){
+  state.pairDecks={};
+  Object.keys(THEMES).forEach(k=>{ state.pairDecks[k]=shuffle(THEMES[k].pairs.map((_,i)=>i)); });
+}
+function drawPair(k){
+  if(!state.pairDecks) state.pairDecks={};
+  let deck=state.pairDecks[k];
+  if(!deck || !deck.length){ deck=state.pairDecks[k]=shuffle(THEMES[k].pairs.map((_,i)=>i)); }
+  return THEMES[k].pairs[deck.pop()];
+}
+function pairsLeft(k){ return (state.pairDecks && state.pairDecks[k]) ? state.pairDecks[k].length : THEMES[k].pairs.length; }
 let toastT;
 function toast(msg){
   const t=$('#toast');t.textContent=msg;t.classList.add('show');
@@ -747,6 +910,7 @@ function confirmPlayers(returnTo){
   if(state.players.length<3){ toast('Il faut au moins 3 joueurs 🙃'); if(state.players.length<1)state.players=[{name:'',drinks:0},{name:'',drinks:0},{name:'',drinks:0}]; drawSetup(returnTo); return; }
   if(returnTo){ gameSelect(); return; }   // édition des joueurs en cours de partie → retour au hub
   state.partyEnded=false;                  // nouvelle soirée → le classement "en cours" redevient visible
+  resetPairDecks();                        // ...et les paires repartent à zéro pour la nouvelle soirée
   beforePhotoPrompt();                     // première mise en place → propose la photo de début
 }
 function beforePhotoPrompt(){
@@ -964,7 +1128,7 @@ function qarBuild(){
     if(assigned>n){toast('Répartition invalide');return;}
   }
   const themeKey = state.randomTheme ? rnd(Object.keys(THEMES)) : state.theme;
-  const pair = rnd(THEMES[themeKey].pairs);
+  const pair = drawPair(themeKey);   // paire jamais tombée depuis le début de la soirée
   // rôles
   let roles=[];
   for(let i=0;i<ref;i++)roles.push('ref');
@@ -1054,7 +1218,7 @@ function qarVote(){
 }
 function qarEliminate(i){
   const p=qar.players[i]; if(!p.alive)return; p.alive=false;
-  if(p.role==='scam'){ resultScreen('Scamer démasqué !',`${p.name} était un scamer. Bien joué.`,'b-scam',qarCheckEnd); }
+  if(p.role==='scam'){ addDrinks(p.name,2); resultScreen('Scamer démasqué !',`${p.name} était un scamer : il/elle boit 2 gorgées. Bien joué au groupe.`,'b-scam',qarCheckEnd); }
   else if(p.role==='ref'){ addDrinks(p.name,1); resultScreen('Raté…',`${p.name} avait la ref ! Il/elle boit une gorgée. Le groupe perd un allié.`,'b-ref',qarCheckEnd); }
   else { qarPnjGuess(p); }
 }

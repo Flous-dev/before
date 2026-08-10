@@ -523,6 +523,8 @@
     border:1px solid var(--line);margin-bottom:8px;
   }
   .rank .pos{font-size:19px;font-weight:800;width:30px;flex:none;text-align:center;}
+  .rank__id{min-width:0;}
+  .rank__t{font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.3;}
   .rank .g{margin-left:auto;font-weight:750;color:var(--gold);white-space:nowrap;}
   .rank.p1{background:linear-gradient(115deg,rgba(220,174,96,.14),rgba(220,174,96,.02));border-color:rgba(220,174,96,.26);}
   .rank.p2{background:linear-gradient(115deg,rgba(198,205,220,.10),rgba(198,205,220,.015));border-color:rgba(198,205,220,.18);}
@@ -602,7 +604,8 @@
    BEFORE — prototype interactif
    ============================================================ */
 const state = {
-  players: [],            // {name, drinks}
+  players: [],            // {name, drinks, gages, reussis}
+  mode:'alcool',          // 'alcool' → gorgées · 'sans' → gages à relever
   album: { name:null, photos:[] },
   albums: [],             // soirées terminées : {id, name, photos:[{src,label}], ranking:[{name,drinks}], date}
   ratio:{ref:1,scam:1,pnj:0},
@@ -813,6 +816,52 @@ const REVANCHE = [
   "Fais ton meilleur pas de danse 🕺",
   "Raconte ta pire honte de soirée 🙈",
 ];
+/* ---------- gages du mode sans alcool ----------
+   Trois niveaux : plus la sanction est lourde, plus le défi l'est.
+   Aucun ne demande de boire, et « je me dégonfle » reste toujours possible. */
+const GAGES = {
+  1:[ // express — quelques secondes
+    "Fais un vrai compliment à la personne à ta droite.",
+    "Imite le cri d'un animal choisi par le groupe.",
+    "Fais 5 pompes.",
+    "Prends la pose la plus ridicule possible et tiens-la 10 secondes.",
+    "Récite l'alphabet de Z à P, sans te tromper.",
+    "Danse 10 secondes sans musique.",
+    "Parle avec l'accent de ton choix jusqu'à ton prochain tour.",
+    "Chante tes phrases au lieu de les dire, jusqu'à ton prochain tour.",
+    "Fais un check à tout le monde, un par un, en les regardant dans les yeux.",
+    "Souris sans montrer les dents pendant 30 secondes.",
+    "Invente un slogan pour la soirée, là, tout de suite.",
+    "Raconte une blague. Si personne ne rit, tu recommences.",
+  ],
+  2:[ // corsé — il faut se lancer
+    "Imite quelqu'un de la pièce, les autres doivent deviner qui.",
+    "Chante le refrain de ta chanson préférée, debout.",
+    "Raconte ta pire honte de soirée.",
+    "Fais un discours de 30 secondes pour remercier ton académie.",
+    "Parle uniquement en questions pendant 2 minutes.",
+    "Fais 15 pompes.",
+    "Échange un vêtement avec la personne en face de toi.",
+    "Appelle un parent et dis-lui que tu l'aimes, sans explication.",
+    "Refais la démarche de trois personnes de la pièce.",
+    "Fais le tour de la pièce en marchant comme un crabe.",
+    "Déclare ta flamme à un objet de la pièce, avec conviction.",
+    "Laisse la personne à ta gauche te coiffer comme elle veut.",
+  ],
+  3:[ // costaud — c'est la soirée qui s'en souviendra
+    "Rejoue toute la soirée en mime, en 30 secondes.",
+    "Laisse le groupe choisir ta photo de profil pour les 10 prochaines minutes.",
+    "Fais un playback complet d'un refrain, chorégraphie comprise.",
+    "Le groupe te pose 3 questions : tu réponds franchement.",
+    "Imite chaque personne de la pièce, 10 secondes chacune.",
+    "Fais 25 pompes.",
+    "Chante l'hymne national, debout, la main sur le cœur.",
+    "Improvise une pub de 30 secondes pour le premier objet qu'on te tend.",
+    "Laisse ton voisin écrire ton statut : tu le lis à voix haute.",
+    "Fais une déclaration d'amour en alexandrins à la personne en face.",
+  ],
+};
+const GAGE_NIV = ['Express','Corsé','Costaud'];
 
 /* ---------- utils ---------- */
 const $ = (s,el=document)=>el.querySelector(s);
@@ -874,19 +923,69 @@ function toast(msg){
   const t=$('#toast');t.textContent=msg;t.classList.add('show');
   clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2200);
 }
+/* ---------- sanctions : gorgées ou gages selon le mode ---------- */
+const sansAlcool = () => state.mode==='sans';
+// « 2 gorgées » / « 2 gages »
+function unite(n){ return sansAlcool() ? `${n} gage${n>1?'s':''}` : `${n} gorgée${n>1?'s':''}`; }
+// « Ali boit 2 gorgées » / « Ali prend 2 gages »
+function sanction(name,n){ return `${name} ${sansAlcool()?'prend':'boit'} ${unite(n)}`; }
 function addDrinks(name,n){
-  const p=state.players.find(p=>p.name===name); if(p) p.drinks+=n;
+  const p=state.players.find(p=>p.name===name); if(!p) return;
+  // en mode sans alcool, le score ne monte qu'une fois le gage relevé (voir gageDone)
+  if(sansAlcool()) p.gages=(p.gages||0)+n; else p.drinks+=n;
 }
+function score(p){ return sansAlcool() ? (p.reussis||0) : (p.drinks||0); }
 function counterBar(){
   if(!state.players.length) return '';
   return `<div class="counter">${state.players.map(p=>
-    `<div class="chip"><b>${p.name}</b><span>${p.drinks}<small> 🍺</small></span></div>`).join('')}</div>`;
+    `<div class="chip"><b>${p.name}</b><span>${score(p)}<small> ${sansAlcool()?'🔥':'🍺'}</small></span></div>`).join('')}</div>`;
 }
 function floatCam(){ return `<div class="floatCam" onclick="openCam()">📸</div>`; }
 
 /* ============================================================
    NAVIGATION
    ============================================================ */
+/* ---------- le gage (mode sans alcool) ----------
+   gagesAfter([[nom,points],…], suite) rend une fonction à passer en « suite » d'un
+   écran de résultat : en mode alcool elle ne fait rien, en mode sans alcool elle
+   enchaîne un défi par joueur sanctionné avant de reprendre le jeu. */
+let _gage=null;
+function gagesAfter(list, next){
+  if(!sansAlcool()) return next;
+  return ()=>{
+    const file=list.filter(([,v])=>v>0);
+    const suivant=()=>{ if(!file.length) return next(); const [nom,v]=file.shift(); gageScreen(nom,v,suivant); };
+    suivant();
+  };
+}
+function gageScreen(name,n,next){
+  const niv=Math.min(3,Math.max(1,n));
+  _gage={name,n,next};
+  render(`
+    <div class="topbar"><h2 style="margin:auto">Gage pour ${name}</h2></div>
+    ${counterBar()}
+    <div class="gap"></div>
+    <div class="card tint-coral center" style="padding:26px 20px">
+      <div class="badge b-scam">${GAGE_NIV[niv-1]} · ${n} point${n>1?'s':''}</div>
+      <div class="gap"></div>
+      <p style="font-size:19px;font-weight:800;line-height:1.35">${rnd(GAGES[niv])}</p>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn mint" onclick="gageDone(true)">✅ Relevé (+${n} 🔥)</button>
+    <div class="gap-s"></div>
+    <button class="btn ghost sm" onclick="gageDone(false)">🐔 Je me dégonfle</button>
+    <div style="height:8px"></div>
+  `, true);
+}
+function gageDone(ok){
+  if(!_gage) return;
+  const {name,n,next}=_gage; _gage=null;
+  const p=state.players.find(p=>p.name===name);
+  if(p && ok) p.reussis=(p.reussis||0)+n;
+  toast(ok?`${name} : +${n} 🔥`:`${name} se dégonfle 🐔`);
+  next();
+}
+
 function render(html, withCam=false){
   app.innerHTML = `<div class="view${withCam?' has-cam':''}">${html}</div>`;
   $('#camlayer').innerHTML = withCam ? floatCam() : '';
@@ -907,7 +1006,7 @@ function home(){
     <div class="gap"></div>
     <button class="btn gold" onclick="hangoverHome()">
       <span class="ico">🥴</span>
-      <span class="col">HANGOVER<small>Tes albums & le classement des gorgées</small></span>
+      <span class="col">HANGOVER<small>Tes albums & le classement de la soirée</small></span>
     </button>
     <div class="gap"></div>
     <button class="btn cyan" onclick="afterHome()">
@@ -916,8 +1015,11 @@ function home(){
     </button>
     <div class="spacer"></div>
     <div class="prevention">
-      <span style="font-size:22px">🍻</span>
-      <span style="font-weight:700">L'abus d'alcool est dangereux pour ta dignité (et ta santé). Bois de l'eau, garde tes potes en vie, et appelle un taxi — ton lit t'attend, pas le caniveau.</span>
+      ${sansAlcool()
+        ? `<span style="font-size:22px">🔥</span>
+           <span style="font-weight:700">Mode sans alcool : ce soir on paie en gages. Personne n'est obligé de rien — se dégonfler fait partie du jeu.</span>`
+        : `<span style="font-size:22px">🍻</span>
+           <span style="font-weight:700">L'abus d'alcool est dangereux pour ta dignité (et ta santé). Bois de l'eau, garde tes potes en vie, et appelle un taxi — ton lit t'attend, pas le caniveau.</span>`}
     </div>
     <div style="height:10px"></div>
   `);
@@ -957,6 +1059,30 @@ function confirmPlayers(returnTo){
   state.players=state.players.filter(p=>p.name.trim()!=='').map(p=>({name:p.name.trim(),drinks:p.drinks||0}));
   if(state.players.length<3){ toast('Il faut au moins 3 joueurs 🙃'); if(state.players.length<1)state.players=[{name:'',drinks:0},{name:'',drinks:0},{name:'',drinks:0}]; drawSetup(returnTo); return; }
   if(returnTo){ gameSelect(); return; }   // édition des joueurs en cours de partie → retour au hub
+  modeSelect();                            // étape 2 : avec ou sans alcool
+}
+function modeSelect(){
+  render(`
+    <div class="topbar"><div class="back" onclick="drawSetup()">‹</div><div><div class="eyebrow">Étape 2</div><h2>Le mode de jeu</h2></div></div>
+    <p class="muted">Comment on paie les erreurs ce soir ?</p>
+    <div class="gap"></div>
+    <button class="btn alt" onclick="pickMode('alcool')">
+      <span class="ico">🍻</span>
+      <span class="col">Avec alcool<small>Chaque erreur se paie en gorgées. Classement des gorgées à la fin.</small></span>
+    </button>
+    <div class="gap-s"></div>
+    <button class="btn alt" onclick="pickMode('sans')">
+      <span class="ico">🔥</span>
+      <span class="col">Sans alcool<small>Chaque erreur se paie en gages. Tu les relèves, tu marques des points.</small></span>
+    </button>
+    <div class="spacer"></div>
+    <p class="prevention" style="margin:0 0 12px"><span>🔥</span><span>En mode sans alcool, les mêmes jeux tournent à l'identique : à la place de boire, tu tires un défi. Relevé, il rapporte des points ; dégonflé, il ne rapporte rien.</span></p>
+    <div style="height:6px"></div>
+  `);
+}
+function pickMode(m){
+  state.mode = m;
+  state.players.forEach(p=>{ p.drinks=0; p.gages=0; p.reussis=0; });  // compteurs à zéro
   state.partyEnded=false;                  // nouvelle soirée → le classement "en cours" redevient visible
   resetPairDecks();                        // ...et les paires repartent à zéro pour la nouvelle soirée
   resetRoleHist();                         // ...ainsi que l'historique des rôles
@@ -1017,12 +1143,14 @@ function saveHangoverName(){
   state.album.name='Hangover Chez '+v;
   state.partyEnded=true;
   // fige la soirée : photos + classement final, et l'ajoute à la liste Hangover
-  const ranking=[...state.players].sort((a,b)=>b.drinks-a.drinks).map(p=>({name:p.name,drinks:p.drinks}));
+  const ranking=classer(state.players,state.mode)
+    .map(p=>({name:p.name,drinks:p.drinks||0,gages:p.gages||0,reussis:p.reussis||0}));
   const rec={
     id: 'sr'+Date.now(),
     name: state.album.name,
     photos: state.album.photos.map(p=>({src:p.src,label:p.label})),
     ranking,
+    mode: state.mode,   // les albums d'avant n'ont pas ce champ : ils retombent sur « alcool »
     players: state.players.length,
     date: Date.now(),
   };
@@ -1269,8 +1397,10 @@ function qarVote(){
 }
 function qarEliminate(i){
   const p=qar.players[i]; if(!p.alive)return; p.alive=false;
-  if(p.role==='scam'){ addDrinks(p.name,2); resultScreen('Scamer démasqué !',`${p.name} était un scamer : il/elle boit 2 gorgées. Bien joué au groupe.`,'b-scam',qarCheckEnd); }
-  else if(p.role==='ref'){ addDrinks(p.name,1); resultScreen('Raté…',`${p.name} avait la ref ! Il/elle boit une gorgée. Le groupe perd un allié.`,'b-ref',qarCheckEnd); }
+  if(p.role==='scam'){ addDrinks(p.name,2);
+    resultScreen('Scamer démasqué !',`${p.name} était un scamer. Sanction : ${unite(2)}. Bien joué au groupe.`,'b-scam',gagesAfter([[p.name,2]],qarCheckEnd)); }
+  else if(p.role==='ref'){ addDrinks(p.name,1);
+    resultScreen('Raté…',`${p.name} avait la ref ! Sanction : ${unite(1)}. Le groupe perd un allié.`,'b-ref',gagesAfter([[p.name,1]],qarCheckEnd)); }
   else { qarPnjGuess(p); }
 }
 function qarPnjGuess(p){
@@ -1296,7 +1426,7 @@ function qarPnjCheck(name){
     qarPnjVote(name);
   }else{
     addDrinks(name,2);
-    resultScreen('❌ Mauvais mot',`Le mot était « ${qar.word.ref} ». ${name} boit 2 gorgées.`,'b-pnj',qarCheckEnd);
+    resultScreen('❌ Mauvais mot',`Le mot était « ${qar.word.ref} ». Sanction pour ${name} : ${unite(2)}.`,'b-pnj',gagesAfter([[name,2]],qarCheckEnd));
   }
 }
 function qarPnjVote(name){
@@ -1313,10 +1443,12 @@ function qarPnjVoteDone(pnjName,target){
   const t=qar.players.find(p=>p.name===target);
   if(t.role==='scam'){
     addDrinks(pnjName,1); addDrinks(target,1);
-    resultScreen('🎯 Touché !',`${target} était bien un scamer. ${pnjName} et ${target} boivent 1 gorgée chacun.`,'b-scam',qarCheckEnd);
+    resultScreen('🎯 Touché !',`${target} était bien un scamer. ${unite(1)} pour ${pnjName} et autant pour ${target}.`,'b-scam',
+      gagesAfter([[pnjName,1],[target,1]],qarCheckEnd));
   }else{
     addDrinks(pnjName,2);
-    resultScreen('😬 Loupé',`${target} n'était pas un scamer. ${pnjName} boit 2 gorgées.`,'b-pnj',qarCheckEnd);
+    resultScreen('😬 Loupé',`${target} n'était pas un scamer. Sanction pour ${pnjName} : ${unite(2)}.`,'b-pnj',
+      gagesAfter([[pnjName,2]],qarCheckEnd));
   }
 }
 function qarCheckEnd(){
@@ -1346,7 +1478,10 @@ function qarEndRound(){
     <div style="height:6px"></div>
   `, true);
 }
+let _suite=null;
+function suivreResultat(){ const f=_suite; _suite=null; if(f) f(); }
 function resultScreen(title,desc,badge,next){
+  _suite=next;   // registre : permet de passer une fonction anonyme, pas juste un nom
   render(`
     <div class="spacer"></div>
     <div class="card center">
@@ -1357,7 +1492,7 @@ function resultScreen(title,desc,badge,next){
     <div class="gap"></div>
     ${counterBar()}
     <div class="spacer"></div>
-    <button class="btn good" onclick="(${next.name})()">Continuer →</button>
+    <button class="btn good" onclick="suivreResultat()">Continuer →</button>
     <div style="height:6px"></div>
   `, true);
 }
@@ -1398,9 +1533,13 @@ function sniperPicked(name){
     <div class="spacer"></div>
     <button class="btn accent" onclick="sniperRevanche('${name.replace(/'/g,"\\'")}')">⚔️ Tenter la revanche</button>
     <div class="gap-s"></div>
-    <button class="btn alt" onclick="addDrinks('${name.replace(/'/g,"\\'")}',1);toast('${name} boit 1 gorgée');sniperRound()">😔 J'assume (1 gorgée)</button>
+    <button class="btn alt" onclick="sniperAssume('${name.replace(/'/g,"\\'")}')">😔 J'assume (${unite(1)})</button>
     <div style="height:6px"></div>
   `, true);
+}
+function sniperAssume(name){
+  addDrinks(name,1); toast(sanction(name,1));
+  gagesAfter([[name,1]],sniperRound)();
 }
 function sniperRevanche(name){
   const action=rnd(REVANCHE);
@@ -1414,19 +1553,28 @@ function sniperRevanche(name){
     <div class="spacer"></div>
     <button class="btn mint" onclick="sniperWin('${name.replace(/'/g,"\\'")}')">✅ Réussi</button>
     <div class="gap-s"></div>
-    <button class="btn danger" onclick="addDrinks('${name.replace(/'/g,"\\'")}',2);toast('${name} boit double 🍺🍺');sniperRound()">❌ Raté (double gorgée)</button>
+    <button class="btn danger" onclick="sniperFail('${name.replace(/'/g,"\\'")}')">❌ Raté (${unite(2)})</button>
     <div style="height:6px"></div>
   `, true);
+}
+function sniperFail(name){
+  addDrinks(name,2); toast(sanction(name,2));
+  gagesAfter([[name,2]],sniperRound)();
 }
 function sniperWin(name){
   render(`
     <div class="topbar"><h2 style="margin:auto">✅ Réussi !</h2></div>
-    <p class="center muted">${name} choisit qui boit avec lui/elle (1 gorgée chacun) :</p>
+    <p class="center muted">${name} choisit qui partage la sanction (${unite(1)} chacun) :</p>
     <div class="gap"></div>
     <div class="list-pick">
-      ${state.players.filter(p=>p.name!==name).map(p=>`<div class="pick" onclick="addDrinks('${name.replace(/'/g,"\\'")}',1);addDrinks('${p.name.replace(/'/g,"\\'")}',1);toast('${name} & ${p.name} : 1 gorgée');sniperRound()">${p.name}<span>›</span></div>`).join('')}
+      ${state.players.filter(p=>p.name!==name).map(p=>`<div class="pick" onclick="sniperShare('${name.replace(/'/g,"\\'")}','${p.name.replace(/'/g,"\\'")}')">${p.name}<span>›</span></div>`).join('')}
     </div>
   `, true);
+}
+function sniperShare(name,autre){
+  addDrinks(name,1); addDrinks(autre,1);
+  toast(`${name} & ${autre} : ${unite(1)}`);
+  gagesAfter([[name,1],[autre,1]],sniperRound)();
 }
 
 /* ============================================================
@@ -1478,8 +1626,9 @@ function bjGuess(dir){
     if(bj.streak>=7){ bjJackpot(); return; }
     bjReveal(prev,next,true);
   }else{
-    const drinks=bj.streak+1; // 1ère erreur = 1 gorgée, 2e = 2…
+    const drinks=bj.streak+1; // 1ère erreur = 1 sanction, 2e = 2…
     addDrinks(bj.player,drinks);
+    bj.pending=drinks;
     bjReveal(prev,next,false,drinks);
   }
 }
@@ -1495,13 +1644,19 @@ function bjReveal(prev,next,correct,drinks){
     <div class="gap"></div>
     <p class="center" style="font-size:16px">${correct
       ? `${player} continue ! Série de <b style="color:var(--gold)">${bj.streak}</b> 🔥`
-      : `${player} s'est trompé·e et boit <b style="color:var(--gold)">${drinks}</b> gorgée(s) 🍺`}</p>
+      : `${player} s'est trompé·e · <b style="color:var(--gold)">${unite(drinks)}</b> ${sansAlcool()?'🔥':'🍺'}`}</p>
     <div class="spacer"></div>
     ${correct
       ? `<button class="btn good" onclick="bjTurn()">Carte suivante →</button>`
-      : `<button class="btn" onclick="bj.streak=0;bj.turn++;bj.current=bj.deck[bj.idx++];bjTurn()">Joueur suivant →</button>`}
+      : `<button class="btn" onclick="bjNextPlayer()">Joueur suivant →</button>`}
     <div style="height:6px"></div>
   `, true);
+}
+function bjNextPlayer(){
+  const n=bj.pending||0, joueur=bj.player; bj.pending=0;
+  gagesAfter([[joueur,n]], ()=>{
+    bj.streak=0; bj.turn++; bj.current=bj.deck[bj.idx++]; bjTurn();
+  })();
 }
 function cardMini(c){
   return `<div class="pcard ${c.red?'red':''}" style="width:90px;height:126px;padding:10px"><div class="v" style="font-size:18px">${c.r}${c.s}</div><div class="s" style="font-size:30px">${c.s}</div><div class="bot" style="font-size:18px">${c.r}${c.s}</div></div>`;
@@ -1515,10 +1670,10 @@ function bjDistribute(){
   const left=7-given;
   render(`
     <div class="topbar"><h2 style="margin:auto">🎰 JACKPOT — 7 d'affilée !</h2></div>
-    <p class="center muted"><b>${bj.player}</b> distribue <b style="color:var(--gold)">7 gorgées</b> comme il/elle veut. Reste : <b style="color:var(--gold)">${left}</b></p>
+    <p class="center muted"><b>${bj.player}</b> distribue <b style="color:var(--gold)">${unite(7)}</b> comme il/elle veut. Reste : <b style="color:var(--gold)">${left}</b></p>
     <div class="gap"></div>
     <div class="list-pick">
-      ${state.players.map(p=>`<div class="pick" onclick="bjGive('${p.name.replace(/'/g,"\\'")}')">${p.name}<span style="color:var(--gold)">${bj.give[p.name]||0} 🍺</span></div>`).join('')}
+      ${state.players.map(p=>`<div class="pick" onclick="bjGive('${p.name.replace(/'/g,"\\'")}')">${p.name}<span style="color:var(--gold)">${bj.give[p.name]||0} ${sansAlcool()?'🔥':'🍺'}</span></div>`).join('')}
     </div>
     <div class="spacer"></div>
     <button class="btn good" ${left>0?'disabled':''} onclick="bjJackpotDone()">${left>0?`Distribue encore ${left}`:'Valider le partage →'}</button>
@@ -1527,13 +1682,16 @@ function bjDistribute(){
 }
 function bjGive(name){
   const given=Object.values(bj.give).reduce((a,b)=>a+b,0);
-  if(given>=7){toast('7 gorgées déjà distribuées');return;}
+  if(given>=7){toast(`${unite(7)} déjà distribuées`);return;}
   bj.give[name]=(bj.give[name]||0)+1; bjDistribute();
 }
 function bjJackpotDone(){
-  Object.entries(bj.give).forEach(([n,v])=>addDrinks(n,v));
-  toast('Partage enregistré 🍺');
-  bj.streak=0; bj.turn++; bj.current=bj.deck[bj.idx++]; bjTurn();
+  const parts=Object.entries(bj.give);
+  parts.forEach(([n,v])=>addDrinks(n,v));
+  toast('Partage enregistré '+(sansAlcool()?'🔥':'🍺'));
+  gagesAfter(parts, ()=>{
+    bj.streak=0; bj.turn++; bj.current=bj.deck[bj.idx++]; bjTurn();
+  })();
 }
 
 /* ============================================================
@@ -1567,7 +1725,7 @@ function hangoverHome(){
     <p class="muted">Toutes tes soirées, leurs photos et leur classement final.</p>
     <div class="gap"></div>
     ${live}
-    ${state.players.length && !state.partyEnded ? `<button class="btn alt" onclick="rankingView()"><span class="ico">🏆</span><span class="col">Classement des gorgées<small>Soirée en cours</small></span></button><div class="gap"></div>`:''}
+    ${state.players.length && !state.partyEnded ? `<button class="btn alt" onclick="rankingView()"><span class="ico">🏆</span><span class="col">${sansAlcool()?'Classement des gages':'Classement des gorgées'}<small>Soirée en cours</small></span></button><div class="gap"></div>`:''}
     ${soirees}
     <div class="spacer"></div>
     <div style="height:10px"></div>
@@ -1597,9 +1755,9 @@ function soireeView(id){
       <button class="btn ghost sm" onclick="shareSaved('${a.id}')">↗ Partager</button>
     </div>
     <div class="gap"></div>
-    <h3>🏆 Classement final</h3>
+    <h3>${(a.mode||'alcool')==='sans'?'🔥 Podium des gages':'🏆 Classement final'}</h3>
     <div class="gap-s"></div>
-    ${rankingListFrom(a.ranking)}
+    ${rankingListFrom(a.ranking, a.mode||'alcool')}
     <div class="gap"></div>
     <button class="btn cyan" onclick="afterHome()">
       <span class="ico">🌙</span><span class="col">La soirée continue ?<small>Les bars & clubs encore ouverts près de toi</small></span>
@@ -1696,7 +1854,7 @@ function albumView(){
     </div>
     ${!state.partyEnded ? `
     <div class="gap"></div>
-    <h3>🏆 Classement de la soirée</h3>
+    <h3>${sansAlcool()?'🔥 Podium des gages':'🏆 Classement de la soirée'}</h3>
     <div class="gap-s"></div>
     ${rankingList()}` : ''}
     <div style="height:20px"></div>
@@ -1704,20 +1862,45 @@ function albumView(){
 }
 function rankingView(){
   render(`
-    <div class="topbar"><div class="back" onclick="hangoverHome()">‹</div><h2>🏆 Classement</h2></div>
+    <div class="topbar"><div class="back" onclick="hangoverHome()">‹</div><h2>${sansAlcool()?'🔥 Podium des gages':'🏆 Classement'}</h2></div>
     <p class="muted">${state.album.name||'Soirée en cours'}</p>
     <div class="gap"></div>
     ${rankingList()}
     <div style="height:20px"></div>
   `, true);
 }
-function rankingList(){
-  const sorted=[...state.players].sort((a,b)=>b.drinks-a.drinks);
-  return rankingListFrom(sorted);
+function classer(list,mode){
+  // mode alcool : le plus grand buveur en tête. Mode sans alcool : le plus de gages relevés,
+  // et à égalité c'est celui qui s'est le moins dégonflé qui passe devant.
+  return [...(list||[])].sort(mode==='sans'
+    ? (a,b)=>((b.reussis||0)-(a.reussis||0)) || (((a.gages||0)-(a.reussis||0))-((b.gages||0)-(b.reussis||0)))
+    : (a,b)=>(b.drinks||0)-(a.drinks||0));
 }
-function rankingListFrom(list){
-  const medals=['🥇','🥈','🥉'];
-  return (list||[]).map((p,i)=>`<div class="rank${i<3?' p'+(i+1):''}"><div class="pos">${medals[i]||i+1}</div><h3>${p.name}</h3><div class="g">${p.drinks} 🍺</div></div>`).join('')||'<p class="muted">Aucun joueur.</p>';
+// petit titre décerné à chaque joueur en mode sans alcool
+function titreGage(rang,pts,degonf){
+  if(!pts && !degonf) return 'est resté·e bien au chaud';
+  if(!pts)            return '🐔 s\'est dégonflé·e à chaque fois';
+  if(rang===0)        return '👑 boss des gages';
+  if(degonf>pts)      return '🐔 s\'est souvent dégonflé·e';
+  if(rang===1)        return '🔥 casse-cou';
+  if(rang===2)        return '😎 solide';
+  return degonf ? '🙂 a joué le jeu' : '💪 n\'a jamais reculé';
+}
+function rankingList(){ return rankingListFrom(classer(state.players,state.mode),state.mode); }
+function rankingListFrom(list,mode='alcool'){
+  const sober = mode==='sans', medals=['🥇','🥈','🥉'];
+  if(!list || !list.length) return '<p class="muted">Aucun joueur.</p>';
+  const legende = sober
+    ? `<p class="muted" style="font-size:12.5px;margin:0 0 10px">🔥 = gages relevés. Se dégonfler ne rapporte rien, mais ne coûte rien non plus.</p>`
+    : '';
+  return legende + list.map((p,i)=>{
+    const pts=sober?(p.reussis||0):(p.drinks||0);
+    const degonf=sober?Math.max(0,(p.gages||0)-(p.reussis||0)):0;
+    return `<div class="rank${i<3?' p'+(i+1):''}">
+      <div class="pos">${medals[i]||i+1}</div>
+      <div class="rank__id"><h3>${p.name}</h3>${sober?`<div class="rank__t">${titreGage(i,pts,degonf)}</div>`:''}</div>
+      <div class="g">${pts} ${sober?'🔥':'🍺'}</div></div>`;
+  }).join('');
 }
 function shareAlbum(){
   if(navigator.share){ navigator.share({title:state.album.name,text:'Regarde notre soirée ! 🥴'}).catch(()=>{}); }

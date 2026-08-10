@@ -68,6 +68,9 @@
 
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;height:100%;}
+  /* iOS : 100% se mesure sur l'écran SANS la barre d'outils Safari, donc le bas
+     de l'app passe dessous et devient inatteignable. dvh suit la barre. */
+  @supports (height:100dvh){ html,body{height:100dvh;} }
   body{
     font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Inter,Roboto,sans-serif;
     background:var(--bg);color:var(--txt);overflow:hidden;
@@ -114,7 +117,8 @@
   #app{position:relative;z-index:2;flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
   #app::-webkit-scrollbar{display:none;}
   .view{min-height:100%;padding:10px 20px 30px;display:flex;flex-direction:column;animation:fade .36s cubic-bezier(.16,1,.3,1);}
-  .view.has-cam{padding-bottom:96px;}
+  /* place réservée sous le contenu pour que le bouton photo ne couvre rien */
+  .view.has-cam{padding-bottom:88px;}
   @keyframes fade{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
 
   /* ===== typographie ===== */
@@ -362,8 +366,13 @@
   }
   .rolecard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
     background:linear-gradient(rgba(var(--rc),.85),rgba(var(--rc),.3));}
+  /* titre et sélecteur sur la même ligne : la carte tient en deux fois moins de hauteur */
+  .rolecard__h{display:flex;align-items:center;justify-content:space-between;gap:14px;}
   .rolecard__t{font-size:14px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:rgb(var(--rc));}
-  .rolecard__d{font-size:12.5px;color:var(--muted);line-height:1.45;margin:5px 0 12px;}
+  .rolecard__d{font-size:12.5px;color:var(--muted);line-height:1.45;margin:7px 0 0;}
+  .rolecard .stepper{flex:0 0 auto;gap:10px;padding:5px 7px;}
+  .rolecard .stepper button{width:34px;height:34px;border-radius:11px;font-size:19px;}
+  .rolecard .stepper .val{font-size:20px;min-width:16px;text-align:center;}
   .rsum{text-align:center;font-size:12.5px;font-weight:650;color:var(--muted);}
   .rsum.ok{color:var(--good);}
   .rbar{height:4px;border-radius:999px;background:rgba(255,255,255,.06);overflow:hidden;margin-top:9px;}
@@ -406,7 +415,8 @@
 
   /* ===== bouton photo flottant ===== */
   .floatCam{
-    position:absolute;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));
+    /* calé sur .screen, qui porte déjà la marge de sécurité du bas */
+    position:absolute;right:18px;bottom:18px;
     width:56px;height:56px;border-radius:50%;z-index:30;
     background:linear-gradient(150deg,#6a58c8,#3b3488);
     border:1px solid rgba(255,255,255,.16);
@@ -573,6 +583,8 @@
     <div class="screen">
       <div class="vignette"></div>
       <div id="app"></div>
+      <!-- hors de #app : sinon le bouton défile avec le contenu et recouvre les boutons -->
+      <div id="camlayer"></div>
       <div class="toast" id="toast"></div>
       <div class="intro" id="intro">
         <div class="intro__glow"></div>
@@ -598,6 +610,7 @@ const state = {
   theme:null,
   randomTheme:false,
   pairDecks:null,         // paquets de paires mélangés, un par thème (voir drawPair)
+  roleHist:null,          // qui a été scamer/PNJ récemment (voir pickRole)
   partyEnded:false,       // true quand la soirée est terminée (masque le classement "en cours")
   after:{city:'paris',type:'all',theme:'all',price:'all',openOnly:'open',sort:'dist'},
 };
@@ -822,6 +835,40 @@ function drawPair(k){
   return THEMES[k].pairs[deck.pop()];
 }
 function pairsLeft(k){ return (state.pairDecks && state.pairDecks[k]) ? state.pairDecks[k].length : THEMES[k].pairs.length; }
+
+/* ---------- attribution des rôles ----------
+   Un tirage purement uniforme laisse passer des séries : à 3 joueurs, la même
+   personne est scamer 3 fois d'affilée une fois sur neuf. On pondère donc le
+   tirage par l'historique récent — mais sans jamais mettre une probabilité à
+   zéro, sinon le groupe pourrait déduire qui n'est PAS scamer, ce qui tuerait
+   le bluff. */
+const ROLE_DECAY = 0.55;   // ce que l'historique garde d'une manche à l'autre
+const ROLE_BIAS  = 4;      // à quel point un rôle récent fait baisser les chances
+function roleHist(){
+  if(!state.roleHist) state.roleHist={scam:{},pnj:{}};
+  return state.roleHist;
+}
+function resetRoleHist(){ state.roleHist={scam:{},pnj:{}}; }
+// tire k indices de joueurs parmi `pool`, en défavorisant ceux qui ont eu le rôle récemment
+function pickRole(pool,role,k){
+  const h=roleHist()[role], rest=pool.slice(), out=[];
+  while(out.length<k && rest.length){
+    const w=rest.map(ix=>1/(1+ROLE_BIAS*(h[state.players[ix].name]||0)));
+    let r=Math.random()*w.reduce((a,b)=>a+b,0), j=0;
+    while(j<w.length-1){ r-=w[j]; if(r<=0) break; j++; }
+    out.push(rest.splice(j,1)[0]);
+  }
+  return out;
+}
+// mémorise la manche : l'historique s'estompe petit à petit
+function noteRoles(roles){
+  const h=roleHist();
+  ['scam','pnj'].forEach(role=>{
+    state.players.forEach((p,ix)=>{
+      h[role][p.name]=(h[role][p.name]||0)*ROLE_DECAY + (roles[ix]===role?1:0);
+    });
+  });
+}
 let toastT;
 function toast(msg){
   const t=$('#toast');t.textContent=msg;t.classList.add('show');
@@ -841,7 +888,8 @@ function floatCam(){ return `<div class="floatCam" onclick="openCam()">📸</div
    NAVIGATION
    ============================================================ */
 function render(html, withCam=false){
-  app.innerHTML = `<div class="view${withCam?' has-cam':''}">${html}</div>${withCam?floatCam():''}`;
+  app.innerHTML = `<div class="view${withCam?' has-cam':''}">${html}</div>`;
+  $('#camlayer').innerHTML = withCam ? floatCam() : '';
   app.scrollTop=0;
 }
 
@@ -911,6 +959,7 @@ function confirmPlayers(returnTo){
   if(returnTo){ gameSelect(); return; }   // édition des joueurs en cours de partie → retour au hub
   state.partyEnded=false;                  // nouvelle soirée → le classement "en cours" redevient visible
   resetPairDecks();                        // ...et les paires repartent à zéro pour la nouvelle soirée
+  resetRoleHist();                         // ...ainsi que l'historique des rôles
   beforePhotoPrompt();                     // première mise en place → propose la photo de début
 }
 function beforePhotoPrompt(){
@@ -1049,13 +1098,15 @@ function qarConfig(){
 }
 function stepRow(label,key,rgb,desc){
   return `<div class="rolecard" style="--rc:${rgb}">
-    <div class="rolecard__t">${label}</div>
-    <div class="rolecard__d">${desc}</div>
-    <div class="stepper">
-      <button onclick="ratioChg('${key}',-1)">−</button>
-      <span class="val" id="r-${key}">${state.ratio[key]}</span>
-      <button onclick="ratioChg('${key}',1)">＋</button>
-    </div></div>`;
+    <div class="rolecard__h">
+      <div class="rolecard__t">${label}</div>
+      <div class="stepper">
+        <button onclick="ratioChg('${key}',-1)">−</button>
+        <span class="val" id="r-${key}">${state.ratio[key]}</span>
+        <button onclick="ratioChg('${key}',1)">＋</button>
+      </div>
+    </div>
+    <div class="rolecard__d">${desc}</div></div>`;
 }
 function drawRatios(){
   $('#ratios').innerHTML =
@@ -1129,13 +1180,13 @@ function qarBuild(){
   }
   const themeKey = state.randomTheme ? rnd(Object.keys(THEMES)) : state.theme;
   const pair = drawPair(themeKey);   // paire jamais tombée depuis le début de la soirée
-  // rôles
-  let roles=[];
-  for(let i=0;i<ref;i++)roles.push('ref');
-  for(let i=0;i<scam;i++)roles.push('scam');
-  for(let i=0;i<pnj;i++)roles.push('pnj');
-  while(roles.length<n)roles.push('ref');
-  roles=shuffle(roles).slice(0,n);
+  // rôles : on désigne d'abord les scamers, puis les PNJ parmi ceux qui restent
+  const tous=state.players.map((_,i)=>i);
+  const roles=new Array(n).fill('ref');
+  const scamIx=pickRole(tous,'scam',scam);
+  scamIx.forEach(ix=>roles[ix]='scam');
+  pickRole(tous.filter(ix=>!scamIx.includes(ix)),'pnj',pnj).forEach(ix=>roles[ix]='pnj');
+  noteRoles(roles);
   qar={
     players: state.players.map((p,i)=>({name:p.name,role:roles[i],alive:true})),
     word:{ref:pair.ref,scam:pair.scam},

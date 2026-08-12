@@ -1146,17 +1146,20 @@ function startEndPhoto(){
   camPurpose='apres';
   openCam();
 }
-/* ---------- nommer le Hangover (après la photo de fin) ---------- */
+/* ---------- nommer le Hangover (fin de soirée, avec ou sans photo) ---------- */
 function nameHangover(){
   const cur=(state.album.name||'').replace(/^Hangover Chez /,'');
   const pre=(cur && cur!=='nous')?cur:'';
+  const sansPhoto=!state.album.photos || !state.album.photos.some(p=>p.src);
   render(`
-    <div class="topbar"><h2 style="margin:auto">Nomme ton Hangover</h2></div>
+    <div class="topbar"><div class="back" onclick="endGame()">‹</div><h2>Nomme ton Hangover</h2></div>
     <div class="spacer"></div>
     <div class="card tint-gold center">
       <div class="big">🥴</div>
       <div class="gap"></div>
-      <p class="muted">Comment s'appelait cette soirée ? Ton album sera enregistré sous ce nom.</p>
+      <p class="muted">Comment s'appelait cette soirée ?${sansPhoto
+        ? ' Pas de photo ce soir, mais le classement et les chiffres de la soirée seront enregistrés.'
+        : ' Ton album sera enregistré sous ce nom.'}</p>
     </div>
     <div class="gap"></div>
     <div class="card">
@@ -1232,7 +1235,8 @@ function endGame(){
     <div class="spacer"></div>
     <button class="btn good" onclick="startEndPhoto()">Prendre la photo de fin 📸</button>
     <div class="gap-s"></div>
-    <button class="btn ghost sm" onclick="state.partyEnded=true;hangoverHome()">Passer</button>
+    <!-- sans photo, on enregistre quand même : le classement et les chiffres, eux, existent -->
+    <button class="btn ghost sm" onclick="nameHangover()">Terminer sans photo</button>
     <div style="height:8px"></div>
   `, true);
 }
@@ -1778,23 +1782,29 @@ function soireeView(id){
   const a=getAlbum(id);
   if(!a){ hangoverHome(); return; }
   const pics=a.photos.filter(p=>p.src).slice(0,3);
-  const cards = pics.length
-    ? pics.map((p,i)=>`<div class="photostack__card s${i+1}"><img src="${p.src}" alt=""></div>`).join('')
-    : `<div class="photostack__card s3"><span style="font-size:40px">📷</span></div>`;
+  // soirée sans photo : on ne montre ni pochette vide ni bouton « ouvrir l'album »,
+  // on va droit au classement et aux chiffres.
+  const entete = pics.length
+    ? `<div class="photostack" onclick="albumPhotos('${a.id}')">
+         ${pics.map((p,i)=>`<div class="photostack__card s${i+1}"><img src="${p.src}" alt=""></div>`).join('')}
+         <span class="photostack__count">${a.photos.length} 📷</span>
+       </div>
+       <p class="photostack__hint">Touche la pochette pour voir toutes les photos</p>
+       <div class="gap"></div>
+       <div class="row">
+         <button class="btn gold sm" onclick="albumPhotos('${a.id}')">📔 Ouvrir l'album</button>
+         <button class="btn ghost sm" onclick="shareSaved('${a.id}')">↗ Partager</button>
+       </div>`
+    : `<div class="card center" style="padding:18px 16px">
+         <p class="muted" style="margin:0">📷 Aucune photo ce soir-là — mais les chiffres, eux, sont bien là.</p>
+       </div>
+       <div class="gap-s"></div>
+       <button class="btn ghost sm" onclick="shareSaved('${a.id}')">↗ Partager</button>`;
   render(`
     <div class="topbar"><div class="back" onclick="hangoverHome()">‹</div><h2 style="font-size:18px">${a.name}</h2></div>
     ${a.date?`<p class="muted">${fmtDate(a.date)}</p>`:''}
     <div class="gap"></div>
-    <div class="photostack" onclick="albumPhotos('${a.id}')">
-      ${cards}
-      <span class="photostack__count">${a.photos.length} 📷</span>
-    </div>
-    <p class="photostack__hint">Touche la pochette pour voir toutes les photos</p>
-    <div class="gap"></div>
-    <div class="row">
-      <button class="btn gold sm" onclick="albumPhotos('${a.id}')">📔 Ouvrir l'album</button>
-      <button class="btn ghost sm" onclick="shareSaved('${a.id}')">↗ Partager</button>
-    </div>
+    ${entete}
     <div class="gap"></div>
     <h3>${(a.mode||'alcool')==='sans'?'🔥 Podium des gages':'🏆 Classement final'}</h3>
     <div class="gap-s"></div>

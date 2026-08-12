@@ -525,6 +525,24 @@
   .rank .pos{font-size:19px;font-weight:800;width:30px;flex:none;text-align:center;}
   .rank__id{min-width:0;}
   .rank__t{font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.3;}
+
+  /* ===== statistiques de fin de soirée ===== */
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+  .stat{
+    background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.018));
+    border:1px solid var(--line);border-radius:var(--r-md);padding:12px 13px;min-width:0;
+  }
+  .stat__l{font-size:11px;font-weight:700;letter-spacing:.3px;color:var(--muted);
+    text-transform:uppercase;line-height:1.3;}
+  .stat__v{font-size:16.5px;font-weight:800;margin-top:6px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .stat__s{font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .statline{
+    display:flex;align-items:center;gap:10px;padding:11px 14px;margin-bottom:7px;
+    background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.015));
+    border:1px solid var(--line);border-radius:var(--r-md);font-size:13.5px;
+  }
+  .statline b{margin-left:auto;color:var(--gold);font-weight:750;white-space:nowrap;}
   .rank .g{margin-left:auto;font-weight:750;color:var(--gold);white-space:nowrap;}
   .rank.p1{background:linear-gradient(115deg,rgba(220,174,96,.14),rgba(220,174,96,.02));border-color:rgba(220,174,96,.26);}
   .rank.p2{background:linear-gradient(115deg,rgba(198,205,220,.10),rgba(198,205,220,.015));border-color:rgba(198,205,220,.18);}
@@ -606,6 +624,7 @@
 const state = {
   players: [],            // {name, drinks, gages, reussis}
   mode:'alcool',          // 'alcool' → gorgées · 'sans' → gages à relever
+  stats:null,             // {debut, manches:{qar,sniper,bj}} — voir resetStats
   album: { name:null, photos:[] },
   albums: [],             // soirées terminées : {id, name, photos:[{src,label}], ranking:[{name,drinks}], date}
   ratio:{ref:1,scam:1,pnj:0},
@@ -929,11 +948,23 @@ const sansAlcool = () => state.mode==='sans';
 function unite(n){ return sansAlcool() ? `${n} gage${n>1?'s':''}` : `${n} gorgée${n>1?'s':''}`; }
 // « Ali boit 2 gorgées » / « Ali prend 2 gages »
 function sanction(name,n){ return `${name} ${sansAlcool()?'prend':'boit'} ${unite(n)}`; }
-function addDrinks(name,n){
+/* `par` = qui inflige la sanction, quand c'est la décision d'un joueur et non du groupe.
+   Sert au « plus grand distributeur » des statistiques de fin de soirée. */
+function addDrinks(name,n,par){
   const p=state.players.find(p=>p.name===name); if(!p) return;
   // en mode sans alcool, le score ne monte qu'une fois le gage relevé (voir gageDone)
   if(sansAlcool()) p.gages=(p.gages||0)+n; else p.drinks+=n;
+  p.subies=(p.subies||0)+n;              // volume total encaissé, quel que soit le mode
+  p.defaites=(p.defaites||0)+1;          // nombre de fois où il/elle s'est fait avoir
+  if(par && par!==name){
+    const q=state.players.find(x=>x.name===par);
+    if(q) q.donnees=(q.donnees||0)+n;    // sanctions distribuées aux autres
+  }
 }
+function resetStats(){
+  state.stats={ debut:Date.now(), manches:{qar:0,sniper:0,bj:0} };
+}
+function compteManche(jeu){ if(state.stats) state.stats.manches[jeu]=(state.stats.manches[jeu]||0)+1; }
 function score(p){ return sansAlcool() ? (p.reussis||0) : (p.drinks||0); }
 function counterBar(){
   if(!state.players.length) return '';
@@ -1082,7 +1113,8 @@ function modeSelect(){
 }
 function pickMode(m){
   state.mode = m;
-  state.players.forEach(p=>{ p.drinks=0; p.gages=0; p.reussis=0; });  // compteurs à zéro
+  state.players.forEach(p=>{ p.drinks=0; p.gages=0; p.reussis=0; p.subies=0; p.defaites=0; p.donnees=0; });
+  resetStats();                            // chrono de la soirée + compteur de manches
   state.partyEnded=false;                  // nouvelle soirée → le classement "en cours" redevient visible
   resetPairDecks();                        // ...et les paires repartent à zéro pour la nouvelle soirée
   resetRoleHist();                         // ...ainsi que l'historique des rôles
@@ -1144,13 +1176,16 @@ function saveHangoverName(){
   state.partyEnded=true;
   // fige la soirée : photos + classement final, et l'ajoute à la liste Hangover
   const ranking=classer(state.players,state.mode)
-    .map(p=>({name:p.name,drinks:p.drinks||0,gages:p.gages||0,reussis:p.reussis||0}));
+    .map(p=>({name:p.name,drinks:p.drinks||0,gages:p.gages||0,reussis:p.reussis||0,
+              subies:p.subies||0,defaites:p.defaites||0,donnees:p.donnees||0}));
+  const st=state.stats||{};
   const rec={
     id: 'sr'+Date.now(),
     name: state.album.name,
     photos: state.album.photos.map(p=>({src:p.src,label:p.label})),
     ranking,
     mode: state.mode,   // les albums d'avant n'ont pas ce champ : ils retombent sur « alcool »
+    stats: { duree: st.debut ? Date.now()-st.debut : 0, manches: {...(st.manches||{})} },
     players: state.players.length,
     date: Date.now(),
   };
@@ -1308,6 +1343,7 @@ function qarBuild(){
   }
   const themeKey = state.randomTheme ? rnd(Object.keys(THEMES)) : state.theme;
   const pair = drawPair(themeKey);   // paire jamais tombée depuis le début de la soirée
+  compteManche('qar');
   // rôles : on désigne d'abord les scamers, puis les PNJ parmi ceux qui restent
   const tous=state.players.map((_,i)=>i);
   const roles=new Array(n).fill('ref');
@@ -1442,7 +1478,7 @@ function qarPnjVote(name){
 function qarPnjVoteDone(pnjName,target){
   const t=qar.players.find(p=>p.name===target);
   if(t.role==='scam'){
-    addDrinks(pnjName,1); addDrinks(target,1);
+    addDrinks(pnjName,1); addDrinks(target,1,pnjName);   // c'est le PNJ qui a désigné la cible
     resultScreen('🎯 Touché !',`${target} était bien un scamer. ${unite(1)} pour ${pnjName} et autant pour ${target}.`,'b-scam',
       gagesAfter([[pnjName,1],[target,1]],qarCheckEnd));
   }else{
@@ -1538,6 +1574,7 @@ function sniperPicked(name){
   `, true);
 }
 function sniperAssume(name){
+  compteManche('sniper');   // la question est tranchée : une manche de plus
   addDrinks(name,1); toast(sanction(name,1));
   gagesAfter([[name,1]],sniperRound)();
 }
@@ -1558,6 +1595,7 @@ function sniperRevanche(name){
   `, true);
 }
 function sniperFail(name){
+  compteManche('sniper');
   addDrinks(name,2); toast(sanction(name,2));
   gagesAfter([[name,2]],sniperRound)();
 }
@@ -1572,7 +1610,8 @@ function sniperWin(name){
   `, true);
 }
 function sniperShare(name,autre){
-  addDrinks(name,1); addDrinks(autre,1);
+  compteManche('sniper');
+  addDrinks(name,1); addDrinks(autre,1,name);          // le gagnant choisit qui trinque avec lui
   toast(`${name} & ${autre} : ${unite(1)}`);
   gagesAfter([[name,1],[autre,1]],sniperRound)();
 }
@@ -1654,6 +1693,7 @@ function bjReveal(prev,next,correct,drinks){
 }
 function bjNextPlayer(){
   const n=bj.pending||0, joueur=bj.player; bj.pending=0;
+  compteManche('bj');   // la série du joueur s'arrête ici : une manche de plus
   gagesAfter([[joueur,n]], ()=>{
     bj.streak=0; bj.turn++; bj.current=bj.deck[bj.idx++]; bjTurn();
   })();
@@ -1687,8 +1727,9 @@ function bjGive(name){
 }
 function bjJackpotDone(){
   const parts=Object.entries(bj.give);
-  parts.forEach(([n,v])=>addDrinks(n,v));
+  parts.forEach(([n,v])=>addDrinks(n,v,bj.player));    // le jackpot : c'est lui qui distribue
   toast('Partage enregistré '+(sansAlcool()?'🔥':'🍺'));
+  compteManche('bj');
   gagesAfter(parts, ()=>{
     bj.streak=0; bj.turn++; bj.current=bj.deck[bj.idx++]; bjTurn();
   })();
@@ -1758,6 +1799,8 @@ function soireeView(id){
     <h3>${(a.mode||'alcool')==='sans'?'🔥 Podium des gages':'🏆 Classement final'}</h3>
     <div class="gap-s"></div>
     ${rankingListFrom(a.ranking, a.mode||'alcool')}
+    <div class="gap"></div>
+    ${statsBlock(a)}
     <div class="gap"></div>
     <button class="btn cyan" onclick="afterHome()">
       <span class="ico">🌙</span><span class="col">La soirée continue ?<small>Les bars & clubs encore ouverts près de toi</small></span>
@@ -1902,6 +1945,76 @@ function rankingListFrom(list,mode='alcool'){
       <div class="g">${pts} ${sober?'🔥':'🍺'}</div></div>`;
   }).join('');
 }
+/* ---------- statistiques de fin de soirée ---------- */
+function dureeTxt(ms){
+  if(!ms || ms<0) return '—';
+  const min=Math.round(ms/60000);
+  if(min<1)  return 'moins d\'une minute';
+  if(min<60) return min+' min';
+  return Math.floor(min/60)+' h '+String(min%60).padStart(2,'0');
+}
+// le/les joueur·s en tête (ou en queue) sur un critère ; null si le critère n'a jamais servi
+function extreme(list,val,sens){
+  if(!list || !list.length) return null;
+  const v=list.map(val);
+  const cible = sens==='min' ? Math.min(...v) : Math.max(...v);
+  return { noms:list.filter((_,i)=>v[i]===cible).map(p=>p.name), val:cible };
+}
+function nomsCourts(noms){
+  return noms.length<=2 ? noms.join(' & ') : noms.slice(0,2).join(', ')+' +'+(noms.length-2);
+}
+function tuile(label,ex,phrase){
+  if(!ex) return '';
+  return `<div class="stat"><div class="stat__l">${label}</div>
+    <div class="stat__v">${nomsCourts(ex.noms)}</div>
+    <div class="stat__s">${phrase(ex.val,ex.noms.length>1)}</div></div>`;
+}
+function statsBlock(a){
+  const list=a.ranking||[]; if(!list.length) return '';
+  const sober=(a.mode||'alcool')==='sans';
+  const st=a.stats||{};
+  const u=n=>sober?`${n} gage${n>1?'s':''}`:`${n} gorgée${n>1?'s':''}`;
+  const e=sober?'':'e';                    // « gages » masculin, « gorgées » féminin
+  const acc=(part,n)=>`${part}${e}${n>1?'s':''}`;
+  const exaequo=m=>m?' (ex æquo)':'';
+
+  const mvp     = sober ? extreme(list,p=>p.reussis||0,'max') : extreme(list,p=>p.drinks||0,'min');
+  const victime = extreme(list,p=>p.subies||0,'max');
+  const distrib = extreme(list,p=>p.donnees||0,'max');
+  const perdant = extreme(list,p=>p.defaites||0,'max');
+
+  const total   = list.reduce((s,p)=>s+(sober?(p.reussis||0):(p.drinks||0)),0);
+  const encaisse= list.reduce((s,p)=>s+(p.subies||0),0);
+  const m=st.manches||{};
+  const jeux=[['🕵️','Qui a la ref',m.qar||0],['🎯','Sniper',m.sniper||0],['🃏','Black(out) Jack',m.bj||0]];
+  const totalManches=jeux.reduce((s,j)=>s+j[2],0);
+
+  return `
+    <h3>📊 Les chiffres de la soirée</h3>
+    <div class="gap-s"></div>
+    <div class="stats">
+      ${tuile('🏅 MVP de la soirée', mvp,
+              (v,eq)=>sober?`${u(v)} ${acc('relevé',v)}${exaequo(eq)}`:`${u(v)} seulement${exaequo(eq)}`)}
+      ${victime && victime.val>0 ? tuile('🩹 Victime de la soirée', victime,
+              (v,eq)=>`${u(v)} ${acc('encaissé',v)}${exaequo(eq)}`) : ''}
+      ${distrib && distrib.val>0 ? tuile('🎯 Plus grand distributeur', distrib,
+              (v,eq)=>`${u(v)} ${acc('infligé',v)} aux autres${exaequo(eq)}`) : ''}
+      ${perdant && perdant.val>0 ? tuile('💀 Plus grand perdant', perdant,
+              (v,eq)=>`${v} fois sanctionné·e${exaequo(eq)}`) : ''}
+    </div>
+    <div class="gap"></div>
+    <div class="statline"><span>${sober?'🔥':'🍺'}</span>
+      <span>${sober?'Gages relevés par le groupe':'Total bu par le groupe'}</span><b>${total}</b></div>
+    ${sober?`<div class="statline"><span>🎲</span><span>Gages tirés en tout</span><b>${encaisse}</b></div>`:''}
+    ${st.duree>0?`<div class="statline"><span>⏱️</span><span>Durée de la soirée</span><b>${dureeTxt(st.duree)}</b></div>`:''}
+    ${totalManches?`
+      <div class="gap-s"></div>
+      <div class="statline"><span>🎮</span><span>Manches jouées</span><b>${totalManches}</b></div>
+      ${jeux.map(([ic,nom,n])=>`<div class="statline" style="opacity:${n?1:.45}">
+         <span>${ic}</span><span>${nom}</span><b>${n}</b></div>`).join('')}`:''}
+  `;
+}
+
 function shareAlbum(){
   if(navigator.share){ navigator.share({title:state.album.name,text:'Regarde notre soirée ! 🥴'}).catch(()=>{}); }
   else toast('Lien copié pour tes amis ↗ (démo)');

@@ -1995,10 +1995,8 @@ function statsBlock(a){
 
   const total   = list.reduce((s,p)=>s+(sober?(p.reussis||0):(p.drinks||0)),0);
   const encaisse= list.reduce((s,p)=>s+(p.subies||0),0);
-  const m=st.manches||{};
-  const jeux=[['🕵️','Qui a la ref',m.qar||0],['🎯','Sniper',m.sniper||0],['🃏','Black(out) Jack',m.bj||0]];
-  const totalManches=jeux.reduce((s,j)=>s+j[2],0);
-
+  // les manches restent comptées et enregistrées dans l'album, mais ne sont plus
+  // affichées : ça faisait trop de lignes après le classement.
   return `
     <h3>📊 Les chiffres de la soirée</h3>
     <div class="gap-s"></div>
@@ -2017,11 +2015,6 @@ function statsBlock(a){
       <span>${sober?'Gages relevés par le groupe':'Total bu par le groupe'}</span><b>${total}</b></div>
     ${sober?`<div class="statline"><span>🎲</span><span>Gages tirés en tout</span><b>${encaisse}</b></div>`:''}
     ${st.duree>0?`<div class="statline"><span>⏱️</span><span>Durée de la soirée</span><b>${dureeTxt(st.duree)}</b></div>`:''}
-    ${totalManches?`
-      <div class="gap-s"></div>
-      <div class="statline"><span>🎮</span><span>Manches jouées</span><b>${totalManches}</b></div>
-      ${jeux.map(([ic,nom,n])=>`<div class="statline" style="opacity:${n?1:.45}">
-         <span>${ic}</span><span>${nom}</span><b>${n}</b></div>`).join('')}`:''}
   `;
 }
 

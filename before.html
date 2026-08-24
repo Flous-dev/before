@@ -253,6 +253,7 @@
   .btn.game.g1{--tint:var(--rgb-violet);}
   .btn.game.g2{--tint:var(--rgb-coral);}
   .btn.game.g3{--tint:var(--rgb-cyan);}
+  .btn.game.g4{--tint:var(--rgb-mint);}
 
   /* état désactivé — après toutes les variantes pour les neutraliser */
   .btn:disabled,.btn:disabled:active{
@@ -592,6 +593,96 @@
   .review p{font-size:13.5px;color:var(--muted);line-height:1.45;}
   .demoNote{font-size:11.5px;color:var(--muted);text-align:center;opacity:.7;line-height:1.4;}
 
+  /* ============================================================
+     LE JEU DES MIMES
+     L'écran de jeu sort du flux : le téléphone est à l'horizontale
+     sur le front, il lui faut toute la surface et un texte qui
+     s'adapte aux deux orientations.
+     ============================================================ */
+  /* calé sur .screen : les marges de sécurité haute et basse sont déjà prises,
+     restent celles des côtés, qui comptent en paysage (encoche). */
+  #mimelayer{position:absolute;inset:0;z-index:50;display:none;}
+  #mimelayer.on{display:block;}
+  .mimescreen{
+    position:absolute;inset:0;display:flex;flex-direction:column;
+    padding:9px calc(14px + env(safe-area-inset-right)) 9px calc(14px + env(safe-area-inset-left));
+    background:linear-gradient(165deg,#15142f,#0a0916);
+    text-align:center;overflow:hidden;
+  }
+  .mimescreen.ok{background:linear-gradient(165deg,#1d4a39,#0d2a20);}
+  .mimescreen.no{background:linear-gradient(165deg,#4a2b34,#26141b);}
+
+  /* la croix d'abandon occupe sa propre ligne : au milieu en haut, seul endroit
+     que les mains ne touchent pas quand le téléphone est tenu par les côtés */
+  .mimetop{display:flex;align-items:center;gap:10px;flex:none;margin-top:17px;}
+  .mimetop .sc{
+    font-size:14px;font-weight:800;padding:5px 11px;border-radius:999px;
+    background:rgba(255,255,255,.06);border:1px solid var(--line);white-space:nowrap;
+  }
+  .mimetop .sc.ok{color:var(--good);border-color:rgba(107,195,156,.28);}
+  .mimetop .sc.no{color:var(--muted);}
+  .mimetime{
+    flex:1;font-size:26px;font-weight:800;letter-spacing:-1px;font-variant-numeric:tabular-nums;
+  }
+  .mimetime.hot{color:var(--bad);animation:hotbeat .5s ease-in-out infinite;}
+  @keyframes hotbeat{0%,100%{transform:scale(1);}50%{transform:scale(1.14);}}
+  .mimequit{
+    position:absolute;left:50%;top:0;transform:translateX(-50%);z-index:4;
+    width:44px;height:22px;display:flex;align-items:center;justify-content:center;
+    font-size:15px;color:var(--muted);opacity:.45;cursor:pointer;
+  }
+  .mimebar{height:4px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;margin:7px 0 0;flex:none;}
+  .mimebar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--violet2),var(--cyan));transition:width .12s linear;}
+  .mimebar.hot i{background:linear-gradient(90deg,var(--coral),var(--gold));}
+
+  /* le mot : il doit remplir la place restante, dans les deux orientations */
+  .mimeword{
+    flex:1;display:flex;align-items:center;justify-content:center;
+    font-size:clamp(26px,7.6vw,58px);font-weight:800;line-height:1.12;letter-spacing:-.6px;
+    padding:6px 4px;text-wrap:balance;overflow:hidden;
+  }
+  .mimeverdict{font-size:clamp(30px,9vw,66px);font-weight:900;letter-spacing:-1px;}
+  .mimeverdict small{display:block;font-size:clamp(13px,3.4vw,20px);font-weight:650;opacity:.72;margin-top:8px;letter-spacing:0;}
+
+  .mimehints{display:flex;gap:8px;flex:none;}
+  .mimehint{
+    flex:1;padding:8px 6px;border-radius:var(--r-md);font-size:12px;font-weight:700;line-height:1.25;
+    background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--muted);
+  }
+  .mimehint.ok{color:var(--good);border-color:rgba(107,195,156,.24);background:rgba(107,195,156,.09);}
+  .mimehint.no{color:var(--gold);border-color:rgba(220,174,96,.22);background:rgba(220,174,96,.08);}
+
+  /* zones de secours : servent quand le capteur d'inclinaison est indisponible */
+  .mimetap{position:absolute;left:0;right:0;height:50%;z-index:3;}
+  .mimetap.no{top:0;}
+  .mimetap.ok{bottom:0;}
+
+  /* ===== écrans d'accompagnement (portrait) ===== */
+  .teamcard{
+    display:flex;align-items:center;gap:12px;padding:12px 14px;margin-bottom:8px;
+    background:linear-gradient(135deg,rgba(var(--rgb-mint),.14),rgba(var(--rgb-mint),.03)),#0d0c1e;
+    border:1px solid rgba(var(--rgb-mint),.2);border-radius:var(--r-md);
+  }
+  .teamcard .n{
+    width:28px;height:28px;flex:none;border-radius:9px;display:flex;align-items:center;justify-content:center;
+    font-size:12.5px;font-weight:800;color:var(--mint);
+    background:rgba(107,195,156,.13);border:1px solid rgba(107,195,156,.24);
+  }
+  .teamcard b{font-size:15px;font-weight:750;}
+  .selcard.off{opacity:.32;}
+  /* 7 thèmes à l'écran : version resserrée pour que le bouton reste à portée */
+  .grid2.tight .selcard{padding:12px 10px;}
+  .grid2.tight .selcard .e{font-size:24px;}
+  .grid2.tight .selcard div{margin-top:5px;font-size:13px;}
+  .wordlog{display:flex;flex-wrap:wrap;gap:7px;}
+  .wchip{
+    display:flex;align-items:center;gap:7px;padding:8px 12px;border-radius:999px;cursor:pointer;
+    font-size:13px;font-weight:650;border:1px solid var(--line);
+    background:rgba(255,255,255,.04);color:var(--muted);transition:transform .12s,background .15s;
+  }
+  .wchip:active{transform:scale(.94);}
+  .wchip.ok{color:var(--good);border-color:rgba(107,195,156,.26);background:rgba(107,195,156,.1);}
+
   .spacer{flex:1;}
   .gap{height:12px;}
   .gap-s{height:8px;}
@@ -605,6 +696,8 @@
       <div id="app"></div>
       <!-- hors de #app : sinon le bouton défile avec le contenu et recouvre les boutons -->
       <div id="camlayer"></div>
+      <!-- le jeu des mimes prend tout l'écran, en paysage : il lui faut son propre calque -->
+      <div id="mimelayer"></div>
       <div class="toast" id="toast"></div>
       <div class="intro" id="intro">
         <div class="intro__glow"></div>
@@ -632,6 +725,7 @@ const state = {
   theme:null,
   randomTheme:false,
   pairDecks:null,         // paquets de paires mélangés, un par thème (voir drawPair)
+  mimeDecks:null,         // idem pour les mots du jeu des mimes (voir drawMime)
   roleHist:null,          // qui a été scamer/PNJ récemment (voir pickRole)
   partyEnded:false,       // true quand la soirée est terminée (masque le classement "en cours")
   after:{city:'paris',type:'all',theme:'all',price:'all',openOnly:'open',sort:'dist'},
@@ -882,6 +976,351 @@ const GAGES = {
 };
 const GAGE_NIV = ['Express','Corsé','Costaud'];
 
+/* ---------- mots du jeu des mimes ----------
+   Un mot (ou une situation) par ligne. Pour en ajouter : colle une
+   nouvelle ligne dans le bloc du thème, rien d'autre à toucher. */
+function parseWords(txt){ return txt.split('\n').map(l=>l.trim()).filter(Boolean); }
+const MIMES = {
+  actions:{label:'Actions',e:'🤸',words:parseWords(`
+    Se brosser les dents
+    Faire du vélo
+    Nager le crawl
+    Éternuer
+    Se faire tatouer
+    Repasser une chemise
+    Jouer au golf
+    Escalader une falaise
+    Faire la vaisselle
+    Se maquiller
+    Accoucher
+    Passer l'aspirateur
+    Marcher sur la lune
+    Se noyer
+    Jongler
+    Faire un selfie
+    Ronfler
+    Tondre la pelouse
+    Danser la salsa
+    Boxer
+    Se raser
+    Pêcher à la ligne
+    Monter une tente
+    Trébucher dans l'escalier
+    Se réveiller en retard
+    Bâiller
+    Faire du surf
+    Peindre un mur
+    Jouer de la batterie
+    Taper à l'ordinateur
+    Compter des billets
+    Se laver les cheveux
+    Faire du karaté
+    Sauter en parachute
+    Tirer un penalty
+    Éplucher une banane
+    Conduire une voiture
+    Ramer dans une barque
+    Faire du hula hoop
+    Se couper les ongles
+    Souffler ses bougies
+    Faire le poirier
+    Mettre des chaussettes
+    Attraper un moustique
+    Ouvrir une bouteille
+    Faire des pompes
+    Se cogner l'orteil
+    Chercher ses clés
+    Faire la queue
+    Monter une étagère
+    Repousser un chien
+    Marcher contre le vent
+    Sentir quelque chose de louche
+    Manger trop épicé
+    Se faire arracher une dent
+  `)},
+  cine:{label:'Films & séries',e:'🎬',words:parseWords(`
+    Titanic
+    Le Roi Lion
+    Harry Potter
+    Spider-Man
+    Batman
+    Fast and Furious
+    Jurassic Park
+    Star Wars
+    Avatar
+    Shrek
+    La Reine des Neiges
+    Les Dents de la mer
+    Rocky
+    Matrix
+    Le Parrain
+    E.T.
+    Pirates des Caraïbes
+    Indiana Jones
+    Toy Story
+    Le Seigneur des Anneaux
+    Les Visiteurs
+    Intouchables
+    Astérix et Obélix
+    Taxi
+    La Casa de Papel
+    Squid Game
+    Peaky Blinders
+    Game of Thrones
+    Stranger Things
+    Breaking Bad
+    Narcos
+    Prison Break
+    Friends
+    Vaiana
+    Kung Fu Panda
+    Les Minions
+    Ratatouille
+    Le Monde de Nemo
+    Madagascar
+    Cars
+    Alien
+    King Kong
+    Terminator
+    Mission Impossible
+    James Bond
+    Joker
+    Black Panther
+    Gladiator
+    Forrest Gump
+    Le Loup de Wall Street
+    Bienvenue chez les Ch'tis
+    La Haine
+    Lupin
+    Validé
+    Koh-Lanta
+    Top Chef
+  `)},
+  perso:{label:'Personnalités',e:'🌟',words:parseWords(`
+    Michael Jackson
+    Elvis Presley
+    Charlie Chaplin
+    Mr Bean
+    Napoléon
+    Cristiano Ronaldo
+    Lionel Messi
+    Kylian Mbappé
+    Zinédine Zidane
+    Usain Bolt
+    Mike Tyson
+    Muhammad Ali
+    Rafael Nadal
+    Elon Musk
+    Donald Trump
+    Emmanuel Macron
+    Barack Obama
+    Albert Einstein
+    Léonard de Vinci
+    Mozart
+    Beyoncé
+    Rihanna
+    Lady Gaga
+    Madonna
+    Aya Nakamura
+    Jul
+    Booba
+    Orelsan
+    Squeezie
+    MrBeast
+    Michou
+    Cyril Hanouna
+    Jean Dujardin
+    Omar Sy
+    Kev Adams
+    Teddy Riner
+    Tony Parker
+    Gims
+    Soprano
+    Dua Lipa
+    Shakira
+    Michael Jordan
+    LeBron James
+    Jean-Claude Van Damme
+    Bruce Lee
+    Johnny Hallyday
+    Céline Dion
+    Stromae
+    Angèle
+    Damso
+    Tibo InShape
+    Léna Situations
+    Franck Ribéry
+    Le Père Noël
+  `)},
+  animaux:{label:'Animaux',e:'🦧',words:parseWords(`
+    Girafe
+    Kangourou
+    Pingouin
+    Éléphant
+    Serpent
+    Crabe
+    Papillon
+    Gorille
+    Escargot
+    Autruche
+    Requin
+    Poulpe
+    Flamant rose
+    Chauve-souris
+    Grenouille
+    Cheval
+    Coq
+    Hérisson
+    Paresseux
+    Dauphin
+    Araignée
+    Taureau
+    Chameau
+    Hibou
+    Ours
+    Loup
+    Abeille
+    Tortue
+    Perroquet
+    Panda
+    Crocodile
+    Mouette
+    Souris
+    Cafard
+    Écureuil
+    Pigeon
+    Lapin
+    Vache
+    Cochon
+    Canard
+    Singe
+    Lion
+    Zèbre
+    Rhinocéros
+    Baleine
+    Méduse
+    Kangourou boxeur
+    Poule qui pond
+    Chat qui se lèche
+    Chien qui creuse
+  `)},
+  metiers:{label:'Objets & métiers',e:'🧰',words:parseWords(`
+    Parapluie
+    Aspirateur
+    Tire-bouchon
+    Guitare
+    Trampoline
+    Micro-ondes
+    Menottes
+    Perceuse
+    Balançoire
+    Échelle
+    Trottinette
+    Machine à laver
+    Sèche-cheveux
+    Marteau
+    Ciseaux
+    Appareil photo
+    Boussole
+    Extincteur
+    Chirurgien
+    Pompier
+    Coiffeur
+    Serveur
+    Policier
+    Boulanger
+    Dentiste
+    Pilote d'avion
+    Prof de sport
+    Magicien
+    Clown
+    DJ
+    Chauffeur de taxi
+    Astronaute
+    Plombier
+    Vétérinaire
+    Juge
+    Boucher
+    Facteur
+    Peintre
+    Barman
+    Videur de boîte
+    Steward
+    Maçon
+    Jardinier
+    Caissière
+    Cascadeur
+    Arbitre de foot
+    Statue vivante
+    Livreur à vélo
+    Photographe de mariage
+    Prof de maths
+  `)},
+  soiree:{label:'Spécial soirée',e:'🍸',words:parseWords(`
+    Un shot de tequila
+    Le sol qui tourne
+    Un karaoké raté
+    Le dernier métro
+    La gueule de bois
+    Un fou rire
+    Un slow gênant
+    Le vigile qui refuse l'entrée
+    Un kebab à 4h du matin
+    Le vestiaire à la fermeture
+    Le pote qui dort sur le canapé
+    Commander un Uber
+    Danser sur la table
+    Le message qu'on regrette
+    Le réveil du lendemain
+    Une bataille de coussins
+    Se faire draguer maladroitement
+    Le selfie de groupe
+    Le blind test
+    Le beer pong
+    La queue aux toilettes
+    Un mojito
+    Le voisin qui tape au mur
+    Renverser son verre
+    Perdre son téléphone
+    La photo de fin de soirée
+    Le pote qui raconte sa vie
+    Le premier sur la piste
+    Chercher du réseau
+    La playlist qu'on coupe
+    Le batteur de la soirée
+    Le jeu de la bouteille
+    Ranger l'appart au petit matin
+    Arriver en retard au before
+    Le pote qui ne paie jamais
+    Chanter faux à tue-tête
+    Le shot de trop
+    Se faire réveiller par la lumière
+    Le taxi qui annule
+    Un pot de Nutella à 3h
+    Le pote qui parle à tout le monde
+    Retrouver sa veste
+    L'ascenseur bondé
+    La photo ratée au flash
+  `)},
+};
+const MIME_MIX = () => Object.keys(MIMES).reduce((a,k)=>a.concat(MIMES[k].words),[]);
+
+/* ---------- tirage des mots, sans doublon dans la soirée ----------
+   Même principe que les paires : un paquet mélangé, on pioche dedans.
+   Quand il est vide (soirée marathon), on remélange tout. */
+function resetMimeDecks(){
+  state.mimeDecks={};
+  Object.keys(MIMES).forEach(k=>{ state.mimeDecks[k]=shuffle(MIMES[k].words); });
+  state.mimeDecks.mix=shuffle(MIME_MIX());
+}
+function drawMime(k){
+  if(!state.mimeDecks) resetMimeDecks();
+  let d=state.mimeDecks[k];
+  if(!d || !d.length){ d=state.mimeDecks[k]=shuffle(k==='mix'?MIME_MIX():MIMES[k].words); }
+  return d.pop();
+}
+
+
 /* ---------- utils ---------- */
 const $ = (s,el=document)=>el.querySelector(s);
 const app = $('#app');
@@ -962,7 +1401,7 @@ function addDrinks(name,n,par){
   }
 }
 function resetStats(){
-  state.stats={ debut:Date.now(), manches:{qar:0,sniper:0,bj:0} };
+  state.stats={ debut:Date.now(), manches:{qar:0,sniper:0,bj:0,mimes:0} };
 }
 function compteManche(jeu){ if(state.stats) state.stats.manches[jeu]=(state.stats.manches[jeu]||0)+1; }
 function score(p){ return sansAlcool() ? (p.reussis||0) : (p.drinks||0); }
@@ -1018,6 +1457,9 @@ function gageDone(ok){
 }
 
 function render(html, withCam=false){
+  // un écran normal reprend la main : on coupe le jeu des mimes s'il tournait encore
+  const ml=$('#mimelayer');
+  if(ml && ml.classList.contains('on')){ mimesStop(); mimeOn(false); }
   app.innerHTML = `<div class="view${withCam?' has-cam':''}">${html}</div>`;
   $('#camlayer').innerHTML = withCam ? floatCam() : '';
   app.scrollTop=0;
@@ -1117,6 +1559,7 @@ function pickMode(m){
   resetStats();                            // chrono de la soirée + compteur de manches
   state.partyEnded=false;                  // nouvelle soirée → le classement "en cours" redevient visible
   resetPairDecks();                        // ...et les paires repartent à zéro pour la nouvelle soirée
+  resetMimeDecks();                        // ...ainsi que les mots des mimes
   resetRoleHist();                         // ...ainsi que l'historique des rôles
   beforePhotoPrompt();                     // première mise en place → propose la photo de début
 }
@@ -1215,6 +1658,10 @@ function gameSelect(){
     <div class="gap"></div>
     <button class="btn game g3" onclick="bjStart()">
       <span class="ico">🃏</span><span class="col">BLACK(OUT) JACK<small>Plus ou moins ? Bonne chance.</small></span>
+    </button>
+    <div class="gap"></div>
+    <button class="btn game g4" onclick="mimesConfig()">
+      <span class="ico">🎭</span><span class="col">LES MIMES<small>Le téléphone sur le front, à toi de deviner.</small></span>
     </button>
     <div class="spacer"></div>
     <button class="btn gold sm" onclick="endGame()"><span class="ico">🏁</span>Fin de la partie</button>
@@ -1737,6 +2184,472 @@ function bjJackpotDone(){
   gagesAfter(parts, ()=>{
     bj.streak=0; bj.turn++; bj.current=bj.deck[bj.idx++]; bjTurn();
   })();
+}
+
+
+/* ============================================================
+   JEU 4 — LE JEU DES MIMES
+   ------------------------------------------------------------
+   Le joueur qui devine pose le téléphone à l'horizontale sur son
+   front, écran tourné vers le groupe : lui seul ne voit pas le mot.
+   Il penche l'appareil vers l'avant quand il a trouvé, vers le haut
+   pour passer. La détection se fait sur la gravité mesurée le long
+   de l'axe perpendiculaire à l'écran (accelerationIncludingGravity.z) :
+     écran à la verticale → z ≈ 0
+     écran basculé vers le sol → z ≈ -9.8  → trouvé
+     écran basculé vers le ciel → z ≈ +9.8 → passer
+   Ça marche dans les deux sens du paysage, contrairement à beta/gamma.
+   Si le capteur est refusé ou absent, les deux moitiés de l'écran
+   deviennent des zones tactiles.
+   ============================================================ */
+let mimes = { format:'solo', duree:60, theme:'mix', manche:0, swap:{}, scores:{}, teams:null, turn:0, log:[] };
+
+/* ---------- son : le joueur ne voit pas l'écran, il faut l'entendre ---------- */
+let mimeAC=null;
+function mimeAudioUnlock(){
+  try{
+    if(!mimeAC){ const C=window.AudioContext||window.webkitAudioContext; if(C) mimeAC=new C(); }
+    if(mimeAC && mimeAC.state==='suspended') mimeAC.resume();
+  }catch(e){}
+}
+function mimeBip(f,d,type,vol){
+  if(!mimeAC) return;
+  try{
+    const t=mimeAC.currentTime, o=mimeAC.createOscillator(), g=mimeAC.createGain();
+    o.type=type||'sine'; o.frequency.setValueAtTime(f,t);
+    g.gain.setValueAtTime(.0001,t);
+    g.gain.exponentialRampToValueAtTime(vol||.22,t+.012);
+    g.gain.exponentialRampToValueAtTime(.0001,t+(d||.15));
+    o.connect(g); g.connect(mimeAC.destination);
+    o.start(t); o.stop(t+(d||.15)+.04);
+  }catch(e){}
+}
+function mimeDing(ok){
+  if(ok){ mimeBip(880,.1); setTimeout(()=>mimeBip(1320,.16),80); }
+  else   { mimeBip(200,.2,'square',.18); }
+}
+function mimeBuzz(){ mimeBip(150,.5,'sawtooth',.2); setTimeout(()=>mimeBip(110,.6,'sawtooth',.2),150); }
+
+/* ---------- l'écran ne doit pas s'éteindre pendant la manche ---------- */
+let mimeWake=null;
+function mimeWakeOn(){
+  try{ if(navigator.wakeLock && navigator.wakeLock.request)
+    navigator.wakeLock.request('screen').then(w=>{mimeWake=w;}).catch(()=>{}); }catch(e){}
+}
+function mimeWakeOff(){
+  try{ if(mimeWake){ const w=mimeWake; mimeWake=null; const p=w.release(); if(p&&p.catch) p.catch(()=>{}); } }catch(e){}
+}
+function mimeOn(b){
+  const l=$('#mimelayer'); if(!l) return;
+  l.classList.toggle('on',!!b);
+  if(!b) l.innerHTML='';
+}
+
+/* ---------- réglages ---------- */
+function mimesConfig(){
+  const n=state.players.length;
+  if(n<4) return mimesTooFew();
+  if(mimes.format==='team' && n%2) mimes.format='solo';
+  const pair=n%2===0;
+  render(`
+    <div class="topbar"><div class="back" onclick="gameSelect()">‹</div><div><div class="eyebrow">Le jeu des mimes</div><h2>Les réglages</h2></div></div>
+    <p class="muted">Le téléphone sur le front, les autres miment. Penche-le vers l'avant si tu trouves, vers le haut pour passer.</p>
+    <div class="gap"></div>
+    <div class="flabel">Format</div>
+    <div class="grid2" id="mimeFmt">
+      <div class="selcard${mimes.format==='solo'?' on':''}" data-f="solo" onclick="mimesFormat('solo')"><div class="e">🙋</div><div>Chacun pour soi</div></div>
+      <div class="selcard${mimes.format==='team'?' on':''}${pair?'':' off'}" data-f="team" onclick="mimesFormat('team')"><div class="e">👯</div><div>En équipe de 2</div></div>
+    </div>
+    <div class="gap-s"></div>
+    <p class="muted" id="mimeFmtHint">${mimesFmtHint()}</p>
+    <div class="gap"></div>
+    <div class="flabel">Temps par joueur</div>
+    <div class="stepper">
+      <button onclick="mimesDur(-15)">−</button>
+      <span class="val" id="mimeDur">${mimes.duree} s</span>
+      <button onclick="mimesDur(15)">＋</button>
+    </div>
+    <div class="gap"></div>
+    <div class="flabel">Thème</div>
+    <div class="grid2 tight" id="mimeThemes">
+      <div class="selcard${mimes.theme==='mix'?' on':''}" data-k="mix" onclick="mimesTheme('mix')"><div class="e">🎲</div><div>Mélange</div></div>
+      ${Object.keys(MIMES).map(k=>`<div class="selcard${mimes.theme===k?' on':''}" data-k="${k}" onclick="mimesTheme('${k}')"><div class="e">${MIMES[k].e}</div><div>${MIMES[k].label}</div></div>`).join('')}
+    </div>
+    <div class="gap"></div>
+    <button class="btn good" onclick="mimesStart()">Commencer →</button>
+    <div style="height:10px"></div>
+  `, true);
+}
+function mimesTooFew(){
+  render(`
+    <div class="topbar"><div class="back" onclick="gameSelect()">‹</div><h2>🎭 Le jeu des mimes</h2></div>
+    <div class="spacer"></div>
+    <div class="card tint-cyan center">
+      <div class="big">🎭</div>
+      <div class="gap"></div>
+      <p>Il faut être <b>au moins 4</b> pour les mimes : un qui devine, et assez de monde en face pour mimer.</p>
+      <div class="gap-s"></div>
+      <p class="muted">Vous êtes ${state.players.length} pour l'instant.</p>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn good" onclick="drawSetup('gameSelect')"><span class="ico">👥</span>Ajouter des joueurs</button>
+    <div class="gap-s"></div>
+    <button class="btn ghost sm" onclick="gameSelect()">Choisir un autre jeu</button>
+    <div style="height:8px"></div>
+  `, true);
+}
+function mimesFmtHint(){
+  const n=state.players.length;
+  return mimes.format==='team'
+    ? `${n/2} équipes de 2 : dans chaque équipe, l'un mime et l'autre devine.`
+    : `Chacun devine à son tour, tous les autres miment.`;
+}
+function mimesFormat(f){
+  if(f==='team' && state.players.length%2){ toast('Les équipes de 2 demandent un nombre pair de joueurs'); return; }
+  mimes.format=f;
+  document.querySelectorAll('#mimeFmt .selcard').forEach(c=>c.classList.toggle('on',c.dataset.f===f));
+  const h=$('#mimeFmtHint'); if(h) h.textContent=mimesFmtHint();
+}
+function mimesDur(d){
+  mimes.duree=Math.min(120,Math.max(30,mimes.duree+d));
+  const el=$('#mimeDur'); if(el) el.textContent=mimes.duree+' s';
+}
+function mimesTheme(k){
+  mimes.theme=k;
+  document.querySelectorAll('#mimeThemes .selcard').forEach(c=>c.classList.toggle('on',c.dataset.k===k));
+}
+function mimesStart(){
+  const n=state.players.length;
+  if(n<4) return mimesTooFew();
+  if(mimes.format==='team'){
+    if(n%2){ toast('Les équipes de 2 demandent un nombre pair de joueurs'); return; }
+    mimesDrawTeams(); return mimesTeamsView();
+  }
+  mimesLaunch();
+}
+
+/* ---------- équipes ---------- */
+function mimesDrawTeams(){
+  const noms=shuffle(state.players.map(p=>p.name));
+  mimes.teams=[]; mimes.swap={};
+  for(let i=0;i<noms.length;i+=2) mimes.teams.push([noms[i],noms[i+1]]);
+}
+function mimesTeamsView(){
+  render(`
+    <div class="topbar"><div class="back" onclick="mimesConfig()">‹</div><div><div class="eyebrow">Le jeu des mimes</div><h2>Les équipes</h2></div></div>
+    <p class="muted">Tirage au sort. Pas d'accord ? Relancez-le.</p>
+    <div class="gap"></div>
+    ${mimes.teams.map((t,i)=>`<div class="teamcard"><div class="n">${i+1}</div><b>${t[0]} &amp; ${t[1]}</b></div>`).join('')}
+    <div class="gap-s"></div>
+    <button class="btn ghost sm" onclick="mimesDrawTeams();mimesTeamsView()"><span class="ico">🎲</span>Retirer au sort</button>
+    <div class="spacer"></div>
+    <button class="btn good" onclick="mimesLaunch()">C'est parti →</button>
+    <div style="height:8px"></div>
+  `, true);
+}
+function mimesLaunch(){ mimes.manche=0; mimes.scores={}; mimes.turn=0; mimesTurnIntro(); }
+function mimesNewRound(){ mimes.manche++; mimes.scores={}; mimes.turn=0; mimesTurnIntro(); }
+
+/* qui joue, dans quel ordre : recalculé à chaque fois, l'ordre reste stable */
+function mimesEnts(){
+  if(mimes.format==='team' && mimes.teams){
+    return mimes.teams.map((t,i)=>{
+      // à chaque manche les rôles s'inversent dans l'équipe ; « inverser » force le contraire
+      const d=(mimes.manche+(mimes.swap[i]?1:0))%2;
+      return { key:'t'+i, idx:i, label:t[0]+' & '+t[1], membres:t.slice(),
+               devine:t[d], mimeurs:[t[1-d]] };
+    });
+  }
+  return state.players.map((p,i)=>({
+    key:'p'+i, idx:i, label:p.name, membres:[p.name], devine:p.name,
+    mimeurs:state.players.filter(x=>x.name!==p.name).map(x=>x.name) }));
+}
+function mimesSwap(){
+  const e=mimesEnts()[mimes.turn]; if(!e) return;
+  mimes.swap[e.idx]=!mimes.swap[e.idx];
+  mimesTurnIntro();
+}
+
+/* ---------- passation du téléphone ---------- */
+function mimesTurnIntro(){
+  const ents=mimesEnts(), e=ents[mimes.turn];
+  if(!e) return mimesResults();
+  const team=mimes.format==='team';
+  render(`
+    <div class="topbar"><div class="back" onclick="gameSelect()">‹</div><h2>🎭 Les mimes</h2></div>
+    <p class="muted center">Tour ${mimes.turn+1} / ${ents.length}${mimes.manche?` · manche ${mimes.manche+1}`:''}</p>
+    <div class="gap"></div>
+    <div class="card tint-cyan center">
+      <div class="eyebrow">${team?e.label:'À toi de deviner'}</div>
+      <div class="gap-s"></div>
+      <div class="big">${e.devine}</div>
+      <div class="gap-s"></div>
+      <p class="muted">${team?`<b>${e.mimeurs[0]}</b> mime, les autres se taisent 🤫`:'Tous les autres miment'}</p>
+    </div>
+    <div class="spacer"></div>
+    <div class="card">
+      <div class="row"><span style="font-size:21px">📱</span><span style="font-size:13.5px">Téléphone <b>à l'horizontale</b> sur le front, écran vers le groupe.</span></div>
+      <div class="gap-s"></div>
+      <div class="row"><span style="font-size:21px">⬇️</span><span style="font-size:13.5px"><b style="color:var(--good)">Trouvé</b> — penche le téléphone vers l'avant.</span></div>
+      <div class="gap-s"></div>
+      <div class="row"><span style="font-size:21px">⬆️</span><span style="font-size:13.5px"><b style="color:var(--gold)">Passer</b> — relève-le vers le haut.</span></div>
+    </div>
+    <div class="gap"></div>
+    ${team?`<button class="btn ghost sm" onclick="mimesSwap()"><span class="ico">🔄</span>Inverser : ${e.mimeurs[0]} devine</button><div class="gap-s"></div>`:''}
+    <button class="btn good" onclick="mimesGo()">C'est parti · ${mimes.duree} s →</button>
+    <div style="height:8px"></div>
+  `, true);
+}
+function mimesGo(){
+  mimeAudioUnlock();   // doit partir d'un vrai geste : c'est le cas ici
+  const DM=window.DeviceMotionEvent;
+  if(DM && typeof DM.requestPermission==='function'){
+    // iOS 13+ : l'autorisation se demande depuis le geste, pas après
+    DM.requestPermission()
+      .then(r=>{ mimes.tilt=(r==='granted'); mimesCountdown(); })
+      .catch(()=>{ mimes.tilt=false; mimesCountdown(); });
+  }else{
+    mimes.tilt=!!DM;
+    mimesCountdown();
+  }
+}
+
+/* ---------- 3 · 2 · 1 ---------- */
+function mimesCountdown(){
+  mimeOn(true);
+  let k=3;
+  const paint=()=>{
+    const l=$('#mimelayer'); if(!l) return;
+    l.innerHTML=`<div class="mimescreen"><div class="mimeword"><div class="mimeverdict">${k>0?k:'GO !'}
+      <small>${k>0?'Pose le téléphone sur ton front':'Le premier mot arrive'}</small></div></div></div>`;
+  };
+  paint(); mimeBip(520,.12);
+  clearInterval(mimes.cd);
+  mimes.cd=setInterval(()=>{
+    k--;
+    if(k<0){ clearInterval(mimes.cd); mimesPlay(); return; }
+    paint();
+    mimeBip(k>0?520:880,k>0?.12:.22);
+  },900);
+}
+
+/* ---------- la manche ---------- */
+function mimesPlay(){
+  mimes.log=[]; mimes.running=true; mimes.armed=true; mimes.flash=false;
+  mimes.lastAct=0; mimes.lastSec=-1; mimes.gotMotion=false;
+  mimes.tap=!mimes.tilt;
+  mimes.word=drawMime(mimes.theme);
+  mimes.endAt=Date.now()+mimes.duree*1000;
+  paintMime();
+  clearInterval(mimes.timer);
+  mimes.timer=setInterval(mimesTick,90);
+  if(mimes.tilt) window.addEventListener('devicemotion',onMimeMotion);
+  // capteur muet (ordinateur, autorisation fantôme) → on ouvre les zones tactiles
+  clearTimeout(mimes.fallback);
+  mimes.fallback=setTimeout(()=>{
+    if(mimes.running && !mimes.gotMotion && !mimes.tap){ mimes.tap=true; paintMime(); }
+  },2600);
+  mimeWakeOn();
+}
+function paintMime(){
+  const l=$('#mimelayer'); if(!l) return;
+  const ok=mimes.log.filter(x=>x.ok).length, no=mimes.log.length-ok;
+  const left=Math.max(0,mimes.endAt-Date.now());
+  l.innerHTML=`
+    <div class="mimescreen" id="mimeScreen">
+      <div class="mimequit" onclick="mimesAbort()">✕</div>
+      <div class="mimetop">
+        <div class="sc ok">✅ ${ok}</div>
+        <div class="mimetime" id="mimeTime">${Math.ceil(left/1000)}</div>
+        <div class="sc no">⏭ ${no}</div>
+      </div>
+      <div class="mimebar" id="mimeBar"><i style="width:${left/(mimes.duree*10)}%"></i></div>
+      <div class="mimeword" id="mimeWord">${mimes.word}</div>
+      <div class="mimehints">
+        <div class="mimehint no">⬆️ ${mimes.tap?'Touche le haut':'Vers le haut'} · Passer</div>
+        <div class="mimehint ok">⬇️ ${mimes.tap?'Touche le bas':'Vers l\'avant'} · Trouvé</div>
+      </div>
+      <div class="mimetap no" onclick="mimesTap(false)"></div>
+      <div class="mimetap ok" onclick="mimesTap(true)"></div>
+    </div>`;
+}
+function mimesTick(){
+  if(!mimes.running) return;
+  const left=mimes.endAt-Date.now();
+  const s=Math.max(0,Math.ceil(left/1000));
+  const el=$('#mimeTime'); if(el){ el.textContent=s; el.classList.toggle('hot',s<=5); }
+  const bar=$('#mimeBar');
+  if(bar){
+    bar.classList.toggle('hot',s<=5);
+    const i=bar.firstElementChild;
+    if(i) i.style.width=Math.max(0,Math.min(100,left/(mimes.duree*10)))+'%';
+  }
+  if(s!==mimes.lastSec){ mimes.lastSec=s; if(s>0&&s<=5) mimeBip(760,.09,'square',.18); }
+  if(left<=0) mimesEndTurn();
+}
+function onMimeMotion(ev){
+  const a=ev.accelerationIncludingGravity; if(!a) return;
+  const x=a.x||0, y=a.y||0, z=a.z||0;
+  const m=Math.sqrt(x*x+y*y+z*z);
+  if(m<4||m>18) return;              // en pleine secousse la gravité n'est plus lisible
+  mimes.gotMotion=true;
+  const nz=z/m;                      // -1 = écran vers le sol · +1 = écran vers le ciel
+  if(mimes.armed){
+    if(nz<-.62){ mimes.armed=false; mimesHit(true); }
+    else if(nz>.62){ mimes.armed=false; mimesHit(false); }
+  }else if(Math.abs(nz)<.34){        // il faut repasser par la verticale avant le mot suivant
+    mimes.armed=true;
+  }
+}
+function mimesTap(ok){ if(mimes.tap) mimesHit(ok); }
+function mimesHit(ok){
+  const t=Date.now();
+  if(!mimes.running || mimes.flash || t-mimes.lastAct<400) return;
+  mimes.lastAct=t; mimes.flash=true;
+  const mot=mimes.word;
+  mimes.log.push({w:mot,ok});
+  mimeDing(ok);
+  const sc=$('#mimeScreen'), w=$('#mimeWord');
+  if(sc) sc.classList.add(ok?'ok':'no');
+  if(w) w.innerHTML=`<div class="mimeverdict">${ok?'TROUVÉ ✅':'PASSÉ ⏭'}<small>${mot}</small></div>`;
+  setTimeout(()=>{
+    mimes.flash=false;
+    if(!mimes.running) return;
+    mimes.word=drawMime(mimes.theme);
+    paintMime();
+  },560);
+}
+function mimesStop(){
+  mimes.running=false;
+  clearInterval(mimes.timer); clearInterval(mimes.cd); clearTimeout(mimes.fallback);
+  window.removeEventListener('devicemotion',onMimeMotion);
+  mimeWakeOff();
+}
+function mimesAbort(){
+  mimesStop(); mimeOn(false);
+  toast('Tour annulé');
+  mimesTurnIntro();
+}
+function mimesEndTurn(){
+  mimesStop(); mimeBuzz(); mimeOn(false);
+  const e=mimesEnts()[mimes.turn];
+  if(e) mimes.scores[e.key]=mimes.log.filter(x=>x.ok).length;
+  mimesRecap();
+}
+
+/* ---------- récap du tour, corrigeable ---------- */
+function mimeLogHTML(){
+  return mimes.log.map((x,i)=>`<div class="wchip${x.ok?' ok':''}" onclick="mimesFix(${i})">${x.ok?'✅':'⏭'} ${x.w}</div>`).join('');
+}
+function mimesFix(i){
+  const x=mimes.log[i]; if(!x) return;
+  x.ok=!x.ok;
+  const e=mimesEnts()[mimes.turn];
+  const pts=mimes.log.filter(y=>y.ok).length;
+  if(e) mimes.scores[e.key]=pts;
+  const lg=$('#mimeLog'); if(lg) lg.innerHTML=mimeLogHTML();
+  const p=$('#mimePts'); if(p) p.textContent=pts;
+  const s=$('#mimePtsSub'); if(s) s.textContent=mimePtsSub(pts);
+}
+function mimePtsSub(pts){
+  const n=mimes.log.length;
+  return `mot${pts>1?'s':''} trouvé${pts>1?'s':''} sur ${n} tiré${n>1?'s':''}`;
+}
+function mimesRecap(){
+  const ents=mimesEnts(), e=ents[mimes.turn];
+  const pts=mimes.scores[e?e.key:'']||0;
+  const dernier=mimes.turn>=ents.length-1;
+  render(`
+    <div class="topbar"><h2 style="margin:auto">⏱️ Temps écoulé</h2></div>
+    <p class="muted center">Remets le téléphone à la verticale 🙂</p>
+    <div class="gap"></div>
+    <div class="card tint-cyan center">
+      <div class="eyebrow">${e?e.label:''}</div>
+      <div class="gap-s"></div>
+      <div class="big" id="mimePts">${pts}</div>
+      <p class="muted" id="mimePtsSub">${mimePtsSub(pts)}</p>
+    </div>
+    ${mimes.log.length?`
+      <div class="gap"></div>
+      <p class="muted">Le téléphone s'est trompé ? Touche un mot pour le corriger.</p>
+      <div class="gap-s"></div>
+      <div class="wordlog" id="mimeLog">${mimeLogHTML()}</div>`:''}
+    <div class="spacer"></div>
+    <button class="btn good" onclick="mimesNext()">${dernier?'Voir le classement →':'Au suivant →'}</button>
+    <div style="height:8px"></div>
+  `, true);
+}
+function mimesNext(){
+  mimes.turn++;
+  if(mimes.turn>=mimesEnts().length) mimesResults(); else mimesTurnIntro();
+}
+
+/* ---------- classement de la manche : le dernier paie ---------- */
+function listeFr(a){ return a.length<2 ? (a[0]||'') : a.slice(0,-1).join(', ')+' & '+a[a.length-1]; }
+function sanctionGroupe(noms,n){
+  const v = sansAlcool() ? (noms.length>1?'prennent':'prend') : (noms.length>1?'boivent':'boit');
+  return `${listeFr(noms)} ${v} ${unite(n)}`;
+}
+function mimesResults(){
+  compteManche('mimes');
+  const rows=mimesEnts().map(e=>Object.assign({},e,{pts:mimes.scores[e.key]||0}))
+                        .sort((a,b)=>b.pts-a.pts);
+  const min=rows[rows.length-1].pts;
+  const perdants=rows.filter(r=>r.pts===min);
+  const egalite=perdants.length===rows.length;
+  // zéro mot trouvé : la note est salée. Égalité générale : tout le monde trinque un coup.
+  const n = egalite ? 1 : (min===0 ? 3 : 2);
+  const punis=[];
+  perdants.forEach(r=>r.membres.forEach(m=>{ addDrinks(m,n); punis.push([m,n]); }));
+  const noms=punis.map(p=>p[0]);
+  const gages = sansAlcool() && punis.length;
+  if(gages) _suite = gagesAfter(punis, mimesReplay);
+  render(`
+    <div class="topbar"><h2 style="margin:auto">🎭 Fin de la manche</h2></div>
+    ${counterBar()}
+    <div class="gap"></div>
+    ${rows.map((r,i)=>`
+      <div class="rank${i<3?' p'+(i+1):''}">
+        <div class="pos">${['🥇','🥈','🥉'][i]||i+1}</div>
+        <div class="rank__id"><h3>${r.label}</h3>${(!egalite&&r.pts===min)?'<div class="rank__t">💀 le maillon faible de la manche</div>':''}</div>
+        <div class="g">${r.pts} 🎭</div>
+      </div>`).join('')}
+    <div class="gap"></div>
+    <div class="card tint-coral center">
+      <p style="font-size:16px;font-weight:750">${egalite
+        ? `Égalité parfaite — ${sanctionGroupe(noms,n)} 😐`
+        : sanctionGroupe(noms,n)}</p>
+      ${(!egalite&&min===0)?`<div class="gap-s"></div><p class="muted">Zéro mot trouvé : la sanction est majorée.</p>`:''}
+    </div>
+    <div class="spacer"></div>
+    ${gages
+      ? `<button class="btn good" onclick="suivreResultat()">Passer aux gages 🔥 →</button>`
+      : `<button class="btn good" onclick="mimesNewRound()">↻ Nouvelle manche</button>
+         <div class="gap-s"></div>
+         <button class="btn ghost sm" onclick="mimesConfig()">⚙️ Changer les réglages</button>
+         <div class="gap-s"></div>
+         <button class="btn ghost sm" onclick="gameSelect()">Changer de jeu</button>`}
+    <div style="height:8px"></div>
+  `, true);
+}
+function mimesReplay(){
+  render(`
+    <div class="topbar"><h2 style="margin:auto">🎭 Manche terminée</h2></div>
+    ${counterBar()}
+    <div class="spacer"></div>
+    <div class="card tint-cyan center">
+      <div class="big">🎭</div>
+      <div class="gap-s"></div>
+      <p class="muted">On remet une manche ?${mimes.format==='team'?" Les rôles s'inversent dans chaque équipe.":''}</p>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn good" onclick="mimesNewRound()">↻ Nouvelle manche</button>
+    <div class="gap-s"></div>
+    <button class="btn ghost sm" onclick="mimesConfig()">⚙️ Changer les réglages</button>
+    <div class="gap-s"></div>
+    <button class="btn ghost sm" onclick="gameSelect()">Changer de jeu</button>
+    <div style="height:8px"></div>
+  `, true);
 }
 
 /* ============================================================

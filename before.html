@@ -2217,7 +2217,7 @@ function bjJackpotDone(){
    deviennent des zones tactiles.
    ============================================================ */
 const MIME_DUREES = [90,120,150,180,210];   // 1m30 · 2min · 2m30 · 3min · 3m30
-let mimes = { rotDir:-1, format:'solo', duree:120, theme:'mix', manche:0, swap:{}, scores:{}, teams:null, turn:0, log:[], order:null };
+let mimes = { rotDir:-1, rotLock:false, format:'solo', duree:120, theme:'mix', manche:0, swap:{}, scores:{}, teams:null, turn:0, log:[], order:null };
 
 /* ---------- son : le joueur ne voit pas l'écran, il faut l'entendre ---------- */
 let mimeAC=null;
@@ -2514,6 +2514,7 @@ function mimesGo(){
 /* ---------- 3 · 2 · 1 ---------- */
 function mimesCountdown(){
   mimeOn(true);
+  mimes.rotLock=false;               // le décompte sert aussi à trouver le bon sens
   if(mimes.tilt) window.addEventListener('devicemotion',onMimeMotion);
   window.addEventListener('resize',mimeFit);
   window.addEventListener('orientationchange',mimeFit);
@@ -2536,6 +2537,7 @@ function mimesCountdown(){
 
 /* ---------- la manche ---------- */
 function mimesPlay(){
+  mimes.rotLock=true;                // à partir d'ici l'écran ne bouge plus jusqu'à la fin du tour
   mimes.log=[]; mimes.running=true; mimes.armed=true; mimes.flash=false;
   mimes.lastAct=0; mimes.lastSec=-1; mimes.gotMotion=false;
   mimes.tap=!mimes.tilt;
@@ -2595,12 +2597,15 @@ function onMimeMotion(ev){
   const m=Math.sqrt(x*x+y*y+z*z);
   if(m<4||m>18) return;              // en pleine secousse la gravité n'est plus lisible
   mimes.gotMotion=true;
-  const nx=x/m;                      // quel côté du téléphone pointe vers le haut
-  if(Math.abs(nx)>.5){
+  const nx=x/m, nz=z/m;              // nz : -1 = écran vers le sol · +1 = écran vers le ciel
+  /* Sens de lecture : réglé pendant le décompte seulement, puis figé pour tout le tour.
+     On ne le lit que quand l'écran est à peu près vertical (|nz| faible) : passé la
+     verticale, un mouvement vers l'avant inverse le signe de nx et retournerait l'écran
+     alors que le téléphone n'a pas bougé de main. */
+  if(!mimes.rotLock && Math.abs(nz)<.4 && Math.abs(nx)>.6){
     const dir = nx>0 ? 1 : -1;
     if(dir!==mimes.rotDir){ mimes.rotDir=dir; mimeFit(); }
   }
-  const nz=z/m;                      // -1 = écran vers le sol · +1 = écran vers le ciel
   if(mimes.armed){
     if(nz<-.62){ mimes.armed=false; mimesHit(true); }
     else if(nz>.62){ mimes.armed=false; mimesHit(false); }

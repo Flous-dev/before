@@ -926,6 +926,81 @@ const THEMES = {
     Visa / Mastercard
     Amazon / AliExpress
   `)},
+  cine:{label:'Films & séries',e:'🎬',pairs:parsePairs(`
+    Harry Potter / Le Seigneur des Anneaux
+    Star Wars / Star Trek
+    Avengers / Justice League
+    Spider-Man / Batman
+    Iron Man / Superman
+    Deadpool / Venom
+    Fast & Furious / Taxi
+    Le Roi Lion / Madagascar
+    La Reine des Neiges / Raiponce
+    Toy Story / Cars
+    Shrek / Kung Fu Panda
+    Les Minions / L'Âge de Glace
+    Titanic / Avatar
+    Interstellar / Gravity
+    Inception / Matrix
+    Joker / Fight Club
+    Le Parrain / Les Affranchis
+    Scarface / Le Loup de Wall Street
+    Pulp Fiction / Kill Bill
+    Django Unchained / Inglourious Basterds
+    Jurassic Park / King Kong
+    Les Dents de la mer / Anaconda
+    Ça / Conjuring
+    Scream / Halloween
+    Hunger Games / Divergente
+    Twilight / After
+    Intouchables / Les Choristes
+    Bienvenue chez les Ch'tis / Camping
+    Astérix et Obélix / Les Visiteurs
+    La Haine / Banlieue 13
+    Taken / John Wick
+    Mission Impossible / James Bond
+    Rocky / Creed
+    Gladiator / Troie
+    Pirates des Caraïbes / Indiana Jones
+    Retour vers le futur / Men in Black
+    E.T. / Wall-E
+    Forrest Gump / Benjamin Button
+    Seven / Shutter Island
+    Whiplash / La La Land
+    Bohemian Rhapsody / Rocketman
+    Very Bad Trip / American Pie
+    Game of Thrones / House of the Dragon
+    Breaking Bad / Better Call Saul
+    Narcos / Peaky Blinders
+    La Casa de Papel / Lupin
+    Stranger Things / Dark
+    Squid Game / Alice in Borderland
+    The Walking Dead / The Last of Us
+    Prison Break / 24 heures chrono
+    Friends / How I Met Your Mother
+    The Big Bang Theory / Brooklyn Nine-Nine
+    The Office / Modern Family
+    Kaamelott / Bref
+    Validé / Braqueurs
+    Plus belle la vie / Demain nous appartient
+    Koh-Lanta / Fort Boyard
+    Les Marseillais / Les Anges
+    Sex Education / Skam France
+    Élite / Gossip Girl
+    Emily in Paris / Sex and the City
+    You / Dexter
+    Black Mirror / Love, Death & Robots
+    Wednesday / La Famille Addams
+    Grey's Anatomy / Dr House
+    Sherlock / Esprits Criminels
+    Naruto / Dragon Ball Z
+    One Piece / Bleach
+    Demon Slayer / Jujutsu Kaisen
+    L'Attaque des Titans / Death Note
+    Pokémon / Digimon
+    Les Simpson / Family Guy
+    South Park / Rick et Morty
+  `)},
 };
 const SNIPER_Q = [
   "Qui est le plus capable de finir la soirée le premier ?",
@@ -2284,6 +2359,10 @@ function mimesConfig(){
   render(`
     <div class="topbar"><div class="back" onclick="gameSelect()">‹</div><div><div class="eyebrow">Le jeu des mimes</div><h2>Les réglages</h2></div></div>
     <p class="muted">Le téléphone sur le front, les autres miment. Penche-le vers l'avant si tu trouves, vers le haut pour passer.</p>
+    <div class="gap-s"></div>
+    <p class="muted">${sansAlcool()
+      ? "Le plus faible de la manche prend un gage."
+      : "Le plus faible de la manche boit autant de gorgées qu'il a deviné de mots."}</p>
     <div class="gap"></div>
     <div class="flabel">Format</div>
     <div class="grid2" id="mimeFmt">
@@ -2711,8 +2790,13 @@ function mimesResults(){
   const min=rows[rows.length-1].pts;
   const perdants=rows.filter(r=>r.pts===min);
   const egalite=perdants.length===rows.length;
-  // zéro mot trouvé : la note est salée. Égalité générale : tout le monde trinque un coup.
-  const n = egalite ? 1 : (min===0 ? 3 : 2);
+  /* Avec alcool : le perdant boit autant de gorgées qu'il a deviné de mots — moins il
+     en trouve, moins il boit, mais il boit toujours au moins un coup. Sans alcool on
+     garde l'échelle des gages (1 à 3), sinon le niveau du défi n'aurait plus de sens :
+     zéro mot trouvé = gage costaud. Égalité générale : tout le monde trinque un coup. */
+  const n = egalite ? 1
+          : sansAlcool() ? (min===0 ? 3 : 2)
+          : Math.max(1,min);
   const punis=[];
   perdants.forEach(r=>r.membres.forEach(m=>{ addDrinks(m,n); punis.push([m,n]); }));
   const noms=punis.map(p=>p[0]);
@@ -2733,7 +2817,9 @@ function mimesResults(){
       <p style="font-size:16px;font-weight:750">${egalite
         ? `Égalité parfaite — ${sanctionGroupe(noms,n)} 😐`
         : sanctionGroupe(noms,n)}</p>
-      ${(!egalite&&min===0)?`<div class="gap-s"></div><p class="muted">Zéro mot trouvé : la sanction est majorée.</p>`:''}
+      ${egalite ? '' : sansAlcool()
+        ? (min===0 ? `<div class="gap-s"></div><p class="muted">Zéro mot trouvé : la sanction est majorée.</p>` : '')
+        : `<div class="gap-s"></div><p class="muted">Une gorgée par mot deviné${min===0?' — et un coup minimum, même à zéro':''}.</p>`}
     </div>
     <div class="spacer"></div>
     ${gages

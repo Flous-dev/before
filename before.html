@@ -413,6 +413,23 @@
   .pcard .s{font-size:52px;text-align:center;}
   .pcard.red{color:#bd3a56;}
   .pcard .bot{transform:rotate(180deg);font-size:28px;font-weight:800;letter-spacing:-1px;}
+  /* les quatre cartes d'un passage de Black(out) Jack, côte à côte */
+  .bjrow{display:flex;gap:8px;justify-content:center;align-items:center;}
+  .pcard.mini{width:68px;height:95px;padding:8px 9px;border-radius:13px;margin:0;
+    justify-content:flex-start;animation:none;}
+  .pcard.mini .v{font-size:14.5px;}
+  .pcard.mini .s{font-size:27px;flex:1;display:flex;align-items:center;justify-content:center;}
+  .pcard.mini.neuve{animation:flip .4s ease;}
+  .pcard.slot{background:linear-gradient(160deg,#191831,#111024);border:1px dashed rgba(255,255,255,.13);
+    box-shadow:none;color:rgba(255,255,255,.18);font-size:22px;font-weight:800;
+    align-items:center;justify-content:center;}
+  .bjdots{display:flex;gap:8px;justify-content:center;}
+  .bjdots i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.12);transition:.25s;}
+  .bjdots i.now{background:var(--violet2);box-shadow:0 0 0 4px rgba(154,139,232,.15);}
+  .bjdots i.ok{background:var(--mint);}
+  .bjdots i.ko{background:var(--coral);}
+  .bjq{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+  .bjq .btn{justify-content:center;text-align:center;white-space:nowrap;padding-left:8px;padding-right:8px;}
 
   /* ===== bouton photo flottant ===== */
   .floatCam{
@@ -652,6 +669,7 @@
     padding:6px 4px;text-wrap:balance;overflow:hidden;
   }
   .mimeverdict{font-size:clamp(30px,7.4vmax,64px);font-weight:900;letter-spacing:-1px;}
+  .mimeby{display:block;font-size:clamp(11px,2.1vmax,16px);font-weight:650;opacity:.5;margin-top:10px;letter-spacing:0;}
   .mimeverdict small{display:block;font-size:clamp(13px,2.6vmax,19px);font-weight:650;opacity:.72;margin-top:8px;letter-spacing:0;}
 
   .mimehints{display:flex;gap:8px;flex:none;}
@@ -684,10 +702,8 @@
   /* les cinq durées doivent tenir sur une seule ligne, même sur un petit écran */
   #mimeDurees .chipf{padding:7px 10px;}
   .teamacts .btn{white-space:nowrap;justify-content:center;gap:7px;padding-left:10px;padding-right:10px;}
-  /* 7 thèmes à l'écran : version resserrée pour que le bouton reste à portée */
-  .grid2.tight .selcard{padding:12px 10px;}
-  .grid2.tight .selcard .e{font-size:24px;}
-  .grid2.tight .selcard div{margin-top:5px;font-size:13px;}
+  /* les trois sources de mots doivent tenir sur une ligne */
+  #mimeSrc .chipf{display:flex;align-items:center;gap:5px;padding:7px 11px;}
   .wordlog{display:flex;flex-wrap:wrap;gap:7px;}
   .wchip{
     display:flex;align-items:center;gap:7px;padding:8px 12px;border-radius:999px;cursor:pointer;
@@ -740,6 +756,7 @@ const state = {
   randomTheme:false,
   pairDecks:null,         // paquets de paires mélangés, un par thème (voir drawPair)
   mimeDecks:null,         // idem pour les mots du jeu des mimes (voir drawMime)
+  mimeJokes:[],           // private jokes des joueurs : {w, by} — voir mimesJokes
   roleHist:null,          // qui a été scamer/PNJ récemment (voir pickRole)
   partyEnded:false,       // true quand la soirée est terminée (masque le classement "en cours")
   after:{city:'paris',type:'all',theme:'all',price:'all',openOnly:'open',sort:'dist'},
@@ -1043,349 +1060,366 @@ const GAGES = {
 const GAGE_NIV = ['Express','Corsé','Costaud'];
 
 /* ---------- mots du jeu des mimes ----------
-   Un mot (ou une situation) par ligne. Pour en ajouter : colle une
-   nouvelle ligne dans le bloc du thème, rien d'autre à toucher. */
+   Un seul paquet, tiré au hasard : plus de catégories à choisir, on lance
+   et c'est parti. Un mot (ou une situation) par ligne — pour en ajouter,
+   colle une nouvelle ligne, rien d'autre à toucher. Les « private jokes »
+   des joueurs vivent ailleurs, dans state.mimeJokes (voir mimesJokes). */
 function parseWords(txt){ return txt.split('\n').map(l=>l.trim()).filter(Boolean); }
-const MIMES = {
-  actions:{label:'Actions',e:'🤸',words:parseWords(`
-    Se brosser les dents
-    Faire du vélo
-    Nager le crawl
-    Éternuer
-    Se faire tatouer
-    Repasser une chemise
-    Jouer au golf
-    Escalader une falaise
-    Faire la vaisselle
-    Se maquiller
-    Accoucher
-    Passer l'aspirateur
-    Marcher sur la lune
-    Se noyer
-    Jongler
-    Faire un selfie
-    Ronfler
-    Tondre la pelouse
-    Danser la salsa
-    Boxer
-    Se raser
-    Pêcher à la ligne
-    Monter une tente
-    Trébucher dans l'escalier
-    Se réveiller en retard
-    Bâiller
-    Faire du surf
-    Peindre un mur
-    Jouer de la batterie
-    Taper à l'ordinateur
-    Compter des billets
-    Se laver les cheveux
-    Faire du karaté
-    Sauter en parachute
-    Tirer un penalty
-    Éplucher une banane
-    Conduire une voiture
-    Ramer dans une barque
-    Faire du hula hoop
-    Se couper les ongles
-    Souffler ses bougies
-    Faire le poirier
-    Mettre des chaussettes
-    Attraper un moustique
-    Ouvrir une bouteille
-    Faire des pompes
-    Se cogner l'orteil
-    Chercher ses clés
-    Faire la queue
-    Monter une étagère
-    Repousser un chien
-    Marcher contre le vent
-    Sentir quelque chose de louche
-    Manger trop épicé
-    Se faire arracher une dent
-  `)},
-  cine:{label:'Films & séries',e:'🎬',words:parseWords(`
-    Titanic
-    Le Roi Lion
-    Harry Potter
-    Spider-Man
-    Batman
-    Fast and Furious
-    Jurassic Park
-    Star Wars
-    Avatar
-    Shrek
-    La Reine des Neiges
-    Les Dents de la mer
-    Rocky
-    Matrix
-    Le Parrain
-    E.T.
-    Pirates des Caraïbes
-    Indiana Jones
-    Toy Story
-    Le Seigneur des Anneaux
-    Les Visiteurs
-    Intouchables
-    Astérix et Obélix
-    Taxi
-    La Casa de Papel
-    Squid Game
-    Peaky Blinders
-    Game of Thrones
-    Stranger Things
-    Breaking Bad
-    Narcos
-    Prison Break
-    Friends
-    Vaiana
-    Kung Fu Panda
-    Les Minions
-    Ratatouille
-    Le Monde de Nemo
-    Madagascar
-    Cars
-    Alien
-    King Kong
-    Terminator
-    Mission Impossible
-    James Bond
-    Joker
-    Black Panther
-    Gladiator
-    Forrest Gump
-    Le Loup de Wall Street
-    Bienvenue chez les Ch'tis
-    La Haine
-    Lupin
-    Validé
-    Koh-Lanta
-    Top Chef
-  `)},
-  perso:{label:'Personnalités',e:'🌟',words:parseWords(`
-    Michael Jackson
-    Elvis Presley
-    Charlie Chaplin
-    Mr Bean
-    Napoléon
-    Cristiano Ronaldo
-    Lionel Messi
-    Kylian Mbappé
-    Zinédine Zidane
-    Usain Bolt
-    Mike Tyson
-    Muhammad Ali
-    Rafael Nadal
-    Elon Musk
-    Donald Trump
-    Emmanuel Macron
-    Barack Obama
-    Albert Einstein
-    Léonard de Vinci
-    Mozart
-    Beyoncé
-    Rihanna
-    Lady Gaga
-    Madonna
-    Aya Nakamura
-    Jul
-    Booba
-    Orelsan
-    Squeezie
-    MrBeast
-    Michou
-    Cyril Hanouna
-    Jean Dujardin
-    Omar Sy
-    Kev Adams
-    Teddy Riner
-    Tony Parker
-    Gims
-    Soprano
-    Dua Lipa
-    Shakira
-    Michael Jordan
-    LeBron James
-    Jean-Claude Van Damme
-    Bruce Lee
-    Johnny Hallyday
-    Céline Dion
-    Stromae
-    Angèle
-    Damso
-    Tibo InShape
-    Léna Situations
-    Franck Ribéry
-    Le Père Noël
-  `)},
-  animaux:{label:'Animaux',e:'🦧',words:parseWords(`
-    Girafe
-    Kangourou
-    Pingouin
-    Éléphant
-    Serpent
-    Crabe
-    Papillon
-    Gorille
-    Escargot
-    Autruche
-    Requin
-    Poulpe
-    Flamant rose
-    Chauve-souris
-    Grenouille
-    Cheval
-    Coq
-    Hérisson
-    Paresseux
-    Dauphin
-    Araignée
-    Taureau
-    Chameau
-    Hibou
-    Ours
-    Loup
-    Abeille
-    Tortue
-    Perroquet
-    Panda
-    Crocodile
-    Mouette
-    Souris
-    Cafard
-    Écureuil
-    Pigeon
-    Lapin
-    Vache
-    Cochon
-    Canard
-    Singe
-    Lion
-    Zèbre
-    Rhinocéros
-    Baleine
-    Méduse
-    Kangourou boxeur
-    Poule qui pond
-    Chat qui se lèche
-    Chien qui creuse
-  `)},
-  metiers:{label:'Objets & métiers',e:'🧰',words:parseWords(`
-    Parapluie
-    Aspirateur
-    Tire-bouchon
-    Guitare
-    Trampoline
-    Micro-ondes
-    Menottes
-    Perceuse
-    Balançoire
-    Échelle
-    Trottinette
-    Machine à laver
-    Sèche-cheveux
-    Marteau
-    Ciseaux
-    Appareil photo
-    Boussole
-    Extincteur
-    Chirurgien
-    Pompier
-    Coiffeur
-    Serveur
-    Policier
-    Boulanger
-    Dentiste
-    Pilote d'avion
-    Prof de sport
-    Magicien
-    Clown
-    DJ
-    Chauffeur de taxi
-    Astronaute
-    Plombier
-    Vétérinaire
-    Juge
-    Boucher
-    Facteur
-    Peintre
-    Barman
-    Videur de boîte
-    Steward
-    Maçon
-    Jardinier
-    Caissière
-    Cascadeur
-    Arbitre de foot
-    Statue vivante
-    Livreur à vélo
-    Photographe de mariage
-    Prof de maths
-  `)},
-  soiree:{label:'Spécial soirée',e:'🍸',words:parseWords(`
-    Un shot de tequila
-    Le sol qui tourne
-    Un karaoké raté
-    Le dernier métro
-    La gueule de bois
-    Un fou rire
-    Un slow gênant
-    Le vigile qui refuse l'entrée
-    Un kebab à 4h du matin
-    Le vestiaire à la fermeture
-    Le pote qui dort sur le canapé
-    Commander un Uber
-    Danser sur la table
-    Le message qu'on regrette
-    Le réveil du lendemain
-    Une bataille de coussins
-    Se faire draguer maladroitement
-    Le selfie de groupe
-    Le blind test
-    Le beer pong
-    La queue aux toilettes
-    Un mojito
-    Le voisin qui tape au mur
-    Renverser son verre
-    Perdre son téléphone
-    La photo de fin de soirée
-    Le pote qui raconte sa vie
-    Le premier sur la piste
-    Chercher du réseau
-    La playlist qu'on coupe
-    Le batteur de la soirée
-    Le jeu de la bouteille
-    Ranger l'appart au petit matin
-    Arriver en retard au before
-    Le pote qui ne paie jamais
-    Chanter faux à tue-tête
-    Le shot de trop
-    Se faire réveiller par la lumière
-    Le taxi qui annule
-    Un pot de Nutella à 3h
-    Le pote qui parle à tout le monde
-    Retrouver sa veste
-    L'ascenseur bondé
-    La photo ratée au flash
-  `)},
-};
-const MIME_MIX = () => Object.keys(MIMES).reduce((a,k)=>a.concat(MIMES[k].words),[]);
+const MOTS_MIMES = parseWords(`
+Se brosser les dents
+Éternuer très fort
+Accoucher
+Marcher sur la Lune
+Se noyer dans 20 cm d'eau
+Faire un selfie raté
+Ronfler comme un tracteur
+Trébucher dans l'escalier
+Se réveiller en retard
+Se cogner l'orteil
+Attraper un moustique
+Manger trop épicé
+Se faire arracher une dent
+Chercher ses clés partout
+Marcher contre le vent
+Sentir un truc louche
+Ouvrir un bocal impossible
+Monter un meuble IKEA
+Faire semblant d'écouter
+Se prendre une porte vitrée
+Glisser sur une peau de banane
+Faire semblant de dormir
+Se faire piquer par une guêpe
+Enfiler un jean trop serré
+Sortir d'une piscine glacée
+Rater une marche
+Se gratter le dos avec une règle
+Courir après le bus
+Souffler ses bougies
+Faire le poirier
+Faire des pompes en tremblant
+Éplucher une banane
+Ramer dans une barque
+Sauter en parachute
+Escalader une falaise
+Nager le crawl
+Faire du hula hoop
+Jongler
+Faire du karaté
+Tirer un penalty et le rater
+Danser la salsa tout seul
+Jouer de la batterie
+Taper à l'ordinateur très vite
+Compter une liasse de billets
+Passer l'aspirateur
+Repasser une chemise
+Tondre la pelouse
+Peindre un plafond
+Monter une tente
+Se faire tatouer
+Se raser en tremblant
+Se maquiller dans le noir
+Se couper les ongles
+Mettre des chaussettes mouillées
+Faire la queue depuis deux heures
+Repousser un chien qui saute
+Pêcher et ne rien attraper
+Conduire avec un GPS qui bugue
+Chercher du réseau
+Envoyer un vocal de huit minutes
+Faire semblant d'aimer un cadeau
+Rire à une blague pas drôle
+Se prendre en photo quarante fois
+Lire un message et ne pas répondre
+Faire le mort
+Draguer et se prendre un vent
+Attendre quelqu'un qui ne vient pas
+Remonter un escalator qui descend
+Ouvrir un paquet de chips en silence
+Manger une glace qui fond trop vite
+Boire un café brûlant
+Bâiller de façon contagieuse
+Diriger un orchestre
+Faire un discours de mariage
+Pleurer devant un film
+Se perdre dans un parking
+Porter quinze sacs de courses
+Rater son créneau dix fois
+Sortir de chez le coiffeur trop court
+Marcher pieds nus sur du Lego
+Se faire klaxonner au feu vert
+Retenir un fou rire à un enterrement
+Sourire sur une photo trop longtemps
+Régler une chaise de bureau
+Essayer d'ouvrir la mauvaise voiture
+Michael Jackson
+Charlie Chaplin
+Mr Bean
+Elvis Presley
+Napoléon
+Cristiano Ronaldo
+Lionel Messi
+Kylian Mbappé
+Zinédine Zidane
+Usain Bolt
+Mike Tyson
+Rafael Nadal
+Elon Musk
+Donald Trump
+Emmanuel Macron
+Albert Einstein
+Mozart
+Beyoncé
+Rihanna
+Lady Gaga
+Aya Nakamura
+Jul
+Booba
+Orelsan
+Squeezie
+MrBeast
+Cyril Hanouna
+Omar Sy
+Kev Adams
+Teddy Riner
+Gims
+Michael Jordan
+LeBron James
+Jean-Claude Van Damme
+Bruce Lee
+Céline Dion
+Stromae
+Angèle
+Tibo InShape
+Léna Situations
+Le Père Noël
+Shakira
+Dua Lipa
+Ronaldinho
+Zlatan Ibrahimović
+Dark Vador
+Titanic
+Le Roi Lion
+Harry Potter
+Spider-Man
+Batman
+Fast and Furious
+Jurassic Park
+Star Wars
+Avatar
+Shrek
+La Reine des Neiges
+Les Dents de la mer
+Matrix
+E.T.
+Pirates des Caraïbes
+Indiana Jones
+Toy Story
+Le Seigneur des Anneaux
+Les Visiteurs
+Intouchables
+Astérix et Obélix
+La Casa de Papel
+Squid Game
+Game of Thrones
+Stranger Things
+Breaking Bad
+Prison Break
+Friends
+Vaiana
+Kung Fu Panda
+Les Minions
+Ratatouille
+Le Monde de Nemo
+Alien
+King Kong
+Terminator
+Mission Impossible
+James Bond
+Joker
+Gladiator
+Forrest Gump
+Le Loup de Wall Street
+Bienvenue chez les Ch'tis
+Koh-Lanta
+Top Chef
+Wednesday
+Emily in Paris
+Naruto
+Dragon Ball Z
+One Piece
+Pokémon
+Les Simpson
+Girafe
+Kangourou boxeur
+Pingouin
+Éléphant
+Serpent
+Crabe
+Papillon
+Gorille
+Escargot
+Autruche
+Requin
+Poulpe
+Flamant rose
+Chauve-souris
+Grenouille
+Coq
+Hérisson
+Paresseux
+Dauphin
+Araignée
+Taureau
+Chameau
+Hibou
+Abeille
+Tortue sur le dos
+Perroquet
+Panda
+Crocodile
+Mouette qui vole une frite
+Cafard
+Écureuil
+Pigeon boiteux
+Méduse
+Poule qui pond
+Chat qui se lèche
+Chien qui creuse
+Lama qui crache
+Vache qui rumine
+Cochon dans la boue
+Parapluie retourné
+Aspirateur
+Tire-bouchon
+Guitare
+Trampoline
+Micro-ondes
+Menottes
+Perceuse
+Balançoire
+Échelle
+Trottinette
+Machine à laver en essorage
+Sèche-cheveux
+Marteau
+Ciseaux
+Appareil photo
+Extincteur
+Chirurgien
+Pompier
+Coiffeur
+Serveur débordé
+Policier
+Boulanger
+Dentiste
+Pilote d'avion
+Prof de sport
+Magicien
+Clown
+DJ
+Chauffeur de taxi
+Astronaute
+Plombier
+Vétérinaire
+Juge
+Facteur
+Barman
+Videur de boîte
+Steward qui montre les issues
+Jardinier
+Caissière
+Cascadeur
+Arbitre de foot
+Statue vivante
+Livreur à vélo
+Photographe de mariage
+Prof de maths qui s'énerve
+Guide touristique
+Un shot de tequila
+Le sol qui tourne
+Un karaoké raté
+Le dernier métro
+La gueule de bois
+Un fou rire incontrôlable
+Un slow gênant
+Le vigile qui refuse l'entrée
+Un kebab à quatre heures du matin
+Le pote qui dort sur le canapé
+Commander un Uber
+Danser sur la table
+Le message qu'on regrette
+Le réveil du lendemain
+Une bataille de coussins
+Le selfie de groupe
+Le blind test
+Le beer pong
+La queue aux toilettes
+Le voisin qui tape au mur
+Renverser son verre sur quelqu'un
+Perdre son téléphone
+Le pote qui raconte sa vie
+Le premier sur la piste
+La playlist qu'on coupe
+Le jeu de la bouteille
+Ranger l'appart au petit matin
+Arriver en retard au before
+Le pote qui ne paie jamais
+Chanter faux à tue-tête
+Le shot de trop
+Le taxi qui annule
+Un pot de Nutella à trois heures
+Retrouver sa veste
+L'ascenseur bondé
+Le pote qui veut rentrer à 22h
+Faire semblant d'être sobre
+Le mec qui bloque le frigo
+Chercher son chargeur
+Le dernier morceau de pizza
+`);
+
+/* ---------- private jokes ----------
+   Chaque mot ajouté garde le nom de celui qui l'a écrit : il ne tombera
+   jamais sur lui (ni sur son équipe), sinon il devinerait sa propre vanne.
+   Elles survivent d'une soirée à l'autre — on ne réécrit pas ses classiques. */
+const JOKES_KEY='before.jokes';
+function loadJokes(){
+  try{ const raw=localStorage.getItem(JOKES_KEY); state.mimeJokes = raw ? (JSON.parse(raw)||[]) : []; }
+  catch(e){ state.mimeJokes=[]; }
+}
+function saveJokes(){
+  try{ localStorage.setItem(JOKES_KEY, JSON.stringify(state.mimeJokes||[])); }catch(e){}
+}
 
 /* ---------- tirage des mots, sans doublon dans la soirée ----------
-   Même principe que les paires : un paquet mélangé, on pioche dedans.
-   Quand il est vide (soirée marathon), on remélange tout. */
+   Un paquet mélangé, on pioche dedans ; quand il est vide (soirée marathon)
+   on remélange tout. `exclus` = ceux qui sont en train de deviner : leurs
+   private jokes sont remises sous la pile, elles resserviront pour d'autres. */
+function mimePool(){
+  const jokes=(state.mimeJokes||[]).map(j=>({w:j.w, by:j.by}));
+  if(mimes.source==='perso') return jokes;
+  const base=MOTS_MIMES.map(w=>({w, by:null}));
+  return mimes.source==='mix' ? base.concat(jokes) : base;
+}
 function resetMimeDecks(){
-  state.mimeDecks={};
-  Object.keys(MIMES).forEach(k=>{ state.mimeDecks[k]=shuffle(MIMES[k].words); });
-  state.mimeDecks.mix=shuffle(MIME_MIX());
+  state.mimeDecks={ src:(typeof mimes!=='undefined'?mimes.source:'base'), deck:shuffle(mimePool()) };
 }
-function drawMime(k){
-  if(!state.mimeDecks) resetMimeDecks();
-  let d=state.mimeDecks[k];
-  if(!d || !d.length){ d=state.mimeDecks[k]=shuffle(k==='mix'?MIME_MIX():MIMES[k].words); }
-  return d.pop();
+function drawMime(exclus){
+  exclus=exclus||[];
+  if(!state.mimeDecks || state.mimeDecks.src!==mimes.source) resetMimeDecks();
+  for(let essai=0; essai<2; essai++){
+    const d=state.mimeDecks.deck, garde=[];
+    let pris=null;
+    while(d.length){
+      const c=d.pop();
+      if(!c.by || exclus.indexOf(c.by)<0){ pris=c; break; }
+      garde.push(c);                       // sa propre vanne : elle retourne sous la pile
+    }
+    state.mimeDecks.deck = garde.concat(d);
+    if(pris) return pris;
+    resetMimeDecks();                      // paquet vide : on remélange et on retente
+  }
+  return { w: rnd(MOTS_MIMES), by:null };  // filet : il n'y avait que ses propres jokes
 }
-
 
 /* ---------- utils ---------- */
 const $ = (s,el=document)=>el.querySelector(s);
@@ -1723,7 +1757,7 @@ function gameSelect(){
     </button>
     <div class="gap"></div>
     <button class="btn game g3" onclick="bjStart()">
-      <span class="ico">🃏</span><span class="col">BLACK(OUT) JACK<small>Plus ou moins ? Bonne chance.</small></span>
+      <span class="ico">🃏</span><span class="col">BLACK(OUT) JACK<small>Quatre paris d'affilée. Bonne chance.</small></span>
     </button>
     <div class="gap"></div>
     <button class="btn game g4" onclick="mimesConfig()">
@@ -2137,121 +2171,166 @@ function sniperShare(name,autre){
    JEU 3 — BLACK(OUT) JACK
    ============================================================ */
 let bj={};
-const SUITS=[{s:'♠',r:false},{s:'♥',r:true},{s:'♦',r:true},{s:'♣',r:false}];
+const SUITS=[{s:'♠',n:'Pique',r:false},{s:'♥',n:'Cœur',r:true},{s:'♦',n:'Carreau',r:true},{s:'♣',n:'Trèfle',r:false}];
 const RANKS=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+const BJ_CADEAU=5;                        // le pactole du sans-faute
+const BJ_ETAPES=[
+  { t:'Rouge ou noir ?',    s:'Ta première carte, à l\'aveugle.' },
+  { t:'Plus ou moins ?',    s:'La deuxième, comparée à la première.' },
+  { t:'Dedans ou dehors ?', s:'La troisième : entre tes deux cartes, ou en dehors.' },
+  { t:'Et le signe ?',      s:'La quatrième : pique, cœur, carreau ou trèfle.' },
+];
 function newDeck(){
   let d=[]; SUITS.forEach(su=>RANKS.forEach((r,i)=>d.push({r,v:i+1,s:su.s,red:su.r}))); return shuffle(d);
 }
 function bjStart(){
-  bj={ deck:newDeck(), idx:0, turn:0, streak:0, current:null };
-  bj.current=bj.deck[bj.idx++];
-  bjTurn();
+  bj={ deck:newDeck(), idx:0, turn:0, give:{}, pending:0 };
+  bjPlayer();
 }
-function bjTurn(){
-  if(bj.deck.length-bj.idx<2){ bj.deck=newDeck(); bj.idx=0; bj.current=bj.deck[bj.idx++]; }
-  const player=state.players[bj.turn%state.players.length];
-  bj.player=player.name;
+function bjPlayer(){
+  if(bj.deck.length-bj.idx<4){ bj.deck=newDeck(); bj.idx=0; }   // il faut quatre cartes par passage
+  bj.player=state.players[bj.turn%state.players.length].name;
+  bj.cards=[]; bj.step=0; bj.rep=null;
+  bjAsk();
+}
+
+/* ---------- le plateau : quatre emplacements, remplis un par un ---------- */
+function bjDots(res){
+  return `<div class="bjdots">${[0,1,2,3].map(i=>
+    `<i class="${i<bj.step?'ok':(i===bj.step?(res||'now'):'')}"></i>`).join('')}</div>`;
+}
+function cardMini(c,neuve){
+  return `<div class="pcard mini${c.red?' red':''}${neuve?' neuve':''}"><div class="v">${c.r}${c.s}</div><div class="s">${c.s}</div></div>`;
+}
+function bjTable(){
+  return `<div class="bjrow">${[0,1,2,3].map(i=>bj.cards[i]
+    ? cardMini(bj.cards[i], i===bj.cards.length-1)
+    : `<div class="pcard mini slot">${i+1}</div>`).join('')}</div>`;
+}
+function bjChoix(){
+  const b=(cls,val,txt)=>`<button class="btn ${cls} sm" onclick="bjAnswer('${val}')">${txt}</button>`;
+  if(bj.step===0) return `<div class="bjq">${b('danger','r','🔴 Rouge')}${b('alt','n','⚫ Noir')}</div>`;
+  if(bj.step===1) return `<div class="bjq">${b('good','plus','⬆️ Plus')}${b('danger','moins','⬇️ Moins')}</div>`;
+  if(bj.step===2) return `<div class="bjq">${b('accent','dedans','↔️ Dedans')}${b('gold','dehors','↗️ Dehors')}</div>`;
+  return `<div class="bjq">${SUITS.map(su=>b(su.r?'danger':'alt',su.s,`${su.s} ${su.n}`)).join('')}</div>`;
+}
+function bjAsk(){
+  const e=BJ_ETAPES[bj.step];
   render(`
     <div class="topbar"><div class="back" onclick="gameSelect()">‹</div><h2>🃏 Black(out) Jack</h2></div>
     ${counterBar()}
     <div class="spacer"></div>
-    <p class="center"><b style="font-size:18px">${player.name}</b> · série : <b style="color:var(--gold)">${bj.streak}</b> 🔥</p>
-    <div class="gap"></div>
-    ${cardHTML(bj.current)}
-    <div class="gap"></div>
-    <p class="muted center">La prochaine carte sera…</p>
+    <p class="center"><b style="font-size:18px">${bj.player}</b> · étape ${bj.step+1} sur 4</p>
     <div class="gap-s"></div>
-    <div class="row">
-      <button class="btn good" onclick="bjGuess('up')">⬆️ Plus</button>
-      <button class="btn danger" onclick="bjGuess('down')">⬇️ Moins</button>
-    </div>
+    ${bjDots()}
+    <div class="gap"></div>
+    ${bjTable()}
+    <div class="gap"></div>
+    <p class="center" style="font-size:21px;font-weight:800;letter-spacing:-.4px">${e.t}</p>
+    <p class="muted center">${e.s}</p>
+    <div class="gap"></div>
+    ${bjChoix()}
+    <div class="gap-s"></div>
+    <p class="muted center">${bj.step===3
+      ? `Sans-faute : tu distribues ${unite(BJ_CADEAU)}. Raté : ${unite(4)} pour toi.`
+      : `Erreur ici : ${unite(bj.step+1)}.`}</p>
+    <div class="spacer"></div>
     <div class="spacer"></div>
     <button class="btn ghost sm" onclick="gameSelect()">Arrêter le jeu</button>
     <div style="height:6px"></div>
   `, true);
 }
-function cardHTML(c){
-  return `<div class="pcard ${c.red?'red':''}"><div class="v">${c.r} ${c.s}</div><div class="s">${c.s}</div><div class="bot">${c.r} ${c.s}</div></div>`;
-}
-function bjGuess(dir){
-  const next=bj.deck[bj.idx++];
-  const correct = dir==='up' ? next.v>=bj.current.v : next.v<=bj.current.v; // égalité = bon (clémence)
-  const prev=bj.current; bj.current=next;
-  if(correct){
-    bj.streak++;
-    if(bj.streak>=7){ bjJackpot(); return; }
-    bjReveal(prev,next,true);
-  }else{
-    const drinks=bj.streak+1; // 1ère erreur = 1 sanction, 2e = 2…
-    addDrinks(bj.player,drinks);
-    bj.pending=drinks;
-    bjReveal(prev,next,false,drinks);
+
+/* ---------- le verdict ----------
+   Une carte de même valeur fait perdre : sinon « plus » sur un as serait
+   un pari gagné d'avance, et « dehors » sur une paire aussi. */
+function bjJuge(c){
+  const cs=bj.cards;
+  if(bj.step===0) return bj.rep===(c.red?'r':'n');
+  if(bj.step===1) return bj.rep==='plus' ? c.v>cs[0].v : c.v<cs[0].v;
+  if(bj.step===2){
+    const lo=Math.min(cs[0].v,cs[1].v), hi=Math.max(cs[0].v,cs[1].v);
+    return bj.rep==='dedans' ? (c.v>lo && c.v<hi) : (c.v<lo || c.v>hi);
   }
+  return bj.rep===c.s;
 }
-function bjReveal(prev,next,correct,drinks){
-  const player=bj.player;
+function bjAnswer(rep){
+  if(bj.cards.length>bj.step) return;      // double tap : la carte est déjà tirée
+  bj.rep=rep;
+  const c=bj.deck[bj.idx++];
+  bj.cards.push(c);
+  if(bjJuge(c)) return bjReveal(true,0);
+  const n=bj.step+1;                       // 1ʳᵉ étape ratée = 1, 2ᵉ = 2, 3ᵉ = 3, 4ᵉ = 4
+  addDrinks(bj.player,n);
+  bj.pending=n;
+  bjReveal(false,n);
+}
+function bjDit(){
+  const l={r:'rouge', n:'noir', plus:'plus', moins:'moins', dedans:'entre les deux', dehors:'à l\'extérieur'};
+  if(l[bj.rep]) return l[bj.rep];
+  const su=SUITS.find(s=>s.s===bj.rep);
+  return su ? su.n.toLowerCase()+' '+su.s : bj.rep;
+}
+function bjReveal(ok,n){
+  const fini = ok && bj.step===3;
   render(`
-    <div class="topbar"><h2 style="margin:auto">${correct?'✅ Bien vu !':'❌ Perdu'}</h2></div>
+    <div class="topbar"><h2 style="margin:auto">${fini?'🎰 SANS-FAUTE':(ok?'✅ Bien vu':'❌ Perdu')}</h2></div>
     ${counterBar()}
-    <div class="gap"></div>
-    <div class="row" style="justify-content:center;gap:18px;align-items:center">
-      ${cardMini(prev)}<span style="font-size:24px">→</span>${cardMini(next)}
-    </div>
-    <div class="gap"></div>
-    <p class="center" style="font-size:16px">${correct
-      ? `${player} continue ! Série de <b style="color:var(--gold)">${bj.streak}</b> 🔥`
-      : `${player} s'est trompé·e · <b style="color:var(--gold)">${unite(drinks)}</b> ${sansAlcool()?'🔥':'🍺'}`}</p>
     <div class="spacer"></div>
-    ${correct
-      ? `<button class="btn good" onclick="bjTurn()">Carte suivante →</button>`
-      : `<button class="btn" onclick="bjNextPlayer()">Joueur suivant →</button>`}
+    ${bjDots(ok?'ok':'ko')}
+    <div class="gap"></div>
+    ${bjTable()}
+    <div class="gap"></div>
+    <p class="center" style="font-size:16px">${ok
+      ? `<b>${bj.player}</b> annonçait <b>${bjDit()}</b>. C'était bon.`
+      : `<b>${bj.player}</b> annonçait <b>${bjDit()}</b>. Raté à l'étape ${bj.step+1} — <b style="color:var(--gold)">${unite(n)}</b> ${sansAlcool()?'🔥':'🍺'}`}</p>
+    ${fini?`<div class="gap"></div><div class="card tint-gold center">
+      <p style="font-size:16px;font-weight:750">Quatre paris, quatre fois juste. À toi de distribuer ${unite(BJ_CADEAU)} 🎁</p></div>`:''}
+    <div class="spacer"></div>
+    ${fini ? `<button class="btn gold" onclick="bjJackpot()">Distribuer →</button>`
+      : ok ? `<button class="btn good" onclick="bjSuite()">Étape ${bj.step+2} sur 4 →</button>`
+           : `<button class="btn" onclick="bjNextPlayer()">Joueur suivant →</button>`}
     <div style="height:6px"></div>
   `, true);
 }
+function bjSuite(){ bj.step++; bjAsk(); }
 function bjNextPlayer(){
   const n=bj.pending||0, joueur=bj.player; bj.pending=0;
-  compteManche('bj');   // la série du joueur s'arrête ici : une manche de plus
-  gagesAfter([[joueur,n]], ()=>{
-    bj.streak=0; bj.turn++; bj.current=bj.deck[bj.idx++]; bjTurn();
-  })();
+  compteManche('bj');                      // le passage du joueur s'arrête ici : une manche de plus
+  gagesAfter([[joueur,n]], ()=>{ bj.turn++; bjPlayer(); })();
 }
-function cardMini(c){
-  return `<div class="pcard ${c.red?'red':''}" style="width:90px;height:126px;padding:10px"><div class="v" style="font-size:18px">${c.r}${c.s}</div><div class="s" style="font-size:30px">${c.s}</div><div class="bot" style="font-size:18px">${c.r}${c.s}</div></div>`;
-}
-function bjJackpot(){
-  bj.toGive=7; bj.give={};
-  bjDistribute();
-}
+
+/* ---------- le sans-faute : cinq à placer où il veut ---------- */
+function bjJackpot(){ bj.give={}; bjDistribute(); }
 function bjDistribute(){
   const given=Object.values(bj.give||{}).reduce((a,b)=>a+b,0);
-  const left=7-given;
+  const left=BJ_CADEAU-given;
   render(`
-    <div class="topbar"><h2 style="margin:auto">🎰 JACKPOT — 7 d'affilée !</h2></div>
-    <p class="center muted"><b>${bj.player}</b> distribue <b style="color:var(--gold)">${unite(7)}</b> comme il/elle veut. Reste : <b style="color:var(--gold)">${left}</b></p>
+    <div class="topbar"><h2 style="margin:auto">🎰 Sans-faute !</h2></div>
+    <p class="center muted"><b>${bj.player}</b> place <b style="color:var(--gold)">${unite(BJ_CADEAU)}</b> comme il/elle veut. Reste : <b style="color:var(--gold)">${left}</b></p>
     <div class="gap"></div>
     <div class="list-pick">
       ${state.players.map(p=>`<div class="pick" onclick="bjGive('${p.name.replace(/'/g,"\\'")}')">${p.name}<span style="color:var(--gold)">${bj.give[p.name]||0} ${sansAlcool()?'🔥':'🍺'}</span></div>`).join('')}
     </div>
+    <div class="gap-s"></div>
+    ${given?`<button class="btn ghost sm" onclick="bj.give={};bjDistribute()"><span class="ico">↺</span>Recommencer le partage</button>`:''}
     <div class="spacer"></div>
-    <button class="btn good" ${left>0?'disabled':''} onclick="bjJackpotDone()">${left>0?`Distribue encore ${left}`:'Valider le partage →'}</button>
+    <button class="btn good" ${left>0?'disabled':''} onclick="bjJackpotDone()">${left>0?`Encore ${left}`:'Valider le partage →'}</button>
     <div style="height:8px"></div>
   `, true);
 }
 function bjGive(name){
   const given=Object.values(bj.give).reduce((a,b)=>a+b,0);
-  if(given>=7){toast(`${unite(7)} déjà distribuées`);return;}
+  if(given>=BJ_CADEAU){ toast(`${unite(BJ_CADEAU)} déjà placées`); return; }
   bj.give[name]=(bj.give[name]||0)+1; bjDistribute();
 }
 function bjJackpotDone(){
   const parts=Object.entries(bj.give);
-  parts.forEach(([n,v])=>addDrinks(n,v,bj.player));    // le jackpot : c'est lui qui distribue
+  parts.forEach(([n,v])=>addDrinks(n,v,bj.player));    // le sans-faute : c'est lui qui distribue
   toast('Partage enregistré '+(sansAlcool()?'🔥':'🍺'));
   compteManche('bj');
-  gagesAfter(parts, ()=>{
-    bj.streak=0; bj.turn++; bj.current=bj.deck[bj.idx++]; bjTurn();
-  })();
+  gagesAfter(parts, ()=>{ bj.turn++; bjPlayer(); })();
 }
-
 
 /* ============================================================
    JEU 4 — LE JEU DES MIMES
@@ -2269,7 +2348,8 @@ function bjJackpotDone(){
    deviennent des zones tactiles.
    ============================================================ */
 const MIME_DUREES = [90,120,150,180,210];   // 1m30 · 2min · 2m30 · 3min · 3m30
-let mimes = { rotDir:-1, rotLock:false, format:'solo', duree:120, theme:'mix', manche:0, swap:{}, scores:{}, teams:null, turn:0, log:[], order:null };
+let mimes = { rotDir:-1, rotLock:false, format:'solo', duree:120, source:'base', manche:0,
+              swap:{}, scores:{}, teams:null, turn:0, log:[], order:null, exclus:[] };
 
 /* ---------- son : le joueur ne voit pas l'écran, il faut l'entendre ---------- */
 let mimeAC=null;
@@ -2332,6 +2412,8 @@ function mimesConfig(){
   const n=state.players.length;
   if(n<4) return mimesTooFew();
   if(mimes.format==='team' && n%2) mimes.format='solo';
+  const nj=(state.mimeJokes||[]).length;
+  if(mimes.source!=='base' && !nj) mimes.source='base';   // les jokes ont été effacées entre-temps
   const pair=n%2===0;
   render(`
     <div class="topbar"><div class="back" onclick="gameSelect()">‹</div><div><div class="eyebrow">Le jeu des mimes</div><h2>Les réglages</h2></div></div>
@@ -2355,11 +2437,14 @@ function mimesConfig(){
     </div>
     <p class="muted" id="mimeTot">${mimesTotal()}</p>
     <div class="gap"></div>
-    <div class="flabel">Thème</div>
-    <div class="grid2 tight" id="mimeThemes">
-      <div class="selcard${mimes.theme==='mix'?' on':''}" data-k="mix" onclick="mimesTheme('mix')"><div class="e">🎲</div><div>Mélange</div></div>
-      ${Object.keys(MIMES).map(k=>`<div class="selcard${mimes.theme===k?' on':''}" data-k="${k}" onclick="mimesTheme('${k}')"><div class="e">${MIMES[k].e}</div><div>${MIMES[k].label}</div></div>`).join('')}
+    <div class="flabel">Les mots</div>
+    <div class="filters" id="mimeSrc">
+      ${[['base','🎲','Classiques'],['mix','🔀','Mélange'],['perso','🔒','Nos jokes']]
+        .map(([k,e,l])=>`<div class="chipf${mimes.source===k?' on':''}" data-s="${k}" onclick="mimesSource('${k}')"><span>${e}</span>${l}</div>`).join('')}
     </div>
+    <p class="muted" id="mimeSrcHint">${mimesSrcHint()}</p>
+    <div class="gap-s"></div>
+    <button class="btn ghost sm" onclick="mimesJokes()"><span class="ico">✏️</span>Nos private jokes${nj?` · ${nj}`:''}</button>
     <div class="gap"></div>
     <button class="btn good" onclick="mimesStart()">Commencer →</button>
     <div style="height:10px"></div>
@@ -2407,9 +2492,96 @@ function mimesTotal(){
   const n = mimes.format==='team' ? state.players.length/2 : state.players.length;
   return `${n} tours de ${dureeMime(mimes.duree)} · environ ${Math.round(n*mimes.duree/60)} min de jeu`;
 }
-function mimesTheme(k){
-  mimes.theme=k;
-  document.querySelectorAll('#mimeThemes .selcard').forEach(c=>c.classList.toggle('on',c.dataset.k===k));
+function mimesSrcHint(){
+  const j=(state.mimeJokes||[]).length;
+  if(mimes.source==='perso') return `Vos ${j} private joke${j>1?'s':''}, et rien d'autre.`;
+  if(mimes.source==='mix')   return `Les ${MOTS_MIMES.length} mots de BEFORE mélangés à vos ${j} private joke${j>1?'s':''}.`;
+  return `${MOTS_MIMES.length} mots tirés au hasard, du grand classique au n'importe quoi.`;
+}
+function mimesSource(s){
+  const j=(state.mimeJokes||[]).length;
+  if(s!=='base' && !j){ toast('Écrivez d\'abord vos private jokes ✏️'); return mimesJokes(); }
+  mimes.source=s;
+  if(s==='perso' && j<10) toast(`${j} private joke${j>1?'s':''} : ça va tourner vite`);
+  document.querySelectorAll('#mimeSrc .chipf').forEach(c=>c.classList.toggle('on',c.dataset.s===s));
+  const h=$('#mimeSrcHint'); if(h) h.textContent=mimesSrcHint();
+}
+
+/* ---------- les private jokes ----------
+   Chacun écrit ses vannes maison sous son nom. Règle du jeu : on ne devine
+   jamais sa propre joke — en solo c'est son auteur qui la mime aux autres,
+   en équipe elle est réservée aux équipes adverses. Elles sont gardées d'une
+   soirée à l'autre ; si l'auteur n'est pas là ce soir, le mot redevient
+   ordinaire et peut tomber sur n'importe qui. */
+let jokeBy=null;
+function mimesJokes(){
+  const noms=state.players.map(p=>p.name);
+  if(jokeBy && noms.indexOf(jokeBy)<0) jokeBy=null;
+  if(!jokeBy && noms.length) jokeBy=noms[0];
+  const list=state.mimeJokes||[];
+  const orphelines=list.filter(j=>noms.indexOf(j.by)<0).length;
+  render(`
+    <div class="topbar"><div class="back" onclick="mimesConfig()">‹</div><div><div class="eyebrow">Le jeu des mimes</div><h2>Vos private jokes</h2></div></div>
+    <p class="muted">Vos vannes maison, celles que personne d'autre ne comprend. Celui qui écrit un mot ne tombera jamais dessus : c'est lui qui le mimera aux autres.</p>
+    <div class="gap"></div>
+    <div class="flabel">Qui écrit ?</div>
+    <div class="filters" id="jokeWho">
+      ${noms.map(n=>`<div class="chipf${jokeBy===n?' on':''}" data-n="${n}" onclick="mimesJokeBy('${n.replace(/'/g,"\\'")}')">${n}</div>`).join('')}
+    </div>
+    <div class="card">
+      <div class="row"><input id="jokeIn" placeholder="Un souvenir, un surnom, une phrase culte…" autocomplete="off" maxlength="42"
+        onkeydown="if(event.key==='Enter'){event.preventDefault();mimesAddJoke();}"></div>
+    </div>
+    <div class="gap-s"></div>
+    <button class="btn accent sm" onclick="mimesAddJoke()"><span class="ico">＋</span>Ajouter à la liste</button>
+    ${list.length?`
+      <div class="gap"></div>
+      <div class="flabel">${list.length} joke${list.length>1?'s':''} en réserve</div>
+      <p class="muted">Touche une joke pour la supprimer.</p>
+      <div class="gap-s"></div>
+      <div class="wordlog" id="jokeLog">${jokeLogHTML()}</div>
+      ${orphelines?`<div class="gap-s"></div><p class="muted">${orphelines} joke${orphelines>1?'s':''} d'une autre soirée : leur auteur n'est pas là, elles peuvent tomber sur tout le monde.</p>`:''}
+    `:`
+      <div class="gap"></div>
+      <div class="card center"><p class="muted">Rien pour l'instant. Trois ou quatre bonnes vannes suffisent à ruiner une manche 😈</p></div>
+    `}
+    <div class="spacer"></div>
+    <button class="btn good" onclick="mimesConfig()">Terminé →</button>
+    <div style="height:8px"></div>
+  `, true);
+  const i=$('#jokeIn'); if(i) i.focus();
+}
+function jokeLogHTML(){
+  const noms=state.players.map(p=>p.name);
+  return (state.mimeJokes||[]).map((j,i)=>
+    `<div class="wchip${noms.indexOf(j.by)<0?'':' ok'}" onclick="mimesDelJoke(${i})">${j.w} · ${j.by} ✕</div>`).join('');
+}
+function mimesJokeBy(n){
+  jokeBy=n;
+  document.querySelectorAll('#jokeWho .chipf').forEach(c=>c.classList.toggle('on',c.dataset.n===n));
+  const i=$('#jokeIn'); if(i) i.focus();
+}
+function mimesAddJoke(){
+  const i=$('#jokeIn'); if(!i) return;
+  const v=i.value.trim().replace(/\s+/g,' ');
+  if(!v){ toast('Écris quelque chose 🙂'); return; }
+  if(!jokeBy){ toast('Choisis qui écrit'); return; }
+  if(!state.mimeJokes) state.mimeJokes=[];
+  if(state.mimeJokes.some(j=>j.w.toLowerCase()===v.toLowerCase())){ toast('Déjà dans la liste'); i.value=''; return; }
+  state.mimeJokes.push({w:v, by:jokeBy});
+  saveJokes();
+  state.mimeDecks=null;                    // le paquet change : on le refera au prochain tirage
+  toast(`« ${v} » ajoutée 🔒`);
+  mimesJokes();                            // l'écran se recompose, le champ reste actif
+}
+function mimesDelJoke(i){
+  const j=(state.mimeJokes||[])[i]; if(!j) return;
+  state.mimeJokes.splice(i,1);
+  saveJokes();
+  state.mimeDecks=null;
+  if(!state.mimeJokes.length && mimes.source!=='base') mimes.source='base';
+  toast(`« ${j.w} » supprimée`);
+  mimesJokes();
 }
 function mimesStart(){
   const n=state.players.length;
@@ -2543,9 +2715,11 @@ function mimesTurnIntro(){
     <div class="card">
       <div class="row"><span style="font-size:21px">📱</span><span style="font-size:13.5px">Téléphone <b>à l'horizontale</b> sur le front, écran vers le groupe.</span></div>
       <div class="gap-s"></div>
-      <div class="row"><span style="font-size:21px">⬇️</span><span style="font-size:13.5px"><b style="color:var(--good)">Trouvé</b> — penche le téléphone vers l'avant.</span></div>
+      <div class="row"><span style="font-size:21px">⬇️</span><span style="font-size:13.5px"><b style="color:var(--good)">Trouvé</b> — penche vers l'avant et tiens une demi-seconde.</span></div>
       <div class="gap-s"></div>
-      <div class="row"><span style="font-size:21px">⬆️</span><span style="font-size:13.5px"><b style="color:var(--gold)">Passer</b> — relève-le vers le haut.</span></div>
+      <div class="row"><span style="font-size:21px">⬆️</span><span style="font-size:13.5px"><b style="color:var(--gold)">Passer</b> — relève vers le haut, pareil.</span></div>
+      <div class="gap-s"></div>
+      <div class="row"><span style="font-size:21px">😌</span><span style="font-size:13.5px">Entre deux mots, remets le téléphone droit : c'est ce qui réarme la détection.</span></div>
     </div>
     <div class="gap"></div>
     ${team?`<button class="btn ghost sm" onclick="mimesSwap()"><span class="ico">🔄</span>Inverser : ${e.mimeurs[0]} devine</button><div class="gap-s"></div>`:''}
@@ -2570,7 +2744,8 @@ function mimesGo(){
 /* ---------- 3 · 2 · 1 ---------- */
 function mimesCountdown(){
   mimeOn(true);
-  mimes.rotLock=false;               // le décompte sert aussi à trouver le bon sens
+  mimes.rotLock=false;               // le décompte sert à trouver le sens ET la position de repos
+  mimeTiltReset();
   if(mimes.tilt) window.addEventListener('devicemotion',onMimeMotion);
   window.addEventListener('resize',mimeFit);
   window.addEventListener('orientationchange',mimeFit);
@@ -2594,10 +2769,14 @@ function mimesCountdown(){
 /* ---------- la manche ---------- */
 function mimesPlay(){
   mimes.rotLock=true;                // à partir d'ici l'écran ne bouge plus jusqu'à la fin du tour
-  mimes.log=[]; mimes.running=true; mimes.armed=true; mimes.flash=false;
+  mimes.log=[]; mimes.running=true; mimes.armed=false; mimes.flash=false;
+  mimes.tiltDir=0; mimes.tiltSince=0;
   mimes.lastAct=0; mimes.lastSec=-1; mimes.gotMotion=false;
   mimes.tap=!mimes.tilt;
-  mimes.word=drawMime(mimes.theme);
+  // ceux qui devinent ce tour-ci : leurs private jokes sont mises de côté
+  const e=mimesEnts()[mimes.turn], noms=state.players.map(p=>p.name);
+  mimes.exclus = e ? e.membres.filter(n=>noms.indexOf(n)>=0) : [];
+  mimes.word=drawMime(mimes.exclus);
   mimes.endAt=Date.now()+mimes.duree*1000;
   paintMime();
   clearInterval(mimes.timer);
@@ -2623,10 +2802,11 @@ function paintMime(){
         <div class="sc no">⏭ ${no}</div>
       </div>
       <div class="mimebar" id="mimeBar"><i style="width:${left/(mimes.duree*10)}%"></i></div>
-      <div class="mimeword" id="mimeWord">${mimes.word}</div>
+      <div class="mimeword" id="mimeWord"><div>${mimes.word.w}${mimes.word.by
+        ? `<span class="mimeby">🔒 la joke de ${mimes.word.by}</span>` : ''}</div></div>
       <div class="mimehints">
-        <div class="mimehint no">⬆️ ${mimes.tap?'Touche le haut':'Vers le haut'} · Passer</div>
-        <div class="mimehint ok">⬇️ ${mimes.tap?'Touche le bas':'Vers l\'avant'} · Trouvé</div>
+        <div class="mimehint no">⬆️ ${mimes.tap?'Touche le haut':'Relève et tiens'} · Passer</div>
+        <div class="mimehint ok">⬇️ ${mimes.tap?'Touche le bas':'Penche et tiens'} · Trouvé</div>
       </div>
       <div class="mimetap no" onclick="mimesTap(false)"></div>
       <div class="mimetap ok" onclick="mimesTap(true)"></div>
@@ -2647,26 +2827,61 @@ function mimesTick(){
   if(s!==mimes.lastSec){ mimes.lastSec=s; if(s>0&&s<=5) mimeBip(760,.09,'square',.18); }
   if(left<=0) mimesEndTurn();
 }
+/* ---------- lecture de l'inclinaison ----------
+   Posé sur un front, le téléphone n'est jamais immobile : la tête tourne, les
+   bras fatiguent, le porteur rigole. Un simple seuil validait donc des mots
+   tout seul. Quatre garde-fous, dans l'ordre :
+     1. un filtre passe-bas sur la gravité — le tremblement disparaît ;
+     2. un zéro pris pendant le décompte : on mesure l'écart à SA position à
+        lui, pas à une verticale théorique que personne ne tient ;
+     3. un seuil franc : 48° d'écart, mesurés en degrés et non en projection,
+        pour que pencher vers l'avant et relever demandent le même geste ;
+     4. une tenue de 150 ms à ce seuil, hors secousse : un à-coup ne suffit pas.
+   Et après chaque mot il faut revenir près de la position de départ pour
+   réarmer — impossible d'enchaîner deux validations sans repasser par là. */
+const MIME_TILT = { fire:48, rearm:22, hold:150, lisse:.26, calme:4 };
+function mimeTiltReset(){
+  mimes.g=null; mimes.zero=0; mimes.armed=false; mimes.tiltDir=0; mimes.tiltSince=0;
+}
 function onMimeMotion(ev){
   const a=ev.accelerationIncludingGravity; if(!a) return;
   const x=a.x||0, y=a.y||0, z=a.z||0;
   const m=Math.sqrt(x*x+y*y+z*z);
-  if(m<4||m>18) return;              // en pleine secousse la gravité n'est plus lisible
+  if(m<4||m>19) return;              // chute libre ou grosse secousse : la gravité est illisible
   mimes.gotMotion=true;
-  const nx=x/m, nz=z/m;              // nz : -1 = écran vers le sol · +1 = écran vers le ciel
-  /* Sens de lecture : réglé pendant le décompte seulement, puis figé pour tout le tour.
-     On ne le lit que quand l'écran est à peu près vertical (|nz| faible) : passé la
-     verticale, un mouvement vers l'avant inverse le signe de nx et retournerait l'écran
-     alors que le téléphone n'a pas bougé de main. */
-  if(!mimes.rotLock && Math.abs(nz)<.4 && Math.abs(nx)>.6){
-    const dir = nx>0 ? 1 : -1;
-    if(dir!==mimes.rotDir){ mimes.rotDir=dir; mimeFit(); }
+  const k=MIME_TILT.lisse;           // filtre passe-bas : on suit la gravité, pas les vibrations
+  if(!mimes.g) mimes.g={x:x/m, y:y/m, z:z/m};
+  else { const p=mimes.g; p.x+=k*(x/m-p.x); p.y+=k*(y/m-p.y); p.z+=k*(z/m-p.z); }
+  const g=mimes.g, gm=Math.sqrt(g.x*g.x+g.y*g.y+g.z*g.z)||1;
+  const nx=g.x/gm, nz=g.z/gm;        // nz : -1 = écran vers le sol · +1 = écran vers le ciel
+  const angle = -Math.asin(Math.max(-1,Math.min(1,nz)))*57.29578;   // degrés · + = penché vers l'avant
+
+  /* Avant le GO : on cherche le sens de lecture et on retient la position de
+     repos. On ne lit le sens que quand l'écran est à peu près vertical — passé
+     la verticale, un mouvement vers l'avant inverse le signe de nx et
+     retournerait l'écran alors que le téléphone n'a pas bougé de main. */
+  if(!mimes.rotLock){
+    if(Math.abs(nz)<.4 && Math.abs(nx)>.6){
+      const dir = nx>0 ? 1 : -1;
+      if(dir!==mimes.rotDir){ mimes.rotDir=dir; mimeFit(); }
+    }
+    mimes.zero = Math.max(-20, Math.min(20, angle));   // sa position à lui, sur son front
+    return;
   }
-  if(mimes.armed){
-    if(nz<-.62){ mimes.armed=false; mimesHit(true); }
-    else if(nz>.62){ mimes.armed=false; mimesHit(false); }
-  }else if(Math.abs(nz)<.34){        // il faut repasser par la verticale avant le mot suivant
-    mimes.armed=true;
+
+  const t=Date.now();
+  const ecart = angle - mimes.zero;  // écart à la position de départ, pas à une verticale théorique
+  if(!mimes.armed){                  // il faut revenir en position avant le mot suivant
+    if(Math.abs(ecart)<MIME_TILT.rearm){ mimes.armed=true; mimes.tiltDir=0; }
+    return;
+  }
+  const secousse = Math.abs(m-9.81)>MIME_TILT.calme;
+  const dir = ecart>=MIME_TILT.fire ? 1 : (ecart<=-MIME_TILT.fire ? -1 : 0);
+  if(!dir || secousse){ mimes.tiltDir=0; return; }
+  if(mimes.tiltDir!==dir){ mimes.tiltDir=dir; mimes.tiltSince=t; return; }
+  if(t-mimes.tiltSince>=MIME_TILT.hold){    // tenu assez longtemps : c'est un vrai geste
+    mimes.armed=false; mimes.tiltDir=0;
+    mimesHit(dir>0);
   }
 }
 function mimesTap(ok){ if(mimes.tap) mimesHit(ok); }
@@ -2675,15 +2890,15 @@ function mimesHit(ok){
   if(!mimes.running || mimes.flash || t-mimes.lastAct<400) return;
   mimes.lastAct=t; mimes.flash=true;
   const mot=mimes.word;
-  mimes.log.push({w:mot,ok});
+  mimes.log.push({w:mot.w, by:mot.by, ok});
   mimeDing(ok);
   const sc=$('#mimeScreen'), w=$('#mimeWord');
   if(sc) sc.classList.add(ok?'ok':'no');
-  if(w) w.innerHTML=`<div class="mimeverdict">${ok?'TROUVÉ ✅':'PASSÉ ⏭'}<small>${mot}</small></div>`;
+  if(w) w.innerHTML=`<div class="mimeverdict">${ok?'TROUVÉ ✅':'PASSÉ ⏭'}<small>${mot.w}</small></div>`;
   setTimeout(()=>{
     mimes.flash=false;
     if(!mimes.running) return;
-    mimes.word=drawMime(mimes.theme);
+    mimes.word=drawMime(mimes.exclus);
     paintMime();
   },560);
 }
@@ -3357,6 +3572,7 @@ function afterShare(name){
 
 /* ---------- boot ---------- */
 loadAlbums();
+loadJokes();
 home();
 
 /* retire le splash d'ouverture une fois l'animation terminée */

@@ -423,6 +423,22 @@
   .pcard.slot{background:linear-gradient(160deg,#191831,#111024);border:1px dashed rgba(255,255,255,.13);
     box-shadow:none;color:rgba(255,255,255,.18);font-size:22px;font-weight:800;
     align-items:center;justify-content:center;}
+  /* ===== Sniper : la question de culture générale ===== */
+  .quizsec{min-width:46px;text-align:center;font-size:23px;font-weight:800;
+    letter-spacing:-.5px;font-variant-numeric:tabular-nums;}
+  .quizsec.hot{color:var(--bad);animation:hotbeat .5s ease-in-out infinite;}
+  .quizbar{flex:1;height:5px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;}
+  .quizbar i{display:block;height:100%;border-radius:999px;
+    background:linear-gradient(90deg,var(--violet2),var(--cyan));transition:width .12s linear;}
+  .quizbar.hot i{background:linear-gradient(90deg,var(--coral),var(--gold));}
+  .quizopts{display:flex;flex-direction:column;gap:9px;}
+  .quizopts .btn{justify-content:flex-start;text-align:left;}
+  .quizrep{display:flex;align-items:center;gap:9px;padding:12px 15px;border-radius:var(--r-md);
+    border:1px solid var(--line);background:rgba(255,255,255,.035);
+    font-size:14.5px;font-weight:650;color:var(--muted);}
+  .quizrep span{width:18px;flex:none;text-align:center;}
+  .quizrep.bon{color:var(--good);border-color:rgba(107,195,156,.3);background:rgba(107,195,156,.1);}
+  .quizrep.faux{color:var(--bad);border-color:rgba(217,115,134,.3);background:rgba(217,115,134,.09);}
   .bjdots{display:flex;gap:8px;justify-content:center;}
   .bjdots i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.12);transition:.25s;}
   .bjdots i.now{background:var(--violet2);box-shadow:0 0 0 4px rgba(154,139,232,.15);}
@@ -755,6 +771,7 @@ const state = {
   theme:null,
   randomTheme:false,
   pairDecks:null,         // paquets de paires mélangés, un par thème (voir drawPair)
+  cultureDeck:null,       // questions de culture G déjà posées (voir drawCulture)
   mimeDecks:null,         // idem pour les mots du jeu des mimes (voir drawMime)
   mimeJokes:[],           // private jokes des joueurs : {w, by} — voir mimesJokes
   roleHist:null,          // qui a été scamer/PNJ récemment (voir pickRole)
@@ -1004,14 +1021,96 @@ const SNIPER_Q = [
   "Qui serait le plus capable de se perdre en rentrant ?",
   "Qui ne se souviendra de rien demain matin ?",
 ];
-const REVANCHE = [
-  "Fais 10 pompes maintenant 💪",
-  "Imite quelqu'un dans la pièce 🎭",
-  "Chante le refrain de ta chanson préférée 🎤",
-  "Parle avec l'accent d'un autre pays pendant 1 min 🗣️",
-  "Fais ton meilleur pas de danse 🕺",
-  "Raconte ta pire honte de soirée 🙈",
+/* ---------- culture générale : la revanche du Sniper ----------
+   Une ligne = [question, LA BONNE RÉPONSE, leurre, leurre, leurre].
+   La bonne est toujours en première position ici ; à l'écran les quatre
+   propositions sont mélangées. Pour en ajouter : une ligne de plus. */
+const CULTURE = [
+  ["Quelle est la capitale de l'Australie ?","Canberra","Sydney","Melbourne","Brisbane"],
+  ["Quelle est la capitale du Canada ?","Ottawa","Toronto","Montréal","Vancouver"],
+  ["Quelle est la capitale du Brésil ?","Brasilia","Rio de Janeiro","São Paulo","Salvador"],
+  ["Quelle est la capitale de la Turquie ?","Ankara","Istanbul","Izmir","Bursa"],
+  ["Quelle est la capitale de la Suisse ?","Berne","Genève","Zurich","Lausanne"],
+  ["Quel est le plus grand pays du monde ?","La Russie","Le Canada","La Chine","Les États-Unis"],
+  ["Quel est le plus petit pays du monde ?","Le Vatican","Monaco","Saint-Marin","Le Liechtenstein"],
+  ["Quel est le plus grand pays d'Afrique ?","L'Algérie","Le Nigeria","L'Égypte","L'Afrique du Sud"],
+  ["Quelle est la plus grande île du monde ?","Le Groenland","Madagascar","Bornéo","La Nouvelle-Guinée"],
+  ["Quel est le plus grand océan ?","Le Pacifique","L'Atlantique","L'Indien","L'Arctique"],
+  ["Quel est le plus grand désert chaud du monde ?","Le Sahara","Le Gobi","Le Kalahari","L'Atacama"],
+  ["Quelle est la plus haute montagne du monde ?","L'Everest","Le K2","Le Mont Blanc","Le Kilimandjaro"],
+  ["Quel est le plus long fleuve de France ?","La Loire","La Seine","Le Rhône","La Garonne"],
+  ["Dans quel pays se trouve le Machu Picchu ?","Le Pérou","Le Mexique","Le Chili","La Bolivie"],
+  ["Dans quelle ville se trouve la Sagrada Família ?","Barcelone","Madrid","Valence","Séville"],
+  ["Dans quelle ville se trouve le Colisée ?","Rome","Athènes","Naples","Milan"],
+  ["Quelle mer est la plus salée ?","La mer Morte","La mer Rouge","La Méditerranée","La mer Noire"],
+  ["Quelle est la langue la plus parlée comme langue maternelle ?","Le mandarin","L'anglais","L'espagnol","L'hindi"],
+  ["Quel pays a offert la statue de la Liberté aux États-Unis ?","La France","L'Angleterre","L'Espagne","L'Italie"],
+  ["Dans quel pays a été inventé le papier ?","En Chine","En Égypte","En Grèce","En Inde"],
+  ["De quel pays vient le tango ?","L'Argentine","L'Espagne","Le Brésil","Le Portugal"],
+  ["De quelle région d'Espagne vient la paella ?","Valence","L'Andalousie","La Catalogne","La Galice"],
+  ["De quel pays vient la marque IKEA ?","La Suède","La Norvège","Le Danemark","La Finlande"],
+  ["Quelle est la monnaie du Japon ?","Le yen","Le yuan","Le won","Le baht"],
+  ["Quelle est la monnaie du Royaume-Uni ?","La livre sterling","L'euro","Le dollar","Le franc"],
+  ["En quelle année est tombé le mur de Berlin ?","1989","1991","1985","1979"],
+  ["En quelle année a commencé la Révolution française ?","1789","1815","1848","1792"],
+  ["Qui a peint la Joconde ?","Léonard de Vinci","Michel-Ange","Raphaël","Botticelli"],
+  ["Qui a écrit « Les Misérables » ?","Victor Hugo","Émile Zola","Balzac","Flaubert"],
+  ["Qui a écrit « Harry Potter » ?","J.K. Rowling","Tolkien","Stephen King","Roald Dahl"],
+  ["Qui a réalisé « Titanic » ?","James Cameron","Steven Spielberg","Ridley Scott","Christopher Nolan"],
+  ["Qui a formulé la théorie de la relativité ?","Albert Einstein","Isaac Newton","Galilée","Stephen Hawking"],
+  ["Qui a composé la célèbre Cinquième Symphonie ?","Beethoven","Mozart","Bach","Chopin"],
+  ["Qui a marché sur la Lune le premier ?","Neil Armstrong","Buzz Aldrin","Youri Gagarine","Michael Collins"],
+  ["Quel est le premier film Star Wars sorti au cinéma ?","Un nouvel espoir","La Menace fantôme","L'Empire contre-attaque","Le Retour du Jedi"],
+  ["Comment s'appelle le chien de Tintin ?","Milou","Idéfix","Rantanplan","Pluto"],
+  ["Quel animal est le logo de Lacoste ?","Le crocodile","Le tigre","Le cheval","L'aigle"],
+  ["Quelle planète est la plus proche du Soleil ?","Mercure","Vénus","Mars","La Terre"],
+  ["Quelle est la plus grande planète du système solaire ?","Jupiter","Saturne","Neptune","Uranus"],
+  ["Combien de temps met la lumière du Soleil pour nous atteindre ?","8 minutes","1 seconde","1 heure","1 jour"],
+  ["Quelle est la vitesse de la lumière, environ ?","300 000 km par seconde","300 000 km par heure","3 000 km par seconde","30 000 km par seconde"],
+  ["Combien de temps met la Lune pour faire le tour de la Terre ?","Environ 28 jours","Environ 7 jours","Environ 100 jours","Environ 365 jours"],
+  ["Quel gaz les plantes absorbent-elles pour grandir ?","Le dioxyde de carbone","L'oxygène","L'azote","L'hydrogène"],
+  ["Quelle est la formule chimique de l'eau ?","H2O","CO2","O2","NaCl"],
+  ["Quel est le symbole chimique de l'or ?","Au","Ag","Fe","Or"],
+  ["Quel élément a pour symbole « O » ?","L'oxygène","L'or","L'osmium","L'ozone"],
+  ["Quel métal est liquide à température ambiante ?","Le mercure","Le plomb","L'étain","Le zinc"],
+  ["Que mesure l'échelle de Richter ?","Les séismes","La température","Le vent","Le bruit"],
+  ["Combien d'os compte le corps humain adulte ?","206","150","300","412"],
+  ["Combien de dents a un adulte, dents de sagesse comprises ?","32","28","30","36"],
+  ["Quel est le plus grand organe du corps humain ?","La peau","Le foie","Les poumons","L'intestin"],
+  ["Quel organe produit l'insuline ?","Le pancréas","Le foie","Les reins","La rate"],
+  ["Quel est le plus petit os du corps humain ?","L'étrier, dans l'oreille","La rotule","La clavicule","Le petit orteil"],
+  ["Quel est l'animal terrestre le plus rapide ?","Le guépard","Le lion","Le cheval","L'autruche"],
+  ["Quel est le plus grand mammifère du monde ?","La baleine bleue","L'éléphant","Le cachalot","La girafe"],
+  ["Quel est le plus grand oiseau du monde ?","L'autruche","Le condor","L'aigle royal","Le pélican"],
+  ["Quel animal dort debout ?","Le cheval","Le chat","Le chien","Le lapin"],
+  ["Quel est l'ingrédient principal du guacamole ?","L'avocat","La courgette","Le concombre","Le petit pois"],
+  ["Lequel de ces fruits contient le plus de vitamine C ?","Le kiwi","L'orange","La pomme","La banane"],
+  ["Combien de joueurs par équipe sur un terrain de football ?","11","10","12","9"],
+  ["Combien de joueurs par équipe sur un terrain de basket ?","5","6","7","4"],
+  ["Combien de joueurs par équipe sur un terrain de volley ?","6","5","7","8"],
+  ["Combien de joueurs par équipe au rugby à XV ?","15","13","11","7"],
+  ["Combien de temps dure un match de football réglementaire ?","90 minutes","60 minutes","120 minutes","80 minutes"],
+  ["Quel pays a gagné la Coupe du monde de football 2018 ?","La France","La Croatie","Le Brésil","L'Allemagne"],
+  ["Quel pays a organisé la Coupe du monde de football 2022 ?","Le Qatar","La Russie","Le Brésil","L'Afrique du Sud"],
+  ["Qui a remporté le plus de Ballons d'Or ?","Lionel Messi","Cristiano Ronaldo","Michel Platini","Zinédine Zidane"],
+  ["Quel est le sport national du Japon ?","Le sumo","Le judo","Le karaté","Le baseball"],
+  ["Quel est le plus grand stade de France ?","Le Stade de France","Le Vélodrome","Le Parc des Princes","Le Groupama Stadium"],
+  ["Combien de cases compte un échiquier ?","64","81","100","49"],
+  ["Combien y a-t-il de dames sur un échiquier au début d'une partie ?","2","1","4","8"],
+  ["Combien de touches compte un piano classique ?","88","76","61","100"],
+  ["Combien de cordes a une guitare classique ?","6","4","7","12"],
+  ["Combien de lettres compte l'alphabet français ?","26","24","25","27"],
+  ["Combien de minutes y a-t-il dans une journée ?","1440","1200","720","2400"],
+  ["Combien de côtés a un hexagone ?","6","5","7","8"],
+  ["Combien de côtés a un dodécagone ?","12","10","20","8"],
+  ["Combien de couleurs compte un arc-en-ciel, traditionnellement ?","7","5","6","8"],
+  ["Quelle est la plus longue muraille du monde ?","La Grande Muraille de Chine","Le mur d'Hadrien","Le mur de Berlin","Les murailles de Constantinople"],
 ];
+function resetCultureDeck(){ state.cultureDeck=shuffle(CULTURE.map((_,i)=>i)); }
+function drawCulture(){
+  if(!state.cultureDeck || !state.cultureDeck.length) resetCultureDeck();
+  return CULTURE[state.cultureDeck.pop()];
+}
 /* ---------- gages du mode sans alcool ----------
    Trois niveaux : plus la sanction est lourde, plus le défi l'est.
    Aucun ne demande de boire, et « je me dégonfle » reste toujours possible. */
@@ -1660,6 +1759,7 @@ function pickMode(m){
   state.partyEnded=false;                  // nouvelle soirée → le classement "en cours" redevient visible
   resetPairDecks();                        // ...et les paires repartent à zéro pour la nouvelle soirée
   resetMimeDecks();                        // ...ainsi que les mots des mimes
+  resetCultureDeck();                      // ...et les questions de culture générale
   resetRoleHist();                         // ...ainsi que l'historique des rôles
   beforePhotoPrompt();                     // première mise en place → propose la photo de début
 }
@@ -1753,7 +1853,7 @@ function gameSelect(){
     </button>
     <div class="gap"></div>
     <button class="btn game g2" onclick="sniperRound()">
-      <span class="ico">🎯</span><span class="col">SNIPER<small>Pointe le plus capable de…</small></span>
+      <span class="ico">🎯</span><span class="col">SNIPER<small>Pointe le plus capable de… puis assume.</small></span>
     </button>
     <div class="gap"></div>
     <button class="btn game g3" onclick="bjStart()">
@@ -2116,9 +2216,11 @@ function sniperPicked(name){
     <div class="card tint-coral center">
       <div class="big">🎯</div>
       <p><b>${name}</b> a été désigné. Tu peux assumer… ou tenter ta revanche.</p>
+      <div class="gap-s"></div>
+      <p class="muted">La revanche, c'est une question de culture générale en 20 secondes. Réussie, quelqu'un d'autre paie ${unite(2)} à ta place. Ratée, c'est ${unite(2)} pour toi.</p>
     </div>
     <div class="spacer"></div>
-    <button class="btn accent" onclick="sniperRevanche('${name.replace(/'/g,"\\'")}')">⚔️ Tenter la revanche</button>
+    <button class="btn accent" onclick="sniperRevanche('${name.replace(/'/g,"\\'")}')">🧠 Tenter la revanche</button>
     <div class="gap-s"></div>
     <button class="btn alt" onclick="sniperAssume('${name.replace(/'/g,"\\'")}')">😔 J'assume (${unite(1)})</button>
     <div style="height:6px"></div>
@@ -2129,42 +2231,122 @@ function sniperAssume(name){
   addDrinks(name,1); toast(sanction(name,1));
   gagesAfter([[name,1]],sniperRound)();
 }
+/* ---------- la revanche : une question de culture générale ----------
+   Le visé récupère le téléphone, lit la question, a 20 secondes pour
+   choisir, et la bonne réponse s'affiche. S'il l'a, il désigne quelqu'un
+   qui prend sa place ; sinon la sanction reste pour lui. La mise est la
+   même dans les deux sens : c'est un pile ou face qu'il a demandé. */
+const QUIZ_SEC = 20;
+const SNIPER_MISE = 2;
+let snip={};
 function sniperRevanche(name){
-  const action=rnd(REVANCHE);
+  const q=drawCulture();
+  snip={ name, q, done:false,
+         opts: shuffle(q.slice(1).map((t,i)=>({t, ok:i===0}))) };
   render(`
-    <div class="topbar"><h2 style="margin:auto">Revanche de ${name}</h2></div>
-    <div class="gap"></div>
-    <div class="card tint-coral center" style="padding:28px 20px">
-      <p class="muted">Ton défi :</p><div class="gap"></div>
-      <p style="font-size:20px;font-weight:800">${action}</p>
+    <div class="topbar"><h2 style="margin:auto">⚔️ Revanche de ${name}</h2></div>
+    ${counterBar()}
+    <div class="spacer"></div>
+    <div class="card tint-violet center">
+      <div class="big">🧠</div>
+      <div class="gap"></div>
+      <p style="font-size:16px"><b>${name}</b>, passe-toi le téléphone.<br>Une question de culture générale, <b>20 secondes</b> pour répondre.</p>
+      <div class="gap-s"></div>
+      <p class="muted">Bonne réponse : tu désignes qui prend ta place (${unite(SNIPER_MISE)}). Mauvaise, ou hors délai : c'est pour toi.</p>
     </div>
     <div class="spacer"></div>
-    <button class="btn mint" onclick="sniperWin('${name.replace(/'/g,"\\'")}')">✅ Réussi</button>
+    <button class="btn accent" onclick="sniperQuizGo()">Je suis prêt·e →</button>
     <div class="gap-s"></div>
-    <button class="btn danger" onclick="sniperFail('${name.replace(/'/g,"\\'")}')">❌ Raté (${unite(2)})</button>
+    <button class="btn ghost sm" onclick="sniperAssume('${name.replace(/'/g,"\\'")}')">Finalement j'assume (${unite(1)})</button>
     <div style="height:6px"></div>
   `, true);
 }
-function sniperFail(name){
-  compteManche('sniper');
-  addDrinks(name,2); toast(sanction(name,2));
-  gagesAfter([[name,2]],sniperRound)();
-}
-function sniperWin(name){
+function sniperQuizGo(){
+  mimeAudioUnlock();                 // les bips des 5 dernières secondes : ça part d'un geste
+  snip.endAt=Date.now()+QUIZ_SEC*1000; snip.lastSec=-1; snip.done=false;
   render(`
-    <div class="topbar"><h2 style="margin:auto">✅ Réussi !</h2></div>
-    <p class="center muted">${name} choisit qui partage la sanction (${unite(1)} chacun) :</p>
-    <div class="gap"></div>
-    <div class="list-pick">
-      ${state.players.filter(p=>p.name!==name).map(p=>`<div class="pick" onclick="sniperShare('${name.replace(/'/g,"\\'")}','${p.name.replace(/'/g,"\\'")}')">${p.name}<span>›</span></div>`).join('')}
+    <div class="topbar"><h2 style="margin:auto">🧠 ${snip.name}</h2></div>
+    <div class="gap-s"></div>
+    <div class="row">
+      <div class="quizsec" id="quizSec">${QUIZ_SEC}</div>
+      <div class="quizbar" id="quizBar"><i style="width:100%"></i></div>
     </div>
+    <div class="spacer"></div>
+    <div class="card tint-violet center" style="padding:24px 18px">
+      <p style="font-size:19px;font-weight:800;line-height:1.32">${snip.q[0]}</p>
+    </div>
+    <div class="spacer"></div>
+    <div class="quizopts">
+      ${snip.opts.map((o,i)=>`<button class="btn alt sm" onclick="sniperQuizRep(${i})">${o.t}</button>`).join('')}
+    </div>
+    <div style="height:74px"></div>
+  `, true);
+  clearInterval(snip.timer);
+  snip.timer=setInterval(sniperQuizTick,100);
+}
+function sniperQuizTick(){
+  const el=$('#quizSec');
+  if(!el || snip.done){ clearInterval(snip.timer); return; }   // écran quitté : on coupe le chrono
+  const left=Math.max(0,snip.endAt-Date.now());
+  const s=Math.ceil(left/1000);
+  el.textContent=s; el.classList.toggle('hot',s<=5);
+  const bar=$('#quizBar');
+  if(bar){
+    bar.classList.toggle('hot',s<=5);
+    const i=bar.firstElementChild;
+    if(i) i.style.width=Math.max(0,Math.min(100,left/(QUIZ_SEC*10)))+'%';
+  }
+  if(s!==snip.lastSec){ snip.lastSec=s; if(s>0&&s<=5) mimeBip(760,.09,'square',.18); }
+  if(left<=0){ clearInterval(snip.timer); sniperQuizReveal(-1); }
+}
+function sniperQuizRep(i){ if(!snip.done){ clearInterval(snip.timer); sniperQuizReveal(i); } }
+function sniperQuizReveal(i){
+  snip.done=true;
+  const bon=snip.opts.findIndex(o=>o.ok);
+  const ok=(i===bon), tempsEcoule=(i<0);
+  compteManche('sniper');            // la question est tranchée : une manche de plus
+  if(ok) mimeDing(true); else mimeBuzz();
+  if(!ok) addDrinks(snip.name, SNIPER_MISE);
+  render(`
+    <div class="topbar"><h2 style="margin:auto">${ok?'✅ Bien joué':(tempsEcoule?'⏱️ Trop tard':'❌ Raté')}</h2></div>
+    ${counterBar()}
+    <div class="gap"></div>
+    <p class="muted center">${snip.q[0]}</p>
+    <div class="gap-s"></div>
+    <div class="quizopts">
+      ${snip.opts.map((o,k)=>`<div class="quizrep${o.ok?' bon':''}${(k===i&&!o.ok)?' faux':''}"><span>${o.ok?'✅':(k===i?'❌':'')}</span>${o.t}</div>`).join('')}
+    </div>
+    <div class="gap"></div>
+    <p class="center" style="font-size:16px">${ok
+      ? `<b>${snip.name}</b> s'en sort. À toi de désigner qui prend ta place.`
+      : `${sanction(snip.name,SNIPER_MISE)} ${sansAlcool()?'🔥':'🍺'}`}</p>
+    <div class="spacer"></div>
+    ${ok ? `<button class="btn good" onclick="sniperQuizWin()">Désigner quelqu'un →</button>`
+         : `<button class="btn" onclick="sniperQuizFin()">Manche suivante →</button>`}
+    <div style="height:6px"></div>
   `, true);
 }
-function sniperShare(name,autre){
-  compteManche('sniper');
-  addDrinks(name,1); addDrinks(autre,1,name);          // le gagnant choisit qui trinque avec lui
-  toast(`${name} & ${autre} : ${unite(1)}`);
-  gagesAfter([[name,1],[autre,1]],sniperRound)();
+function sniperQuizFin(){
+  gagesAfter([[snip.name,SNIPER_MISE]], sniperRound)();
+}
+function sniperQuizWin(){
+  render(`
+    <div class="topbar"><h2 style="margin:auto">✅ Réussi !</h2></div>
+    ${counterBar()}
+    <div class="gap"></div>
+    <p class="center muted"><b>${snip.name}</b> désigne qui prend sa place : ${unite(SNIPER_MISE)} pour l'élu·e.</p>
+    <div class="gap"></div>
+    <div class="list-pick">
+      ${state.players.filter(p=>p.name!==snip.name).map(p=>`<div class="pick" onclick="sniperQuizGive('${p.name.replace(/'/g,"\\'")}')">${p.name}<span>›</span></div>`).join('')}
+    </div>
+    <div class="spacer"></div>
+    <div style="height:6px"></div>
+  `, true);
+}
+function sniperQuizGive(autre){
+  addDrinks(autre, SNIPER_MISE, snip.name);   // c'est le gagnant de la revanche qui l'inflige
+  toast(sanction(autre,SNIPER_MISE));
+  gagesAfter([[autre,SNIPER_MISE]], sniperRound)();
 }
 
 /* ============================================================

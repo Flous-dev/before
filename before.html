@@ -772,6 +772,7 @@ const state = {
   randomTheme:false,
   pairDecks:null,         // paquets de paires mélangés, un par thème (voir drawPair)
   cultureDeck:null,       // questions de culture G déjà posées (voir drawCulture)
+  gageDecks:null,         // gages et vérités déjà tombés (voir tireGage)
   mimeDecks:null,         // idem pour les mots du jeu des mimes (voir drawMime)
   mimeJokes:[],           // private jokes des joueurs : {w, by} — voir mimesJokes
   roleHist:null,          // qui a été scamer/PNJ récemment (voir pickRole)
@@ -1013,6 +1014,10 @@ const THEMES = {
     L'Attaque des Titans / Death Note
   `)},
 };
+/* Le PNJ a une chance de se racheter : trouver le mot, puis démasquer un
+   scamer. S'il la gâche, c'est le plus gros raté de la manche — sans alcool
+   son gage passe au niveau Costaud. */
+function pnjRate(){ return sansAlcool() ? 3 : 2; }
 const SNIPER_Q = [
   "Qui est le plus capable de finir la soirée le premier ?",
   "Qui enverrait un message à son ex à 3h du mat ?",
@@ -1111,52 +1116,289 @@ function drawCulture(){
   if(!state.cultureDeck || !state.cultureDeck.length) resetCultureDeck();
   return CULTURE[state.cultureDeck.pop()];
 }
-/* ---------- gages du mode sans alcool ----------
-   Trois niveaux : plus la sanction est lourde, plus le défi l'est.
-   Aucun ne demande de boire, et « je me dégonfle » reste toujours possible. */
+/* ---------- gages & vérités du mode sans alcool ----------
+   Un jeu de gages par jeu : le gage parle de ce qui vient de se passer.
+   Quatre niveaux — plus la faute est lourde, plus le défi l'est. Seul le
+   Black(out) Jack monte jusqu'au niveau 4 : c'est le seul où l'on peut se
+   planter après être allé très loin. Aucun ne demande de boire, et
+   « je me dégonfle » reste toujours possible.
+   Une fois sur cinq environ, le gage laisse la place à une vérité : c'est
+   le coup de chance de la soirée. */
+const GAGE_NIV = ['Express','Corsé','Costaud','Légendaire'];
+const VERITE_CHANCE = .22;
+
 const GAGES = {
-  1:[ // express — quelques secondes
-    "Fais un vrai compliment à la personne à ta droite.",
-    "Imite le cri d'un animal choisi par le groupe.",
-    "Fais 5 pompes.",
-    "Prends la pose la plus ridicule possible et tiens-la 10 secondes.",
-    "Récite l'alphabet de Z à P, sans te tromper.",
-    "Danse 10 secondes sans musique.",
-    "Parle avec l'accent de ton choix jusqu'à ton prochain tour.",
-    "Chante tes phrases au lieu de les dire, jusqu'à ton prochain tour.",
-    "Fais un check à tout le monde, un par un, en les regardant dans les yeux.",
-    "Souris sans montrer les dents pendant 30 secondes.",
-    "Invente un slogan pour la soirée, là, tout de suite.",
-    "Raconte une blague. Si personne ne rit, tu recommences.",
-  ],
-  2:[ // corsé — il faut se lancer
-    "Imite quelqu'un de la pièce, les autres doivent deviner qui.",
-    "Chante le refrain de ta chanson préférée, debout.",
-    "Raconte ta pire honte de soirée.",
-    "Fais un discours de 30 secondes pour remercier ton académie.",
-    "Parle uniquement en questions pendant 2 minutes.",
-    "Fais 15 pompes.",
-    "Échange un vêtement avec la personne en face de toi.",
-    "Appelle un parent et dis-lui que tu l'aimes, sans explication.",
-    "Refais la démarche de trois personnes de la pièce.",
-    "Fais le tour de la pièce en marchant comme un crabe.",
-    "Déclare ta flamme à un objet de la pièce, avec conviction.",
-    "Laisse la personne à ta gauche te coiffer comme elle veut.",
-  ],
-  3:[ // costaud — c'est la soirée qui s'en souviendra
-    "Rejoue toute la soirée en mime, en 30 secondes.",
-    "Laisse le groupe choisir ta photo de profil pour les 10 prochaines minutes.",
-    "Fais un playback complet d'un refrain, chorégraphie comprise.",
-    "Le groupe te pose 3 questions : tu réponds franchement.",
-    "Imite chaque personne de la pièce, 10 secondes chacune.",
-    "Fais 25 pompes.",
-    "Chante l'hymne national, debout, la main sur le cœur.",
-    "Improvise une pub de 30 secondes pour le premier objet qu'on te tend.",
-    "Laisse ton voisin écrire ton statut : tu le lis à voix haute.",
-    "Fais une déclaration d'amour en alexandrins à la personne en face.",
-  ],
+  /* ---- Qui a la ref : le bluff, le soupçon, les fausses identités ---- */
+  qar:{
+    1:[
+      "Accuse quelqu'un de la pièce d'un crime imaginaire, avec deux preuves inventées.",
+      "Trouve-toi un alibi béton pour hier soir 21h. Le groupe a droit à trois questions.",
+      "Jusqu'à ton prochain tour, tu ne peux répondre qu'en posant une question.",
+      "Regarde la personne en face droit dans les yeux et jure-lui un mensonge évident sans rire.",
+      "Choisis un objet de la pièce et défends-le devant le groupe comme si c'était ton enfant.",
+      "Présente la personne à ta droite au groupe comme si personne ne la connaissait. Invente tout.",
+      "Donne trois raisons pour lesquelles on aurait dû te soupçonner en premier.",
+      "Donne un alibi à la personne à ta droite pour ce soir. Elle devra le confirmer si on lui demande.",
+      "Invente un mot qui n'existe pas et place-le dans la conversation jusqu'à ce qu'on te reprenne.",
+      "Décris la personne en face comme si tu la signalais à la police. Signalement complet.",
+      "Choisis quelqu'un : c'est ton complice. Vous devez être d'accord sur tout jusqu'à ton prochain tour.",
+      "Désigne le pire menteur de la pièce et explique en vingt secondes comment tu l'as démasqué.",
+    ],
+    2:[
+      "Raconte une anecdote de ta vie. Le groupe vote : vrai ou faux. S'il tombe juste, tu en racontes une deuxième.",
+      "Conférence de presse : excuse-toi pendant trente secondes pour un scandale que le groupe t'invente.",
+      "Le groupe choisit un mot interdit. Raconte ta journée sans jamais le prononcer.",
+      "Convaincs le groupe pendant une minute que tu as un talent caché. Tu diras à la fin si c'était vrai.",
+      "Prends l'accent et les tics de quelqu'un de la pièce jusqu'à ton prochain tour. S'il ne se reconnaît pas, tu recommences.",
+      "Défends avec conviction la pire opinion possible sur un sujet que le groupe te donne. Une minute.",
+      "Fais deviner qui, dans la pièce, tu aurais accusé en premier — sans le nommer, uniquement par indices.",
+      "Le groupe te donne un métier. Tu prétends l'exercer et tu réponds à trois questions techniques.",
+      "Deux vérités, un mensonge sur toi. Si le groupe trouve le mensonge, tu recommences.",
+      "Fais l'éloge funèbre du premier joueur éliminé de la manche. Il est vivant, ça n'aide pas.",
+      "Raconte une histoire vraie en changeant tous les prénoms et tous les lieux. Le groupe doit deviner de qui il s'agit.",
+      "Négocie ta libération : propose un marché au groupe, il vote. S'il refuse, tu fais le gage quand même.",
+    ],
+    3:[
+      "Procès express : le groupe t'accuse de ce qu'il veut, tu as une minute pour plaider. Vote à main levée.",
+      "Tu deviens le majordome du groupe jusqu'à ton prochain tour. On t'appelle, tu réponds « Vous avez sonné ? ».",
+      "Raconte le plus gros mensonge que tu aies servi à tes parents.",
+      "Discours d'adieu larmoyant à la personne de ton choix, debout, la voix qui tremble.",
+      "Échange de rôle : le groupe désigne quelqu'un, vous jouez la vie de l'autre jusqu'au prochain tour.",
+      "Le groupe te pose trois questions. Tu mens aux trois, le plus crédiblement possible.",
+      "Autobiographie express : raconte ta vie en deux minutes, dont exactement trois mensonges. Le groupe doit les trouver.",
+      "Tu es sous serment jusqu'à la fin de la partie : chaque phrase que tu dis doit commencer par « Je jure que ».",
+      "Le groupe te crée une double vie complète — métier, ville, secret. Tu la racontes comme si c'était la tienne.",
+      "Interrogatoire : deux personnes te cuisinent une minute sur ta journée. Interdit de te contredire une seule fois.",
+      "Le groupe invente ton casier judiciaire en trois délits. Tu les assumes publiquement, circonstances comprises.",
+      "Change d'identité jusqu'à la fin de la manche : nouveau prénom, nouveau métier, nouvel accent. Tu ne sors jamais du rôle.",
+    ],
+  },
+
+  /* ---- Black(out) Jack : la chance, le pari, la poisse ---- */
+  bj:{
+    1:[
+      "Nomme ton porte-bonheur dans cette pièce et explique au groupe pourquoi c'est lui.",
+      "Raconte la fois où tu as eu le plus de chance de ta vie.",
+      "Invente une superstition et fais-la respecter à tout le monde jusqu'à ton prochain tour.",
+      "Trente secondes chrono : ce que tu ferais avec un million, dépensé jusqu'au dernier euro.",
+      "Tu as la poisse : jusqu'à ton prochain tour, tu gardes les doigts croisés. Une main suffit.",
+      "Fais un vœu à voix haute. Le groupe décide s'il est assez ambitieux.",
+      "Confie à quelqu'un le soin de souffler sur tes mains : c'est lui qui portera ta chance jusqu'à la fin.",
+      "Annonce ta prédiction pour la carte du joueur suivant. S'il te croit, il doit la suivre.",
+      "Souffle sur les mains de la personne à ta gauche : tu lui donnes ta chance, tu n'en as plus besoin.",
+      "Explique en vingt secondes pourquoi tu aurais dû choisir l'inverse. Convaincs-nous.",
+      "Choisis un chiffre porte-bonheur. Chaque fois qu'il apparaît ce soir, tu lèves les bras.",
+      "Raconte le pari le plus stupide que tu aies gagné.",
+    ],
+    2:[
+      "Tu es voyant : prédis l'avenir de trois personnes de la pièce. Sois précis, on notera.",
+      "Le casino t'a ruiné. Explique à ta famille imaginaire ce qui s'est passé, avec les larmes.",
+      "Croupier jusqu'à ton prochain tour : tu annonces chaque action du groupe comme dans un casino.",
+      "Improvise une pub de trente secondes pour le premier objet qu'on te tend, en vantant la chance qu'il porte.",
+      "Raconte ton pire achat inutile. Le groupe note la bêtise sur dix.",
+      "Le groupe désigne deux personnes : commente leur duel de regards comme un match, jusqu'à ce que l'une cligne.",
+      "Déclaration solennelle : annonce ce que tu abandonnes définitivement si tu reperds ce soir.",
+      "Table de poker : dis à chaque personne de la pièce ce qu'elle cache ce soir.",
+      "Annonce ta défaite comme un présentateur de loto qui sort les numéros.",
+      "Le groupe pense à une carte. Tu la devines à voix haute, avec tout le cérémonial.",
+      "Explique le hasard à quelqu'un qui n'y comprend rien. Trente secondes et un tableau imaginaire.",
+      "Raconte la dernière fois où tu as tout misé sur une intuition.",
+    ],
+    3:[
+      "Commissaire-priseur : le groupe te tend trois objets, tu les vends aux enchères, à la criée.",
+      "Rejoue toute la partie depuis le début en commentateur sportif surexcité. Une minute.",
+      "Le groupe te désigne un ange gardien. Jusqu'à ton prochain tour, tu lui demandes l'autorisation avant chaque phrase.",
+      "Pile ou face contre la personne en face. Le perdant raconte sa pire idée de génie.",
+      "Une minute pour convaincre le groupe que la malchance existe. Vote à la fin, tu dois obtenir la majorité.",
+      "Tu deviens la mascotte : chaque fois que quelqu'un gagne quoi que ce soit ce soir, tu lances une danse de célébration.",
+      "Bookmaker de la soirée : établis les cotes de chaque joueur pour la suite, à voix haute et avec arguments.",
+      "Rejoue ton passage en tragédie grecque : le destin, les dieux, la chute. Une minute.",
+      "Le groupe te tend trois objets. Tu improvises un tour de magie avec les trois, dans l'ordre.",
+    ],
+    4:[
+      "Tu étais à une carte du sans-faute. Discours de défaite de deux minutes, debout, en remerciant chacun nommément.",
+      "Le groupe te trouve un nouveau nom. Tu ne réponds plus qu'à celui-là pour le reste de la soirée.",
+      "Interview d'après-match : le groupe te pose cinq questions sur ta défaite. Tu réponds sérieusement, sans sourire une seule fois.",
+      "Raconte la plus grosse humiliation de ta vie. En détail, avec les dialogues.",
+      "Statue de la malchance : le groupe te donne une pose, tu la tiens une minute entière sans bouger.",
+      "Tu avais tout entre les mains. Écris et lis à voix haute la lettre d'excuses de ta main gauche à ta main droite.",
+    ],
+  },
+
+  /* ---- Sniper : être pointé du doigt, la réputation, le verdict du groupe ---- */
+  sniper:{
+    1:[
+      "Assume jusqu'au bout : explique en trente secondes pourquoi ils ont eu raison de te désigner.",
+      "Remercie le groupe pour cet honneur, façon discours de remise de prix.",
+      "Fais ton autoportrait en trois défauts. Le groupe en rajoute un quatrième.",
+      "Trouve-toi un surnom à la hauteur de ce qu'on vient de dire sur toi. Il tient jusqu'à la fin de la partie.",
+      "Plaidoirie de vingt secondes, chrono en main. Après, tu te tais.",
+      "Le groupe te note sur dix. Défends une note plus haute.",
+      "Désigne à ton tour la personne la plus injuste du groupe, et justifie-toi.",
+      "Désigne la personne la plus injustement épargnée ce soir, et explique pourquoi.",
+      "Fais ton propre portrait comme si tu écrivais l'annonce de ta disparition. Deux phrases.",
+      "Trouve un point commun entre toi et la personne qui t'a pointé le plus vite.",
+      "Le groupe te donne un titre honorifique. Tu l'exiges avant chacune de tes phrases jusqu'à ton prochain tour.",
+      "Vingt secondes pour retourner l'accusation sur quelqu'un d'autre. Le groupe juge si c'est crédible.",
+    ],
+    2:[
+      "Tu as voulu jouer au plus malin. Le groupe invente une règle absurde que tu respectes jusqu'à ton prochain tour.",
+      "Chacun te dit une qualité qu'il ne t'a jamais dite en face. Tu écoutes sans répondre.",
+      "Une minute de stand-up sur le groupe. S'ils ne rient pas, ils remettent le couvert.",
+      "Le groupe te pose la question de culture générale de son choix. Aucune proposition, tu réponds à voix haute.",
+      "Raconte la fois où tu as le plus mal jugé quelqu'un.",
+      "Écris toi-même le prochain « Qui est le plus… ». Ce sera forcément sur toi.",
+      "Le groupe désigne quelqu'un : tu prends sa place, sa voix et ses manies jusqu'à ton prochain tour.",
+      "Chacun te donne un mot pour te décrire. Tu construis une phrase avec tous, et tu l'assumes.",
+      "Énumère tes trois plus grandes qualités, en te vantant sans la moindre retenue.",
+      "Le groupe choisit ton pire trait. Tu l'exagères jusqu'à ton prochain tour.",
+      "Improvise ta chanson de défaite. Refrain compris — le groupe le reprendra.",
+      "Raconte la fois où tout le monde t'a dit non et où tu as continué quand même.",
+    ],
+    3:[
+      "Tribunal : le groupe dresse ton acte d'accusation en trois points. Tu réponds point par point, debout.",
+      "Confesse la chose la plus embarrassante que tu aies faite pour impressionner quelqu'un.",
+      "Le groupe vote la personne que tu dois complimenter pendant une minute, sans jamais répéter le même mot.",
+      "Porte-parole des perdants : jusqu'à la fin de la partie, tu commentes à voix haute chaque sanction du groupe.",
+      "Fais le tour de la pièce et dis à chacun la première chose que tu as pensée de lui en le rencontrant.",
+      "Le groupe te donne une conviction que tu dois défendre bec et ongles pendant deux minutes. Elle est ridicule, c'est le but.",
+      "Conférence de presse de démission : tu quittes le groupe, tu expliques pourquoi, tu réponds aux questions.",
+      "Le groupe rédige ta biographie officielle en trois phrases. Tu la lis à voix haute et tu la signes.",
+      "Jusqu'à la fin de la partie, tu parles de toi à la troisième personne.",
+      "Tour de table : chacun dit ce qu'il changerait chez toi. Tu remercies chacun, sincèrement.",
+      "Porte-parole officiel du groupe pendant cinq minutes : toute question extérieure passe par toi, avec la solennité qui s'impose.",
+      "Le groupe dresse ton bilan de soirée en trois points. Tu y réponds en conférence de presse, debout.",
+    ],
+  },
+
+  /* ---- Les mimes : le corps, le silence, l'expression ---- */
+  mimes:{
+    1:[
+      "Le groupe te donne une émotion. Tu la joues en gros plan pendant dix secondes.",
+      "Traverse la pièce dans la démarche que le groupe te donne.",
+      "Raconte ta journée en mimant, sans un mot. Trente secondes.",
+      "Mime le dernier plat que tu as mangé jusqu'à ce qu'on devine.",
+      "Jusqu'à ton prochain tour, tu ne parles plus qu'en chuchotant.",
+      "Fais la vraie tête que tu fais quand ton réveil sonne. Sans exagérer.",
+      "Prends la pose la plus improbable que tu peux tenir dix secondes. Le groupe te photographie mentalement.",
+      "Fais deviner ton humeur en un seul bruit. Pas un mot.",
+      "Mime la personne qui a le plus parlé depuis le début de la soirée.",
+      "Prends l'expression de quelqu'un dans la pièce et garde-la jusqu'à ce qu'on devine qui.",
+      "Traverse la pièce comme si le sol était brûlant, puis reviens comme s'il était gelé.",
+      "Mime l'objet le plus proche de toi. Si on trouve en moins de dix secondes, tu es libéré.",
+    ],
+    2:[
+      "Tu es doublé : quelqu'un du groupe parle à ta place, tu mimes chacun de ses mots.",
+      "Rejoue sans un mot la scène du film que tu as vue le plus de fois.",
+      "Le groupe choisit deux personnes. Tu mimes leur rencontre dans dix ans.",
+      "Jusqu'à ton prochain tour, chaque phrase que tu dis s'accompagne d'un geste parfaitement inutile.",
+      "Trente secondes de danse sans musique. Le groupe donne le rythme à la voix.",
+      "Mime un métier jusqu'à ce qu'on devine. Interdit de recommencer si on se trompe.",
+      "Prends la posture, les gestes et le regard de quelqu'un de la pièce. Tiens une minute.",
+      "Raconte le dernier film que tu as vu, uniquement avec les mains.",
+      "Le groupe te donne trois mots. Tu les mimes à la suite, sans pause, en une seule scène.",
+      "Mime une conversation téléphonique catastrophique. Le groupe doit deviner qui est au bout du fil.",
+      "Fais deviner un lieu de la ville en mime. Interdit de mimer le nom.",
+      "Rejoue en mime le meilleur moment de la manche précédente, du point de vue de celui qui a perdu.",
+    ],
+    3:[
+      "Rejoue les cinq dernières minutes de la soirée en muet et en accéléré. Tous les rôles.",
+      "Le groupe te donne une chanson. Tu la mimes en entier, du premier au dernier couplet.",
+      "Fais le tour de la pièce et mime chaque personne présente jusqu'à ce qu'on la reconnaisse.",
+      "Muet jusqu'à ton prochain tour. Tout passe par les gestes, même pour demander à boire.",
+      "Mime la scène la plus gênante de ta vie. Le groupe doit deviner le contexte.",
+      "Improvise un cours de danse de trente secondes. Tout le monde suit, personne ne discute.",
+      "Un film entier en trois minutes, en muet, seul, tous les personnages. Le groupe doit trouver le titre.",
+      "Jusqu'à la fin de la partie, tu accompagnes chaque prise de parole du groupe d'une traduction gestuelle.",
+      "Le groupe te donne trois objets invisibles. Tu les utilises l'un après l'autre jusqu'à ce qu'on les nomme tous.",
+      "Mime une recette entière, de l'achat des ingrédients à la vaisselle.",
+      "Le groupe choisit une personne : tu mimes sa journée type, du réveil au coucher.",
+      "Mime une dispute entre deux personnes que tu joues toutes les deux, en alternance.",
+    ],
+  },
 };
-const GAGE_NIV = ['Express','Corsé','Costaud'];
+
+/* ---- les vérités : le coup de chance ---- */
+const VERITES = [
+  "Quelle est la dernière chose que tu as cherchée sur Internet ?",
+  "Quel est le truc le plus cher que tu aies acheté et jamais utilisé ?",
+  "Qui, dans cette pièce, appellerais-tu en premier si tu avais un vrai problème à 4h du matin ?",
+  "Quel est le mensonge que tu répètes le plus souvent ?",
+  "Quelle est ta plus grosse honte en soirée ?",
+  "Quelle chanson honteuse connais-tu par cœur, du premier au dernier mot ?",
+  "Qui, ici, connaît le moins bien la vraie version de toi ?",
+  "Quel talent parfaitement inutile as-tu, que personne ne connaît ?",
+  "Qu'as-tu fait aujourd'hui dont tu n'es pas fier ?",
+  "Quelle est la chose la plus bizarre que tu aies faite en étant seul chez toi ?",
+  "Quel surnom détestes-tu le plus, et qui te l'a donné ?",
+  "Si tu devais échanger de vie avec quelqu'un ici, ce serait qui, et pourquoi ?",
+  "Quelle bêtise tes parents ignorent-ils encore ?",
+  "Quel est le pire cadeau que tu aies offert ?",
+  "Quel est ton plaisir coupable du dimanche ?",
+  "Qu'est-ce que tu regardes en boucle alors que tu l'as déjà vu dix fois ?",
+  "Décris la dernière photo de ta galerie, sans la montrer.",
+  "Quel est le message que tu as écrit et jamais envoyé ?",
+  "Combien de temps as-tu passé sur ton téléphone hier ? À la minute près, on vérifie.",
+  "Quelle est la chose la plus gentille que quelqu'un ici ait faite pour toi ?",
+  "Quelle promesse t'es-tu faite en janvier et déjà complètement oubliée ?",
+  "Quel est le pire conseil que tu aies donné à quelqu'un ?",
+  "Si le groupe pouvait revivre une seule journée de ta vie, laquelle tu cacherais ?",
+  "Qu'est-ce qui te fait rire alors que ça ne devrait vraiment pas ?",
+  "Quel est ton réflexe quand tu es mal à l'aise, et depuis quand ?",
+  "Quelle est la dépense la plus honteuse de ton mois ?",
+  "À qui, dans cette pièce, dois-tu encore des excuses ?",
+  "Qu'est-ce que tu prétends aimer juste pour faire bonne figure ?",
+  "Quelle est la dernière fois où tu as menti pour éviter de sortir ?",
+  "Qui ici te ressemble le plus, et est-ce une bonne nouvelle ?",
+  "Quel compliment te fait toujours plaisir, même quand il est bidon ?",
+  "Quelle est la chose que tu ne dis jamais à voix haute et que tu penses très fort ?",
+  "Qui, ici, serait le meilleur alibi pour un crime ?",
+  "Combien de temps tiendrais-tu sans ton téléphone ? Sois honnête.",
+  "Quel est ton plus gros mensonge au travail ou en cours ?",
+  "Qui ici t'a fait la meilleure première impression ? Et la pire ?",
+  "C'était quand, la dernière fois que tu as pleuré, et pourquoi ?",
+  "Qu'as-tu fait de plus stupide pour impressionner quelqu'un ?",
+  "Quelle rumeur complètement fausse a circulé sur toi ?",
+  "Quel est ton pire souvenir de vacances ?",
+  "Qu'as-tu déjà volé, même minuscule ?",
+  "Qui emmènerais-tu sur une île déserte, et qui laisserais-tu sur la plage ?",
+  "Quelle est la chose la plus chère que tu aies cassée ?",
+  "Combien de fois par jour regardes-tu ton propre profil ?",
+  "Quel plan as-tu annulé au dernier moment en inventant une excuse ?",
+  "Qui, ici, serait le pire colocataire ?",
+  "Ton avis sincère sur la personne à ta droite. Une phrase, vraie.",
+  "Quel est ton plus gros regret de cette année ?",
+  "Quelle série as-tu finie alors qu'elle était mauvaise ?",
+  "Que ferais-tu de dix mille euros demain matin ?",
+  "Qui, ici, a le plus changé depuis que tu le connais ?",
+  "Quelle est ta vraie plus grande peur — pas celle qu'on sort en soirée ?",
+  "Quel est le moment où tu as été le plus fier de toi ?",
+  "Qui est la dernière personne que tu as fouillée sur les réseaux ?",
+  "Que changerais-tu chez toi si c'était gratuit et immédiat ?",
+  "Quel service qu'on t'a rendu n'as-tu jamais remboursé ?",
+  "Quel compliment aimerais-tu entendre et qu'on ne te fait jamais ?",
+  "Qu'as-tu appris beaucoup trop tard ?",
+  "Qui ici te connaît le mieux ? Prouve-le : il doit deviner ton plat préféré.",
+  "Quelle est la vidéo la plus regardée de ton historique ?",
+  "Quel est le plus beau mensonge qu'on t'ait dit ?",
+  "Quelle est la première chose que tu regardes chez quelqu'un ?",
+];
+
+/* ---- tirage sans doublon : un paquet par jeu et par niveau ---- */
+function resetGageDecks(){ state.gageDecks={}; }
+function gagePioche(cle, source){
+  if(!state.gageDecks) state.gageDecks={};
+  let d=state.gageDecks[cle];
+  if(!d || !d.length) d=state.gageDecks[cle]=shuffle(source.slice());
+  return d.pop();
+}
+function tireGage(jeu, n){
+  const pool=GAGES[jeu] || GAGES.qar;
+  const max=Math.max.apply(null, Object.keys(pool).map(Number));
+  const niv=Math.min(max, Math.max(1, Math.round(n)||1));
+  if(Math.random()<VERITE_CHANCE) return { verite:true, niv, txt:gagePioche('verite', VERITES) };
+  return { verite:false, niv, txt:gagePioche(jeu+'-'+niv, pool[niv]) };
+}
 
 /* ---------- mots du jeu des mimes ----------
    Un seul paquet, tiré au hasard : plus de catégories à choisir, on lance
@@ -1583,7 +1825,15 @@ function toast(msg){
 /* ---------- sanctions : gorgées ou gages selon le mode ---------- */
 const sansAlcool = () => state.mode==='sans';
 // « 2 gorgées » / « 2 gages »
-function unite(n){ return sansAlcool() ? `${n} gage${n>1?'s':''}` : `${n} gorgée${n>1?'s':''}`; }
+/* En mode alcool, n est un nombre de gorgées. En mode sans alcool, c'est le
+   NIVEAU d'un gage unique : « un gage Costaud », pas « trois gages ». */
+function unite(n){
+  return sansAlcool()
+    ? `un gage ${GAGE_NIV[Math.min(GAGE_NIV.length, Math.max(1, Math.round(n)||1))-1]}`
+    : `${n} gorgée${n>1?'s':''}`;
+}
+// quand c'est vraiment une quantité à répartir (le sans-faute du Black(out) Jack)
+function uniteN(n){ return sansAlcool() ? `${n} gage${n>1?'s':''}` : `${n} gorgée${n>1?'s':''}`; }
 // « Ali boit 2 gorgées » / « Ali prend 2 gages »
 function sanction(name,n){ return `${name} ${sansAlcool()?'prend':'boit'} ${unite(n)}`; }
 /* `par` = qui inflige la sanction, quand c'est la décision d'un joueur et non du groupe.
@@ -1619,30 +1869,31 @@ function floatCam(){ return `<div class="floatCam" onclick="openCam()">📸</div
    écran de résultat : en mode alcool elle ne fait rien, en mode sans alcool elle
    enchaîne un défi par joueur sanctionné avant de reprendre le jeu. */
 let _gage=null;
-function gagesAfter(list, next){
+function gagesAfter(list, next, jeu){
   if(!sansAlcool()) return next;
   return ()=>{
     const file=list.filter(([,v])=>v>0);
-    const suivant=()=>{ if(!file.length) return next(); const [nom,v]=file.shift(); gageScreen(nom,v,suivant); };
+    const suivant=()=>{ if(!file.length) return next(); const [nom,v]=file.shift(); gageScreen(nom,v,suivant,jeu); };
     suivant();
   };
 }
-function gageScreen(name,n,next){
-  const niv=Math.min(3,Math.max(1,n));
+function gageScreen(name,n,next,jeu){
+  const g=tireGage(jeu||'qar', n);
   _gage={name,n,next};
   render(`
-    <div class="topbar"><h2 style="margin:auto">Gage pour ${name}</h2></div>
+    <div class="topbar"><h2 style="margin:auto">${g.verite?`🍀 Vérité pour ${name}`:`Gage pour ${name}`}</h2></div>
     ${counterBar()}
-    <div class="gap"></div>
-    <div class="card tint-coral center" style="padding:26px 20px">
-      <div class="badge b-scam">${GAGE_NIV[niv-1]} · ${n} point${n>1?'s':''}</div>
+    <div class="spacer"></div>
+    <div class="card ${g.verite?'tint-cyan':'tint-coral'} center" style="padding:26px 20px">
+      <div class="badge ${g.verite?'b-ref':'b-scam'}">${g.verite?'Coup de chance · une vérité':`Gage ${GAGE_NIV[g.niv-1]} · niveau ${g.niv}`}</div>
       <div class="gap"></div>
-      <p style="font-size:19px;font-weight:800;line-height:1.35">${rnd(GAGES[niv])}</p>
+      <p style="font-size:19px;font-weight:800;line-height:1.35">${g.txt}</p>
+      ${g.verite?`<div class="gap-s"></div><p class="muted">Pas de gage cette fois : réponds honnêtement, ça suffira.</p>`:''}
     </div>
     <div class="spacer"></div>
-    <button class="btn mint" onclick="gageDone(true)">✅ Relevé (+${n} 🔥)</button>
+    <button class="btn mint" onclick="gageDone(true)">✅ ${g.verite?'Répondu':'Relevé'} (+${n} 🔥)</button>
     <div class="gap-s"></div>
-    <button class="btn ghost sm" onclick="gageDone(false)">🐔 Je me dégonfle</button>
+    <button class="btn ghost sm" onclick="gageDone(false)">🐔 ${g.verite?'Je préfère ne pas répondre':'Je me dégonfle'}</button>
     <div style="height:8px"></div>
   `, true);
 }
@@ -1760,6 +2011,7 @@ function pickMode(m){
   resetPairDecks();                        // ...et les paires repartent à zéro pour la nouvelle soirée
   resetMimeDecks();                        // ...ainsi que les mots des mimes
   resetCultureDeck();                      // ...et les questions de culture générale
+  resetGageDecks();                        // ...et les gages du mode sans alcool
   resetRoleHist();                         // ...ainsi que l'historique des rôles
   beforePhotoPrompt();                     // première mise en place → propose la photo de début
 }
@@ -2085,9 +2337,9 @@ function qarVote(){
 function qarEliminate(i){
   const p=qar.players[i]; if(!p.alive)return; p.alive=false;
   if(p.role==='scam'){ addDrinks(p.name,2);
-    resultScreen('Scamer démasqué !',`${p.name} était un scamer. Sanction : ${unite(2)}. Bien joué au groupe.`,'b-scam',gagesAfter([[p.name,2]],qarCheckEnd)); }
+    resultScreen('Scamer démasqué !',`${p.name} était un scamer. Sanction : ${unite(2)}. Bien joué au groupe.`,'b-scam',gagesAfter([[p.name,2]],qarCheckEnd,'qar')); }
   else if(p.role==='ref'){ addDrinks(p.name,1);
-    resultScreen('Raté…',`${p.name} avait la ref ! Sanction : ${unite(1)}. Le groupe perd un allié.`,'b-ref',gagesAfter([[p.name,1]],qarCheckEnd)); }
+    resultScreen('Raté…',`${p.name} avait la ref ! Sanction : ${unite(1)}. Le groupe perd un allié.`,'b-ref',gagesAfter([[p.name,1]],qarCheckEnd,'qar')); }
   else { qarPnjGuess(p); }
 }
 function qarPnjGuess(p){
@@ -2112,8 +2364,9 @@ function qarPnjCheck(name){
     // peut voter pour un scamer
     qarPnjVote(name);
   }else{
-    addDrinks(name,2);
-    resultScreen('❌ Mauvais mot',`Le mot était « ${qar.word.ref} ». Sanction pour ${name} : ${unite(2)}.`,'b-pnj',gagesAfter([[name,2]],qarCheckEnd));
+    const n=pnjRate();
+    addDrinks(name,n);
+    resultScreen('❌ Mauvais mot',`Le mot était « ${qar.word.ref} ». Sanction pour ${name} : ${unite(n)}.`,'b-pnj',gagesAfter([[name,n]],qarCheckEnd,'qar'));
   }
 }
 function qarPnjVote(name){
@@ -2131,11 +2384,12 @@ function qarPnjVoteDone(pnjName,target){
   if(t.role==='scam'){
     addDrinks(pnjName,1); addDrinks(target,1,pnjName);   // c'est le PNJ qui a désigné la cible
     resultScreen('🎯 Touché !',`${target} était bien un scamer. ${unite(1)} pour ${pnjName} et autant pour ${target}.`,'b-scam',
-      gagesAfter([[pnjName,1],[target,1]],qarCheckEnd));
+      gagesAfter([[pnjName,1],[target,1]],qarCheckEnd,'qar'));
   }else{
-    addDrinks(pnjName,2);
-    resultScreen('😬 Loupé',`${target} n'était pas un scamer. Sanction pour ${pnjName} : ${unite(2)}.`,'b-pnj',
-      gagesAfter([[pnjName,2]],qarCheckEnd));
+    const n=pnjRate();
+    addDrinks(pnjName,n);
+    resultScreen('😬 Loupé',`${target} n'était pas un scamer. Sanction pour ${pnjName} : ${unite(n)}.`,'b-pnj',
+      gagesAfter([[pnjName,n]],qarCheckEnd,'qar'));
   }
 }
 function qarCheckEnd(){
@@ -2217,7 +2471,7 @@ function sniperPicked(name){
       <div class="big">🎯</div>
       <p><b>${name}</b> a été désigné. Tu peux assumer… ou tenter ta revanche.</p>
       <div class="gap-s"></div>
-      <p class="muted">La revanche, c'est une question de culture générale en 20 secondes. Réussie, quelqu'un d'autre paie ${unite(2)} à ta place. Ratée, c'est ${unite(2)} pour toi.</p>
+      <p class="muted">La revanche, c'est une question de culture générale en 20 secondes. Réussie, quelqu'un d'autre paie ${unite(SNIPER_MISE)} à ta place. Ratée, c'est ${unite(sniperRate())} pour toi.</p>
     </div>
     <div class="spacer"></div>
     <button class="btn accent" onclick="sniperRevanche('${name.replace(/'/g,"\\'")}')">🧠 Tenter la revanche</button>
@@ -2229,7 +2483,7 @@ function sniperPicked(name){
 function sniperAssume(name){
   compteManche('sniper');   // la question est tranchée : une manche de plus
   addDrinks(name,1); toast(sanction(name,1));
-  gagesAfter([[name,1]],sniperRound)();
+  gagesAfter([[name,1]],sniperRound,'sniper')();
 }
 /* ---------- la revanche : une question de culture générale ----------
    Le visé récupère le téléphone, lit la question, a 20 secondes pour
@@ -2238,6 +2492,9 @@ function sniperAssume(name){
    même dans les deux sens : c'est un pile ou face qu'il a demandé. */
 const QUIZ_SEC = 20;
 const SNIPER_MISE = 2;
+/* Rater sa revanche est plus lourd qu'assumer tout de suite : sans alcool le
+   gage passe au niveau Costaud, avec alcool la mise reste la même. */
+function sniperRate(){ return sansAlcool() ? 3 : SNIPER_MISE; }
 let snip={};
 function sniperRevanche(name){
   const q=drawCulture();
@@ -2252,7 +2509,7 @@ function sniperRevanche(name){
       <div class="gap"></div>
       <p style="font-size:16px"><b>${name}</b>, passe-toi le téléphone.<br>Une question de culture générale, <b>20 secondes</b> pour répondre.</p>
       <div class="gap-s"></div>
-      <p class="muted">Bonne réponse : tu désignes qui prend ta place (${unite(SNIPER_MISE)}). Mauvaise, ou hors délai : c'est pour toi.</p>
+      <p class="muted">Bonne réponse : tu désignes qui prend ta place (${unite(SNIPER_MISE)}). Mauvaise, ou hors délai : ${unite(sniperRate())} pour toi.</p>
     </div>
     <div class="spacer"></div>
     <button class="btn accent" onclick="sniperQuizGo()">Je suis prêt·e →</button>
@@ -2306,7 +2563,7 @@ function sniperQuizReveal(i){
   const ok=(i===bon), tempsEcoule=(i<0);
   compteManche('sniper');            // la question est tranchée : une manche de plus
   if(ok) mimeDing(true); else mimeBuzz();
-  if(!ok) addDrinks(snip.name, SNIPER_MISE);
+  if(!ok) addDrinks(snip.name, sniperRate());
   render(`
     <div class="topbar"><h2 style="margin:auto">${ok?'✅ Bien joué':(tempsEcoule?'⏱️ Trop tard':'❌ Raté')}</h2></div>
     ${counterBar()}
@@ -2319,7 +2576,7 @@ function sniperQuizReveal(i){
     <div class="gap"></div>
     <p class="center" style="font-size:16px">${ok
       ? `<b>${snip.name}</b> s'en sort. À toi de désigner qui prend ta place.`
-      : `${sanction(snip.name,SNIPER_MISE)} ${sansAlcool()?'🔥':'🍺'}`}</p>
+      : `${sanction(snip.name,sniperRate())} ${sansAlcool()?'🔥':'🍺'}`}</p>
     <div class="spacer"></div>
     ${ok ? `<button class="btn good" onclick="sniperQuizWin()">Désigner quelqu'un →</button>`
          : `<button class="btn" onclick="sniperQuizFin()">Manche suivante →</button>`}
@@ -2327,7 +2584,7 @@ function sniperQuizReveal(i){
   `, true);
 }
 function sniperQuizFin(){
-  gagesAfter([[snip.name,SNIPER_MISE]], sniperRound)();
+  gagesAfter([[snip.name,sniperRate()]], sniperRound, 'sniper')();
 }
 function sniperQuizWin(){
   render(`
@@ -2346,7 +2603,7 @@ function sniperQuizWin(){
 function sniperQuizGive(autre){
   addDrinks(autre, SNIPER_MISE, snip.name);   // c'est le gagnant de la revanche qui l'inflige
   toast(sanction(autre,SNIPER_MISE));
-  gagesAfter([[autre,SNIPER_MISE]], sniperRound)();
+  gagesAfter([[autre,SNIPER_MISE]], sniperRound, 'sniper')();
 }
 
 /* ============================================================
@@ -2355,7 +2612,9 @@ function sniperQuizGive(autre){
 let bj={};
 const SUITS=[{s:'♠',n:'Pique',r:false},{s:'♥',n:'Cœur',r:true},{s:'♦',n:'Carreau',r:true},{s:'♣',n:'Trèfle',r:false}];
 const RANKS=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
-const BJ_CADEAU=5;                        // le pactole du sans-faute
+/* Le pactole du sans-faute. En mode sans alcool on descend à 3 : trois gages
+   d'affilée sur la même personne, c'est déjà une éternité pour le groupe. */
+function bjCadeau(){ return sansAlcool() ? 3 : 5; }
 const BJ_ETAPES=[
   { t:'Rouge ou noir ?',    s:'Ta première carte, à l\'aveugle.' },
   { t:'Plus ou moins ?',    s:'La deuxième, comparée à la première.' },
@@ -2414,7 +2673,7 @@ function bjAsk(){
     ${bjChoix()}
     <div class="gap-s"></div>
     <p class="muted center">${bj.step===3
-      ? `Sans-faute : tu distribues ${unite(BJ_CADEAU)}. Raté : ${unite(4)} pour toi.`
+      ? `Sans-faute : tu distribues ${uniteN(bjCadeau())}. Raté : ${unite(4)} pour toi.`
       : `Erreur ici : ${unite(bj.step+1)}.`}</p>
     <div class="spacer"></div>
     <div class="spacer"></div>
@@ -2467,7 +2726,7 @@ function bjReveal(ok,n){
       ? `<b>${bj.player}</b> annonçait <b>${bjDit()}</b>. C'était bon.`
       : `<b>${bj.player}</b> annonçait <b>${bjDit()}</b>. Raté à l'étape ${bj.step+1} — <b style="color:var(--gold)">${unite(n)}</b> ${sansAlcool()?'🔥':'🍺'}`}</p>
     ${fini?`<div class="gap"></div><div class="card tint-gold center">
-      <p style="font-size:16px;font-weight:750">Quatre paris, quatre fois juste. À toi de distribuer ${unite(BJ_CADEAU)} 🎁</p></div>`:''}
+      <p style="font-size:16px;font-weight:750">Quatre paris, quatre fois juste. À toi de distribuer ${uniteN(bjCadeau())} 🎁</p></div>`:''}
     <div class="spacer"></div>
     ${fini ? `<button class="btn gold" onclick="bjJackpot()">Distribuer →</button>`
       : ok ? `<button class="btn good" onclick="bjSuite()">Étape ${bj.step+2} sur 4 →</button>`
@@ -2479,17 +2738,17 @@ function bjSuite(){ bj.step++; bjAsk(); }
 function bjNextPlayer(){
   const n=bj.pending||0, joueur=bj.player; bj.pending=0;
   compteManche('bj');                      // le passage du joueur s'arrête ici : une manche de plus
-  gagesAfter([[joueur,n]], ()=>{ bj.turn++; bjPlayer(); })();
+  gagesAfter([[joueur,n]], ()=>{ bj.turn++; bjPlayer(); }, 'bj')();
 }
 
 /* ---------- le sans-faute : cinq à placer où il veut ---------- */
 function bjJackpot(){ bj.give={}; bjDistribute(); }
 function bjDistribute(){
   const given=Object.values(bj.give||{}).reduce((a,b)=>a+b,0);
-  const left=BJ_CADEAU-given;
+  const left=bjCadeau()-given;
   render(`
     <div class="topbar"><h2 style="margin:auto">🎰 Sans-faute !</h2></div>
-    <p class="center muted"><b>${bj.player}</b> place <b style="color:var(--gold)">${unite(BJ_CADEAU)}</b> comme il/elle veut. Reste : <b style="color:var(--gold)">${left}</b></p>
+    <p class="center muted"><b>${bj.player}</b> place <b style="color:var(--gold)">${uniteN(bjCadeau())}</b> comme il/elle veut. Reste : <b style="color:var(--gold)">${left}</b></p>
     <div class="gap"></div>
     <div class="list-pick">
       ${state.players.map(p=>`<div class="pick" onclick="bjGive('${p.name.replace(/'/g,"\\'")}')">${p.name}<span style="color:var(--gold)">${bj.give[p.name]||0} ${sansAlcool()?'🔥':'🍺'}</span></div>`).join('')}
@@ -2503,7 +2762,7 @@ function bjDistribute(){
 }
 function bjGive(name){
   const given=Object.values(bj.give).reduce((a,b)=>a+b,0);
-  if(given>=BJ_CADEAU){ toast(`${unite(BJ_CADEAU)} déjà placées`); return; }
+  if(given>=bjCadeau()){ toast(`${uniteN(bjCadeau())} déjà placées`); return; }
   bj.give[name]=(bj.give[name]||0)+1; bjDistribute();
 }
 function bjJackpotDone(){
@@ -2511,7 +2770,7 @@ function bjJackpotDone(){
   parts.forEach(([n,v])=>addDrinks(n,v,bj.player));    // le sans-faute : c'est lui qui distribue
   toast('Partage enregistré '+(sansAlcool()?'🔥':'🍺'));
   compteManche('bj');
-  gagesAfter(parts, ()=>{ bj.turn++; bjPlayer(); })();
+  gagesAfter(parts, ()=>{ bj.turn++; bjPlayer(); }, 'bj')();
 }
 
 /* ============================================================
@@ -3175,7 +3434,7 @@ function mimesResults(){
   perdants.forEach(r=>r.membres.forEach(m=>{ addDrinks(m,n); punis.push([m,n]); }));
   const noms=punis.map(p=>p[0]);
   const gages = sansAlcool() && punis.length;
-  if(gages) _suite = gagesAfter(punis, mimesReplay);
+  if(gages) _suite = gagesAfter(punis, mimesReplay, 'mimes');
   render(`
     <div class="topbar"><h2 style="margin:auto">🎭 Fin de la manche</h2></div>
     ${counterBar()}

@@ -1039,12 +1039,66 @@ const THEMES = {
    son gage passe au niveau Costaud. */
 function pnjRate(){ return sansAlcool() ? 3 : 2; }
 const SNIPER_Q = [
-  "Qui est le plus capable de finir la soirée le premier ?",
-  "Qui enverrait un message à son ex à 3h du mat ?",
-  "Qui est le plus susceptible de danser sur la table ?",
-  "Qui raconte les meilleures (ou pires) blagues ?",
-  "Qui serait le plus capable de se perdre en rentrant ?",
-  "Qui ne se souviendra de rien demain matin ?",
+  "Qui est le plus capable d'aimer les pieds ?",
+  "Qui est le plus capable de croire aux théories du complot ?",
+  "Qui est le plus capable de mentir sur son bodycount ?",
+  "Qui est le plus capable de tromper ?",
+  "Qui est le plus capable de devenir influenceur ?",
+  "Qui est le plus capable de devenir acteur X ?",
+  "Qui est le plus capable de quitter la soirée en premier ?",
+  "Qui est le plus capable de faire passer sa meuf avant ses potes ?",
+  "Qui est le plus capable d'aller en prison ?",
+  "Qui est le plus capable de cachér qu'il reparle à son ex ?",
+  "Qui est le plus capable d'aller au Babinski ?",
+  "Qui est le plus capable de vendre de la drogue ?",
+  "Qui est le plus capable de payer un abonnement OF ?",
+  "Qui est le plus capable de faire un plan à 3 ?",
+  "Qui est le plus capable de faire un badbuzz ?",
+  "Qui est le plus capable de devenir une ref ?",
+  "Qui est le plus capable de faire de l'inceste ?",
+  "Qui est le plus capable de se faire scam ?",
+  "Qui est le plus capable de voler ?",
+  "Qui est le plus capable de se réveiller sans savoir où il est ?",
+  "Qui est le plus capable de parler à toute la boîte ?",
+  "Qui est le plus capable de connaître le videur ?",
+  "Qui est le plus capable de ne pas se rappeler de cette soirée demain ?",
+  "Qui est le plus capable de ghost quelqu'un après avoir couché avec ?",
+  "Qui est le plus capable de voler la meuf de son pote ?",
+  "Qui est le plus capable de disparaître pendant 3 heures en soirée ?",
+  "Qui est le plus capable de se faire virer d'une boîte ?",
+  "Qui est le plus capable d'envoyer un message à son ex bourré ?",
+  "Qui est le plus capable de poster une story uniquement pour qu'une personne la voie ?",
+  "Qui est le plus capable de faire croire qu'il est riche ?",
+  "Qui est le plus capable de flamber tout son salaire en un week-end ?",
+  "Qui est le plus capable d'avoir deux plans en même temps ?",
+  "Qui est le plus capable de ne jamais payer un verre de la soirée ?",
+  "Qui est le plus capable de perdre son téléphone en soirée ?",
+  "Qui est le plus capable de faire un tatouage sur un coup de tête ?",
+  "Qui est le plus capable de se marier en premier ?",
+  "Qui est le plus capable de divorcer en premier ?",
+  "Qui est le plus capable de finir millionnaire ?",
+  "Qui est le plus capable de finir dans une émission de télé-réalité ?",
+  "Qui est le plus capable de liker une vieille photo en stalkant quelqu'un ?",
+  "Qui est le plus capable de se faire friendzone ?",
+  "Qui est le plus capable de tomber amoureux au premier date ?",
+  "Qui est le plus capable de se mettre en couple avec quelqu'un rencontré en soirée ?",
+  "Qui est le plus capable de quitter sa meuf pour quelqu'un rencontré en soirée ?",
+  "Qui est le plus capable de faire semblant de connaître quelqu'un ?",
+  "Qui est le plus capable de se faire afficher dans le groupe ?",
+  "Qui est le plus capable de se faire refuser l'entrée d'une boîte ?",
+  "Qui est le plus capable de quitter son travail sur un coup de tête ?",
+  "Qui est le plus capable d'avoir un deuxième téléphone caché ?",
+  "Qui est le plus capable de se faire passer pour le pote de quelqu'un de connu ?",
+  "Qui est le plus capable de finir par sortir avec quelqu'un qu'il critiquait ?",
+  "Qui est le plus capable de faire une dinguerie et de convaincre tout le monde que c'était une bonne idée ?",
+  "Qui est le plus capable de finir avec le plus gros casier judiciaire du groupe ?",
+  "Qui est le plus capable de se faire passer pour célibataire alors qu'il est en couple ?",
+  "Qui est le plus capable d'avoir un compte Instagram secret ?",
+  "Qui est le plus capable de parier tout son salaire ?",
+  "Qui est le plus capable de prêter beaucoup d'argent à quelqu'un qu'il connaît à peine ?",
+  "Qui est le plus capable de changer complètement de vie du jour au lendemain ?",
+  "Qui est le plus capable de partir seul à l'autre bout du monde sur un coup de tête ?",
+  "Qui est le plus capable de s'inventer une vie juste pour pécho ?",
 ];
 /* ---------- culture générale : la revanche du Sniper ----------
    Une ligne = [question, LA BONNE RÉPONSE, leurre, leurre, leurre].
@@ -1802,6 +1856,13 @@ function drawPair(k){
   if(!deck || !deck.length){ deck=state.pairDecks[k]=shuffle(THEMES[k].pairs.map((_,i)=>i)); }
   return THEMES[k].pairs[deck.pop()];
 }
+/* ---------- tirage des questions Sniper, sans doublon dans la soirée ----------
+   Même principe que les paires : un paquet mélangé qu'on épuise avant de le
+   refaire. Avec 60 questions, une soirée entière passe sans jamais se répéter. */
+function drawSniperQ(){
+  if(!state.sniperDeck || !state.sniperDeck.length) state.sniperDeck=shuffle(SNIPER_Q);
+  return state.sniperDeck.pop();
+}
 function pairsLeft(k){ return (state.pairDecks && state.pairDecks[k]) ? state.pairDecks[k].length : THEMES[k].pairs.length; }
 
 /* ---------- attribution des rôles ----------
@@ -2517,7 +2578,7 @@ function resultScreen(title,desc,badge,next){
    JEU 2 — SNIPER
    ============================================================ */
 function sniperRound(){
-  const q=rnd(SNIPER_Q);
+  const q=drawSniperQ();
   render(`
     <div class="topbar"><div class="back" onclick="gameSelect()">‹</div><h2>🎯 Sniper</h2></div>
     ${counterBar()}

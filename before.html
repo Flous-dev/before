@@ -1099,6 +1099,26 @@ const SNIPER_Q = [
   "Qui est le plus capable de changer complètement de vie du jour au lendemain ?",
   "Qui est le plus capable de partir seul à l'autre bout du monde sur un coup de tête ?",
   "Qui est le plus capable de s'inventer une vie juste pour pécho ?",
+  "Qui est le plus capable de finir la soirée aux urgences ?",
+  "Qui est le plus capable de dormir chez un inconnu ?",
+  "Qui est le plus capable de partir sans dire au revoir à personne ?",
+  "Qui est le plus capable de vomir dans la voiture de quelqu'un ?",
+  "Qui est le plus capable de monter sur la table ?",
+  "Qui est le plus capable de prendre le micro et de ne plus le lâcher ?",
+  "Qui est le plus capable de ramener quelqu'un que personne ne connaît ?",
+  "Qui est le plus capable de balancer un secret du groupe ?",
+  "Qui est le plus capable de perdre sa carte bancaire ?",
+  "Qui est le plus capable de rappeler quelqu'un douze fois d'affilée ?",
+  "Qui est le plus capable de bloquer puis débloquer quelqu'un dans la même nuit ?",
+  "Qui est le plus capable de supprimer sa story au bout de dix minutes ?",
+  "Qui est le plus capable de mentir sur son salaire ?",
+  "Qui est le plus capable de convaincre le groupe d'investir dans une crypto ?",
+  "Qui est le plus capable de se lancer dans le dropshipping ?",
+  "Qui est le plus capable de se remettre avec son ex après avoir juré que non ?",
+  "Qui est le plus capable d'oublier l'anniversaire de sa meuf ?",
+  "Qui est le plus capable de s'excuser par message le lendemain ?",
+  "Qui est le plus capable de nier l'évidence alors que tout le monde a vu ?",
+  "Qui est le plus capable de finir en garde à vue ?",
 ];
 /* ---------- culture générale : la revanche du Sniper ----------
    Une ligne = [question, LA BONNE RÉPONSE, leurre, leurre, leurre].
@@ -1858,7 +1878,7 @@ function drawPair(k){
 }
 /* ---------- tirage des questions Sniper, sans doublon dans la soirée ----------
    Même principe que les paires : un paquet mélangé qu'on épuise avant de le
-   refaire. Avec 60 questions, une soirée entière passe sans jamais se répéter. */
+   refaire. Avec 80 questions, une soirée entière passe sans jamais se répéter. */
 function drawSniperQ(){
   if(!state.sniperDeck || !state.sniperDeck.length) state.sniperDeck=shuffle(SNIPER_Q);
   return state.sniperDeck.pop();

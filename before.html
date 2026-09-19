@@ -1099,111 +1099,107 @@ const SNIPER_Q = [
   "Qui est le plus capable de changer complètement de vie du jour au lendemain ?",
   "Qui est le plus capable de partir seul à l'autre bout du monde sur un coup de tête ?",
   "Qui est le plus capable de s'inventer une vie juste pour pécho ?",
-  "Qui est le plus capable de finir la soirée aux urgences ?",
-  "Qui est le plus capable de dormir chez un inconnu ?",
-  "Qui est le plus capable de pleurer en soirée ?",
-  "Qui est le plus capable de vomir dans la voiture de quelqu'un ?",
-  "Qui est le plus capable de monter sur la table ?",
-  "Qui est le plus capable de prendre le micro et de ne plus le lâcher ?",
-  "Qui est le plus capable de ramener quelqu'un que personne ne connaît ?",
-  "Qui est le plus capable de balancer un secret du groupe ?",
-  "Qui est le plus capable de s'endormir en pleine soirée ?",
-  "Qui est le plus capable de rappeler quelqu'un douze fois d'affilée ?",
-  "Qui est le plus capable de bloquer puis débloquer quelqu'un dans la même nuit ?",
-  "Qui est le plus capable de supprimer sa story au bout de dix minutes ?",
-  "Qui est le plus capable de finir au kebab à 5h du matin ?",
-  "Qui est le plus capable de convaincre le groupe d'investir dans une crypto ?",
-  "Qui est le plus capable de se lancer dans le dropshipping ?",
-  "Qui est le plus capable de raconter la même histoire trois fois dans la soirée ?",
-  "Qui est le plus capable d'oublier l'anniversaire de sa meuf ?",
-  "Qui est le plus capable de s'excuser par message le lendemain ?",
-  "Qui est le plus capable d'envoyer des vocaux de trois minutes au groupe ?",
-  "Qui est le plus capable de répondre à un message trois semaines plus tard ?",
 ];
 /* ---------- culture générale : la revanche du Sniper ----------
    Une ligne = [question, LA BONNE RÉPONSE, leurre, leurre, leurre].
    La bonne est toujours en première position ici ; à l'écran les quatre
    propositions sont mélangées. Pour en ajouter : une ligne de plus. */
 const CULTURE = [
-  ["Quelle est la capitale de l'Australie ?","Canberra","Sydney","Melbourne","Brisbane"],
-  ["Quelle est la capitale du Canada ?","Ottawa","Toronto","Montréal","Vancouver"],
-  ["Quelle est la capitale du Brésil ?","Brasilia","Rio de Janeiro","São Paulo","Salvador"],
-  ["Quelle est la capitale de la Turquie ?","Ankara","Istanbul","Izmir","Bursa"],
-  ["Quelle est la capitale de la Suisse ?","Berne","Genève","Zurich","Lausanne"],
-  ["Quel est le plus grand pays du monde ?","La Russie","Le Canada","La Chine","Les États-Unis"],
-  ["Quel est le plus petit pays du monde ?","Le Vatican","Monaco","Saint-Marin","Le Liechtenstein"],
-  ["Quel est le plus grand pays d'Afrique ?","L'Algérie","Le Nigeria","L'Égypte","L'Afrique du Sud"],
-  ["Quelle est la plus grande île du monde ?","Le Groenland","Madagascar","Bornéo","La Nouvelle-Guinée"],
-  ["Quel est le plus grand océan ?","Le Pacifique","L'Atlantique","L'Indien","L'Arctique"],
-  ["Quel est le plus grand désert chaud du monde ?","Le Sahara","Le Gobi","Le Kalahari","L'Atacama"],
-  ["Quelle est la plus haute montagne du monde ?","L'Everest","Le K2","Le Mont Blanc","Le Kilimandjaro"],
-  ["Quel est le plus long fleuve de France ?","La Loire","La Seine","Le Rhône","La Garonne"],
-  ["Dans quel pays se trouve le Machu Picchu ?","Le Pérou","Le Mexique","Le Chili","La Bolivie"],
-  ["Dans quelle ville se trouve la Sagrada Família ?","Barcelone","Madrid","Valence","Séville"],
-  ["Dans quelle ville se trouve le Colisée ?","Rome","Athènes","Naples","Milan"],
-  ["Quelle mer est la plus salée ?","La mer Morte","La mer Rouge","La Méditerranée","La mer Noire"],
-  ["Quelle est la langue la plus parlée comme langue maternelle ?","Le mandarin","L'anglais","L'espagnol","L'hindi"],
-  ["Quel pays a offert la statue de la Liberté aux États-Unis ?","La France","L'Angleterre","L'Espagne","L'Italie"],
-  ["Dans quel pays a été inventé le papier ?","En Chine","En Égypte","En Grèce","En Inde"],
-  ["De quel pays vient le tango ?","L'Argentine","L'Espagne","Le Brésil","Le Portugal"],
-  ["De quelle région d'Espagne vient la paella ?","Valence","L'Andalousie","La Catalogne","La Galice"],
-  ["De quel pays vient la marque IKEA ?","La Suède","La Norvège","Le Danemark","La Finlande"],
-  ["Quelle est la monnaie du Japon ?","Le yen","Le yuan","Le won","Le baht"],
-  ["Quelle est la monnaie du Royaume-Uni ?","La livre sterling","L'euro","Le dollar","Le franc"],
+  ["Quelle est la capitale de l'Australie ?","Canberra","Sydney","Melbourne","Perth"],
+  ["Quelle est la capitale de la Nouvelle-Zélande ?","Wellington","Auckland","Christchurch","Hamilton"],
+  ["Quelle est la capitale du Maroc ?","Rabat","Casablanca","Marrakech","Fès"],
+  ["Quelle est la capitale du Nigeria ?","Abuja","Lagos","Kano","Ibadan"],
+  ["Quelle est la capitale du Kazakhstan ?","Astana","Almaty","Tachkent","Bichkek"],
+  ["Quelle est la capitale de la Turquie ?","Ankara","Istanbul","Izmir","Antalya"],
+  ["Quelle est la capitale du Vietnam ?","Hanoï","Hô Chi Minh-Ville","Da Nang","Huế"],
+  ["Quelle est la capitale de l'Inde ?","New Delhi","Bombay","Calcutta","Bangalore"],
+  ["Quelle est la capitale de l'Écosse ?","Édimbourg","Glasgow","Aberdeen","Dundee"],
+  ["Quel pays compte le plus d'habitants ?","L'Inde","La Chine","Les États-Unis","L'Indonésie"],
+  ["Quel pays a le plus de fuseaux horaires ?","La France","La Russie","Les États-Unis","La Chine"],
+  ["Quel est le plus grand pays d'Afrique ?","L'Algérie","Le Nigeria","L'Égypte","La RD Congo"],
+  ["Quel est le plus petit pays du monde ?","Le Vatican","Monaco","Saint-Marin","Nauru"],
+  ["Quel est le plus grand désert du monde ?","L'Antarctique","Le Sahara","Le Gobi","L'Arctique"],
+  ["Quel est le plus long fleuve d'Europe ?","La Volga","Le Danube","Le Rhin","Le Dniepr"],
+  ["Quel est le plus haut sommet d'Afrique ?","Le Kilimandjaro","Le mont Kenya","Le Toubkal","Le mont Cameroun"],
+  ["Quel est le plus grand lac d'Afrique ?","Le lac Victoria","Le lac Tanganyika","Le lac Malawi","Le lac Tchad"],
+  ["Quel détroit sépare l'Europe de l'Afrique ?","Gibraltar","Le Bosphore","Messine","Ormuz"],
+  ["Dans quel pays se trouve Tombouctou ?","Le Mali","Le Niger","Le Sénégal","La Mauritanie"],
+  ["Dans quel pays se trouve la cité de Pétra ?","La Jordanie","L'Égypte","Le Liban","L'Arabie saoudite"],
+  ["Quelle mer est la plus salée ?","La mer Morte","La mer Rouge","La mer Caspienne","La mer Noire"],
+  ["Combien de pays compte l'Union européenne ?","27","28","25","30"],
+  ["Qui fut le premier président de la Ve République ?","Charles de Gaulle","Georges Pompidou","René Coty","Vincent Auriol"],
+  ["En quelle année a eu lieu le Débarquement en Normandie ?","1944","1942","1943","1945"],
   ["En quelle année est tombé le mur de Berlin ?","1989","1991","1985","1979"],
-  ["En quelle année a commencé la Révolution française ?","1789","1815","1848","1792"],
-  ["Qui a peint la Joconde ?","Léonard de Vinci","Michel-Ange","Raphaël","Botticelli"],
-  ["Qui a écrit « Les Misérables » ?","Victor Hugo","Émile Zola","Balzac","Flaubert"],
-  ["Qui a écrit « Harry Potter » ?","J.K. Rowling","Tolkien","Stephen King","Roald Dahl"],
-  ["Qui a réalisé « Titanic » ?","James Cameron","Steven Spielberg","Ridley Scott","Christopher Nolan"],
-  ["Qui a formulé la théorie de la relativité ?","Albert Einstein","Isaac Newton","Galilée","Stephen Hawking"],
-  ["Qui a composé la célèbre Cinquième Symphonie ?","Beethoven","Mozart","Bach","Chopin"],
-  ["Qui a marché sur la Lune le premier ?","Neil Armstrong","Buzz Aldrin","Youri Gagarine","Michael Collins"],
-  ["Quel est le premier film Star Wars sorti au cinéma ?","Un nouvel espoir","La Menace fantôme","L'Empire contre-attaque","Le Retour du Jedi"],
-  ["Comment s'appelle le chien de Tintin ?","Milou","Idéfix","Rantanplan","Pluto"],
-  ["Quel animal est le logo de Lacoste ?","Le crocodile","Le tigre","Le cheval","L'aigle"],
-  ["Quelle planète est la plus proche du Soleil ?","Mercure","Vénus","Mars","La Terre"],
-  ["Quelle est la plus grande planète du système solaire ?","Jupiter","Saturne","Neptune","Uranus"],
-  ["Combien de temps met la lumière du Soleil pour nous atteindre ?","8 minutes","1 seconde","1 heure","1 jour"],
-  ["Quelle est la vitesse de la lumière, environ ?","300 000 km par seconde","300 000 km par heure","3 000 km par seconde","30 000 km par seconde"],
-  ["Combien de temps met la Lune pour faire le tour de la Terre ?","Environ 28 jours","Environ 7 jours","Environ 100 jours","Environ 365 jours"],
-  ["Quel gaz les plantes absorbent-elles pour grandir ?","Le dioxyde de carbone","L'oxygène","L'azote","L'hydrogène"],
-  ["Quelle est la formule chimique de l'eau ?","H2O","CO2","O2","NaCl"],
-  ["Quel est le symbole chimique de l'or ?","Au","Ag","Fe","Or"],
-  ["Quel élément a pour symbole « O » ?","L'oxygène","L'or","L'osmium","L'ozone"],
+  ["En quelle année s'est terminée la Première Guerre mondiale ?","1918","1917","1919","1916"],
+  ["En quelle année l'homme a-t-il marché sur la Lune ?","1969","1965","1972","1961"],
+  ["En quelle année Christophe Colomb a-t-il atteint l'Amérique ?","1492","1498","1453","1515"],
+  ["En quelle année Mandela est-il devenu président de l'Afrique du Sud ?","1994","1990","1989","1999"],
+  ["Qui a été le premier homme dans l'espace ?","Youri Gagarine","Neil Armstrong","Alan Shepard","John Glenn"],
+  ["Quel empereur est mort en exil sur l'île de Sainte-Hélène ?","Napoléon Ier","Napoléon III","Louis-Philippe","Charles X"],
+  ["Quel roi de France était surnommé le Roi-Soleil ?","Louis XIV","Louis XVI","Louis XV","François Ier"],
+  ["Quelle civilisation a bâti le Machu Picchu ?","Les Incas","Les Aztèques","Les Mayas","Les Olmèques"],
+  ["Quelle était la capitale de l'Empire byzantin ?","Constantinople","Rome","Athènes","Alexandrie"],
+  ["Quel pharaon a une tombe retrouvée intacte en 1922 ?","Toutânkhamon","Ramsès II","Khéops","Akhenaton"],
+  ["Quel pays a donné le droit de vote aux femmes en premier ?","La Nouvelle-Zélande","Les États-Unis","Le Royaume-Uni","La France"],
+  ["Comment s'appelait le plus grand navire de Christophe Colomb ?","La Santa María","La Niña","La Pinta","Le Mayflower"],
+  ["Qui a peint « La Nuit étoilée » ?","Van Gogh","Monet","Gauguin","Cézanne"],
+  ["Qui a sculpté « Le Penseur » ?","Auguste Rodin","Camille Claudel","Michel-Ange","Bartholdi"],
+  ["Dans quel musée est exposée la Joconde ?","Le Louvre","Le musée d'Orsay","Le Prado","Les Offices"],
+  ["Qui a écrit « L'Étranger » ?","Albert Camus","Jean-Paul Sartre","André Gide","Boris Vian"],
+  ["Qui a écrit « Le Petit Prince » ?","Saint-Exupéry","Jules Verne","Albert Camus","Marcel Pagnol"],
+  ["Qui a écrit « 1984 » ?","George Orwell","Aldous Huxley","Ray Bradbury","H.G. Wells"],
+  ["Qui a écrit « Les Misérables » ?","Victor Hugo","Émile Zola","Balzac","Alexandre Dumas"],
+  ["Qui a réalisé « Pulp Fiction » ?","Quentin Tarantino","Martin Scorsese","David Fincher","Guy Ritchie"],
+  ["Qui a réalisé « Inception » ?","Christopher Nolan","Denis Villeneuve","Ridley Scott","James Cameron"],
+  ["Où se déroule le premier braquage de « La Casa de Papel » ?","Madrid","Barcelone","Séville","Valence"],
+  ["Dans quelle ville vivent les Simpson ?","Springfield","Shelbyville","Riverdale","Hawkins"],
+  ["Quel est le vrai nom de Stromae ?","Paul Van Haver","Paul Verhaegen","Pierre Van Dyck","Pascal Vanhoutte"],
+  ["De quel pays vient le groupe ABBA ?","La Suède","La Norvège","Le Danemark","Les Pays-Bas"],
+  ["Quel compositeur est devenu sourd ?","Beethoven","Mozart","Bach","Chopin"],
+  ["Qui a composé « Les Quatre Saisons » ?","Vivaldi","Mozart","Bach","Haydn"],
+  ["Combien de touches compte un piano classique ?","88","76","92","100"],
+  ["Quel est le symbole chimique du fer ?","Fe","Fr","Ir","F"],
+  ["Quel est le symbole chimique de l'or ?","Au","Ag","Or","Go"],
+  ["Quel est le symbole chimique du potassium ?","K","P","Po","Pt"],
+  ["Quelle est la formule chimique du sel de table ?","NaCl","KCl","NaOH","CaCO3"],
+  ["Quel gaz est le plus présent dans l'air ?","L'azote","L'oxygène","Le CO2","L'argon"],
   ["Quel métal est liquide à température ambiante ?","Le mercure","Le plomb","L'étain","Le zinc"],
-  ["Que mesure l'échelle de Richter ?","Les séismes","La température","Le vent","Le bruit"],
+  ["Quelle est la planète la plus chaude du système solaire ?","Vénus","Mercure","Mars","Jupiter"],
+  ["Combien de planètes compte le système solaire ?","8","9","7","10"],
+  ["Combien de temps met la lumière du Soleil pour nous atteindre ?","8 minutes","8 secondes","1 heure","1 jour"],
+  ["Qui a découvert la pénicilline ?","Alexander Fleming","Louis Pasteur","Marie Curie","Robert Koch"],
+  ["Que mesure l'échelle de Richter ?","Les séismes","Les ouragans","Les volcans","Les marées"],
+  ["Combien de chromosomes possède un être humain ?","46","44","48","23"],
+  ["Quel groupe sanguin est donneur universel ?","O négatif","O positif","AB positif","A négatif"],
   ["Combien d'os compte le corps humain adulte ?","206","150","300","412"],
-  ["Combien de dents a un adulte, dents de sagesse comprises ?","32","28","30","36"],
-  ["Quel est le plus grand organe du corps humain ?","La peau","Le foie","Les poumons","L'intestin"],
+  ["Quel est l'os le plus long du corps humain ?","Le fémur","Le tibia","L'humérus","Le péroné"],
+  ["Quel est le plus petit os du corps humain ?","L'étrier","La rotule","Le coccyx","L'enclume"],
   ["Quel organe produit l'insuline ?","Le pancréas","Le foie","Les reins","La rate"],
-  ["Quel est le plus petit os du corps humain ?","L'étrier, dans l'oreille","La rotule","La clavicule","Le petit orteil"],
-  ["Quel est l'animal terrestre le plus rapide ?","Le guépard","Le lion","Le cheval","L'autruche"],
-  ["Quel est le plus grand mammifère du monde ?","La baleine bleue","L'éléphant","Le cachalot","La girafe"],
-  ["Quel est le plus grand oiseau du monde ?","L'autruche","Le condor","L'aigle royal","Le pélican"],
-  ["Quel animal dort debout ?","Le cheval","Le chat","Le chien","Le lapin"],
-  ["Quel est l'ingrédient principal du guacamole ?","L'avocat","La courgette","Le concombre","Le petit pois"],
-  ["Lequel de ces fruits contient le plus de vitamine C ?","Le kiwi","L'orange","La pomme","La banane"],
-  ["Combien de joueurs par équipe sur un terrain de football ?","11","10","12","9"],
-  ["Combien de joueurs par équipe sur un terrain de basket ?","5","6","7","4"],
-  ["Combien de joueurs par équipe sur un terrain de volley ?","6","5","7","8"],
-  ["Combien de joueurs par équipe au rugby à XV ?","15","13","11","7"],
-  ["Combien de temps dure un match de football réglementaire ?","90 minutes","60 minutes","120 minutes","80 minutes"],
-  ["Quel pays a gagné la Coupe du monde de football 2018 ?","La France","La Croatie","Le Brésil","L'Allemagne"],
-  ["Quel pays a organisé la Coupe du monde de football 2022 ?","Le Qatar","La Russie","Le Brésil","L'Afrique du Sud"],
-  ["Qui a remporté le plus de Ballons d'Or ?","Lionel Messi","Cristiano Ronaldo","Michel Platini","Zinédine Zidane"],
+  ["Combien de cœurs a une pieuvre ?","3","1","2","8"],
+  ["Quel est l'animal le plus rapide du monde ?","Le faucon pèlerin","Le guépard","L'espadon","L'aigle royal"],
+  ["Quel mammifère a la plus longue gestation ?","L'éléphant","La baleine bleue","La girafe","Le rhinocéros"],
+  ["Quel est le seul mammifère capable de vraiment voler ?","La chauve-souris","L'écureuil volant","Le colugo","Le phalanger"],
+  ["À combien de degrés Fahrenheit l'eau bout-elle ?","212","100","180","232"],
+  ["Quel pays a gagné la première Coupe du monde, en 1930 ?","L'Uruguay","L'Argentine","Le Brésil","L'Italie"],
+  ["Quel pays a remporté l'Euro 2016 ?","Le Portugal","La France","L'Allemagne","L'Espagne"],
+  ["Quelle ville a accueilli les JO d'été 2012 ?","Londres","Pékin","Rio","Athènes"],
+  ["Quelle est la distance d'un marathon ?","42,195 km","40 km","42 km","45,5 km"],
+  ["Qui a gagné Roland-Garros le plus de fois ?","Rafael Nadal","Novak Djokovic","Roger Federer","Björn Borg"],
+  ["Qui a remporté le plus de Ballons d'Or ?","Lionel Messi","Cristiano Ronaldo","Michel Platini","Johan Cruyff"],
+  ["Combien dure un round de boxe professionnelle ?","3 minutes","2 minutes","4 minutes","5 minutes"],
+  ["Dans quel sport parle-t-on d'un « albatros » ?","Le golf","Le surf","Le cricket","Le polo"],
   ["Quel est le sport national du Japon ?","Le sumo","Le judo","Le karaté","Le baseball"],
-  ["Quel est le plus grand stade de France ?","Le Stade de France","Le Vélodrome","Le Parc des Princes","Le Groupama Stadium"],
-  ["Combien de cases compte un échiquier ?","64","81","100","49"],
-  ["Combien y a-t-il de dames sur un échiquier au début d'une partie ?","2","1","4","8"],
-  ["Combien de touches compte un piano classique ?","88","76","61","100"],
-  ["Combien de cordes a une guitare classique ?","6","4","7","12"],
-  ["Combien de lettres compte l'alphabet français ?","26","24","25","27"],
+  ["Au Monopoly français, quelle est la case la plus chère ?","La rue de la Paix","Les Champs-Élysées","L'avenue Foch","L'avenue Henri-Martin"],
+  ["Avec qui Bill Gates a-t-il fondé Microsoft ?","Paul Allen","Steve Jobs","Steve Wozniak","Larry Page"],
+  ["En quelle année est sorti le premier iPhone ?","2007","2005","2009","2010"],
+  ["De quel pays vient la marque IKEA ?","La Suède","La Norvège","Le Danemark","La Finlande"],
+  ["De quelle région d'Espagne vient la paella ?","Valence","L'Andalousie","La Catalogne","La Galice"],
+  ["Quelle est la monnaie de l'Inde ?","La roupie","Le rand","Le baht","Le dinar"],
+  ["Quelle est la monnaie du Japon ?","Le yen","Le yuan","Le won","Le baht"],
+  ["Dans quel pays a été inventé le papier ?","En Chine","En Égypte","En Grèce","En Inde"],
+  ["Lequel de ces fruits contient le plus de vitamine C ?","Le kiwi","L'orange","Le citron","La pomme"],
   ["Combien de minutes y a-t-il dans une journée ?","1440","1200","720","2400"],
-  ["Combien de côtés a un hexagone ?","6","5","7","8"],
   ["Combien de côtés a un dodécagone ?","12","10","20","8"],
-  ["Combien de couleurs compte un arc-en-ciel, traditionnellement ?","7","5","6","8"],
-  ["Quelle est la plus longue muraille du monde ?","La Grande Muraille de Chine","Le mur d'Hadrien","Le mur de Berlin","Les murailles de Constantinople"],
 ];
 function resetCultureDeck(){ state.cultureDeck=shuffle(CULTURE.map((_,i)=>i)); }
 function drawCulture(){
@@ -1727,7 +1723,7 @@ function drawPair(k){
 }
 /* ---------- tirage des questions Sniper, sans doublon dans la soirée ----------
    Même principe que les paires : un paquet mélangé qu'on épuise avant de le
-   refaire. Avec 80 questions, une soirée entière passe sans jamais se répéter. */
+   refaire. Avec 60 questions, une soirée entière passe sans jamais se répéter. */
 function drawSniperQ(){
   if(!state.sniperDeck || !state.sniperDeck.length) state.sniperDeck=shuffle(SNIPER_Q);
   return state.sniperDeck.pop();
@@ -2477,10 +2473,10 @@ function sniperPicked(name){
       <div class="big">🎯</div>
       <p><b>${name}</b> a été désigné. Tu peux assumer… ou tenter ta revanche.</p>
       <div class="gap-s"></div>
-      <p class="muted">La revanche, c'est une question de culture générale en 20 secondes. Réussie, quelqu'un d'autre paie ${unite(SNIPER_MISE)} à ta place. Ratée, c'est ${unite(sniperRate())} pour toi.</p>
+      <p class="muted">La revanche, c'est une question de culture générale en ${QUIZ_SEC} secondes. Réussie, quelqu'un d'autre paie ${unite(SNIPER_MISE)} à ta place. Ratée, c'est ${unite(sniperRate())} pour toi.</p>
     </div>
     <div class="spacer"></div>
-    <button class="btn accent" onclick="sniperRevanche('${name.replace(/'/g,"\\'")}')">🧠 Tenter la revanche</button>
+    <button class="btn accent" onclick="sniperRevanche('${name.replace(/'/g,"\\'")}')">🧠 Question Culture Générale</button>
     <div class="gap-s"></div>
     <button class="btn alt" onclick="sniperAssume('${name.replace(/'/g,"\\'")}')">😔 J'assume (${unite(1)})</button>
     <div style="height:6px"></div>
@@ -2492,11 +2488,11 @@ function sniperAssume(name){
   gagesAfter([[name,1]],sniperRound)();
 }
 /* ---------- la revanche : une question de culture générale ----------
-   Le visé récupère le téléphone, lit la question, a 20 secondes pour
+   Le visé récupère le téléphone, lit la question, a 10 secondes pour
    choisir, et la bonne réponse s'affiche. S'il l'a, il désigne quelqu'un
    qui prend sa place ; sinon la sanction reste pour lui. La mise est la
    même dans les deux sens : c'est un pile ou face qu'il a demandé. */
-const QUIZ_SEC = 20;
+const QUIZ_SEC = 10;
 const SNIPER_MISE = 2;
 /* Rater sa revanche est plus lourd qu'assumer tout de suite : sans alcool le
    gage vaut 3 🔥 au lieu de 2, avec alcool la mise reste la même. */
@@ -2513,7 +2509,7 @@ function sniperRevanche(name){
     <div class="card tint-violet center">
       <div class="big">🧠</div>
       <div class="gap"></div>
-      <p style="font-size:16px"><b>${name}</b>, passe-toi le téléphone.<br>Une question de culture générale, <b>20 secondes</b> pour répondre.</p>
+      <p style="font-size:16px"><b>${name}</b>, passe-toi le téléphone.<br>Une question de culture générale, <b>${QUIZ_SEC} secondes</b> pour répondre.</p>
       <div class="gap-s"></div>
       <p class="muted">Bonne réponse : tu désignes qui prend ta place (${unite(SNIPER_MISE)}). Mauvaise, ou hors délai : ${unite(sniperRate())} pour toi.</p>
     </div>

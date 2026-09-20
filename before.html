@@ -659,35 +659,24 @@
 
   /* ============================================================
      LE JEU DES MIMES
-     L'écran de jeu sort du flux : le téléphone est à l'horizontale
-     sur le front, il lui faut toute la surface et un texte qui
-     s'adapte aux deux orientations.
+     L'écran de jeu sort du flux : le mimeur tient le téléphone
+     normalement, mais le mot doit remplir toute la surface pour se
+     lire d'un coup d'œil entre deux gesticulations.
      ============================================================ */
-  /* calé sur .screen : les marges de sécurité haute et basse sont déjà prises,
-     restent celles des côtés, qui comptent en paysage (encoche). */
+  /* calé sur .screen : les marges de sécurité haute et basse sont déjà prises. */
   #mimelayer{position:absolute;inset:0;z-index:50;display:none;}
   #mimelayer.on{display:block;}
   .mimescreen{
     position:absolute;inset:0;display:flex;flex-direction:column;
-    padding:9px calc(14px + env(safe-area-inset-right)) 9px calc(14px + env(safe-area-inset-left));
+    padding:9px calc(14px + env(safe-area-inset-right)) 12px calc(14px + env(safe-area-inset-left));
     background:linear-gradient(165deg,#15142f,#0a0916);
     text-align:center;overflow:hidden;
   }
   .mimescreen.ok{background:linear-gradient(165deg,#1d4a39,#0d2a20);}
   .mimescreen.no{background:linear-gradient(165deg,#4a2b34,#26141b);}
-  /* iOS ne laisse aucune page forcer la rotation, et la plupart des téléphones
-     ont le verrouillage portrait activé : quand la fenêtre reste en portrait, on
-     fait pivoter le plateau nous-mêmes pour qu'il se lise droit une fois le
-     téléphone tourné. --mw/--mh sont les dimensions du calque, posées en JS. */
-  .mimescreen.rot{
-    top:50%;left:50%;right:auto;bottom:auto;
-    width:var(--mh);height:var(--mw);
-    transform:translate(-50%,-50%) rotate(90deg);
-  }
-  .mimescreen.rot.rot-r{transform:translate(-50%,-50%) rotate(-90deg);}
 
-  /* la croix d'abandon occupe sa propre ligne : au milieu en haut, seul endroit
-     que les mains ne touchent pas quand le téléphone est tenu par les côtés */
+  /* la croix d'abandon occupe sa propre ligne, tout en haut : loin des deux
+     gros boutons du bas, pour qu'on ne coupe pas la manche par mégarde */
   .mimetop{display:flex;align-items:center;gap:10px;flex:none;margin-top:17px;}
   .mimetop .sc{
     font-size:14px;font-weight:800;padding:5px 11px;border-radius:999px;
@@ -709,28 +698,36 @@
   .mimebar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--violet2),var(--cyan));transition:width .12s linear;}
   .mimebar.hot i{background:linear-gradient(90deg,var(--coral),var(--gold));}
 
-  /* le mot : il doit remplir la place restante, dans les deux orientations */
+  /* le mot : il remplit toute la place restante entre le chrono et les boutons */
   .mimeword{
     flex:1;display:flex;align-items:center;justify-content:center;
-    font-size:clamp(26px,6.2vmax,56px);font-weight:800;line-height:1.12;letter-spacing:-.6px;
-    padding:6px 4px;text-wrap:balance;overflow:hidden;
+    font-size:clamp(31px,9.4vw,54px);font-weight:800;line-height:1.14;letter-spacing:-.6px;
+    padding:10px 4px;text-wrap:balance;overflow:hidden;
   }
-  .mimeverdict{font-size:clamp(30px,7.4vmax,64px);font-weight:900;letter-spacing:-1px;}
-  .mimeby{display:block;font-size:clamp(11px,2.1vmax,16px);font-weight:650;opacity:.5;margin-top:10px;letter-spacing:0;}
-  .mimeverdict small{display:block;font-size:clamp(13px,2.6vmax,19px);font-weight:650;opacity:.72;margin-top:8px;letter-spacing:0;}
+  .mimeverdict{font-size:clamp(34px,9.4vw,58px);font-weight:900;letter-spacing:-1px;}
+  .mimeby{display:block;font-size:13px;font-weight:650;opacity:.5;margin-top:12px;letter-spacing:0;}
+  .mimeverdict small{display:block;font-size:15px;font-weight:650;opacity:.72;margin-top:10px;letter-spacing:0;}
 
-  .mimehints{display:flex;gap:8px;flex:none;}
-  .mimehint{
-    flex:1;padding:8px 6px;border-radius:var(--r-md);font-size:12px;font-weight:700;line-height:1.25;
-    background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--muted);
+  /* les deux boutons du mimeur : larges, en bas, atteignables au pouce sans
+     regarder l'écran. « Trouvé » à droite, c'est celui qu'on cherche vite. */
+  .mimeacts{display:flex;gap:10px;flex:none;}
+  .mimebtn{
+    flex:1;min-height:86px;border-radius:var(--r-lg);cursor:pointer;user-select:none;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+    font-size:15px;font-weight:800;letter-spacing:.2px;
+    border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);
+    transition:transform .1s ease;
   }
-  .mimehint.ok{color:var(--good);border-color:rgba(107,195,156,.24);background:rgba(107,195,156,.09);}
-  .mimehint.no{color:var(--gold);border-color:rgba(220,174,96,.22);background:rgba(220,174,96,.08);}
-
-  /* zones de secours : servent quand le capteur d'inclinaison est indisponible */
-  .mimetap{position:absolute;left:0;right:0;height:50%;z-index:3;}
-  .mimetap.no{top:0;}
-  .mimetap.ok{bottom:0;}
+  .mimebtn b{font-size:27px;line-height:1;font-weight:400;}
+  .mimebtn:active{transform:scale(.96);}
+  .mimebtn.ok{
+    color:#eafff5;border-color:rgba(107,195,156,.4);
+    background:linear-gradient(160deg,rgba(107,195,156,.26),rgba(107,195,156,.1));
+  }
+  .mimebtn.no{
+    color:var(--gold);border-color:rgba(220,174,96,.3);
+    background:linear-gradient(160deg,rgba(220,174,96,.16),rgba(220,174,96,.05));
+  }
 
   /* ===== écrans d'accompagnement (portrait) ===== */
   .teamcard{
@@ -773,7 +770,7 @@
       <div id="app"></div>
       <!-- hors de #app : sinon le bouton défile avec le contenu et recouvre les boutons -->
       <div id="camlayer"></div>
-      <!-- le jeu des mimes prend tout l'écran, en paysage : il lui faut son propre calque -->
+      <!-- le jeu des mimes prend tout l'écran : il lui faut son propre calque -->
       <div id="mimelayer"></div>
       <div class="toast" id="toast"></div>
       <div class="intro" id="intro">
@@ -1691,8 +1688,9 @@ Le dernier morceau de pizza
 `);
 
 /* ---------- private jokes ----------
-   Chaque mot ajouté garde le nom de celui qui l'a écrit : il ne tombera
-   jamais sur lui (ni sur son équipe), sinon il devinerait sa propre vanne.
+   Chaque mot ajouté garde le nom de celui qui l'a écrit : c'est lui, et lui
+   seul, qui le mimera. Une joke signée ne sort donc que pendant le tour de
+   son auteur — les autres ne la verront jamais à l'écran.
    Elles survivent d'une soirée à l'autre — on ne réécrit pas ses classiques. */
 const JOKES_KEY='before.jokes';
 function loadJokes(){
@@ -1705,8 +1703,9 @@ function saveJokes(){
 
 /* ---------- tirage des mots, sans doublon dans la soirée ----------
    Un paquet mélangé, on pioche dedans ; quand il est vide (soirée marathon)
-   on remélange tout. `exclus` = ceux qui sont en train de deviner : leurs
-   private jokes sont remises sous la pile, elles resserviront pour d'autres. */
+   on remélange tout. `mimeur` = celui qui tient le téléphone : seules ses
+   propres jokes peuvent sortir, celles des autres retournent sous la pile.
+   Une joke dont l'auteur n'est pas là ce soir redevient un mot ordinaire. */
 function mimePool(){
   const jokes=(state.mimeJokes||[]).map(j=>({w:j.w, by:j.by}));
   if(mimes.source==='perso') return jokes;
@@ -1716,22 +1715,27 @@ function mimePool(){
 function resetMimeDecks(){
   state.mimeDecks={ src:(typeof mimes!=='undefined'?mimes.source:'base'), deck:shuffle(mimePool()) };
 }
-function drawMime(exclus){
-  exclus=exclus||[];
+function mimeJouable(c, mimeur, presents){
+  if(!c.by) return true;                   // mot classique : pour tout le monde
+  if(presents.indexOf(c.by)<0) return true;// son auteur n'est pas de la soirée
+  return c.by===mimeur;                    // sinon : réservée à celui qui l'a écrite
+}
+function drawMime(mimeur){
+  const presents=state.players.map(p=>p.name);
   if(!state.mimeDecks || state.mimeDecks.src!==mimes.source) resetMimeDecks();
   for(let essai=0; essai<2; essai++){
     const d=state.mimeDecks.deck, garde=[];
     let pris=null;
     while(d.length){
       const c=d.pop();
-      if(!c.by || exclus.indexOf(c.by)<0){ pris=c; break; }
-      garde.push(c);                       // sa propre vanne : elle retourne sous la pile
+      if(mimeJouable(c,mimeur,presents)){ pris=c; break; }
+      garde.push(c);                       // la joke d'un autre : elle retourne sous la pile
     }
     state.mimeDecks.deck = garde.concat(d);
     if(pris) return pris;
     resetMimeDecks();                      // paquet vide : on remélange et on retente
   }
-  return { w: rnd(MOTS_MIMES), by:null };  // filet : il n'y avait que ses propres jokes
+  return { w: rnd(MOTS_MIMES), by:null };  // filet : il n'a écrit aucune joke
 }
 
 /* ---------- utils ---------- */
@@ -2124,7 +2128,7 @@ function gameSelect(){
     </button>
     <div class="gap"></div>
     <button class="btn game g4" onclick="mimesConfig()">
-      <span class="ico">🎭</span><span class="col">LES MIMES<small>Le téléphone sur le front, à toi de deviner.</small></span>
+      <span class="ico">🎭</span><span class="col">LES MIMES<small>Le mot dans ta main, à toi de le faire deviner.</small></span>
     </button>
     <div class="spacer"></div>
     <button class="btn gold sm" onclick="endGame()"><span class="ico">🏁</span>Fin de la partie</button>
@@ -2826,23 +2830,18 @@ function bjJackpotDone(){
 /* ============================================================
    JEU 4 — LE JEU DES MIMES
    ------------------------------------------------------------
-   Le joueur qui devine pose le téléphone à l'horizontale sur son
-   front, écran tourné vers le groupe : lui seul ne voit pas le mot.
-   Il penche l'appareil vers l'avant quand il a trouvé, vers le haut
-   pour passer. La détection se fait sur la gravité mesurée le long
-   de l'axe perpendiculaire à l'écran (accelerationIncludingGravity.z) :
-     écran à la verticale → z ≈ 0
-     écran basculé vers le sol → z ≈ -9.8  → trouvé
-     écran basculé vers le ciel → z ≈ +9.8 → passer
-   Ça marche dans les deux sens du paysage, contrairement à beta/gamma.
-   Si le capteur est refusé ou absent, les deux moitiés de l'écran
-   deviennent des zones tactiles.
+   C'est le mimeur qui tient le téléphone : il lit le mot, le fait
+   deviner, et appuie sur « Trouvé » dès que quelqu'un a dit le mot.
+   Bloqué ? « Passer », et le mot suivant arrive. On compte les mots
+   qu'il a réussi à faire deviner avant la fin du chrono.
+   Le téléphone reste droit dans la main, à l'endroit : plus de front,
+   plus d'inclinaison à lire, plus rien à verrouiller avant de jouer.
    ============================================================ */
 const MIME_DUREES = [90,120,150,180,210];   // 1m30 · 2min · 2m30 · 3min · 3m30
-let mimes = { rotDir:-1, rotLock:false, format:'solo', duree:120, source:'base', manche:0,
-              swap:{}, scores:{}, teams:null, turn:0, log:[], order:null, exclus:[] };
+let mimes = { format:'solo', duree:120, source:'base', manche:0,
+              swap:{}, scores:{}, teams:null, turn:0, log:[], order:null, mimeur:'' };
 
-/* ---------- son : le joueur ne voit pas l'écran, il faut l'entendre ---------- */
+/* ---------- son : le mimeur a les yeux sur le groupe, pas sur le chrono ---------- */
 let mimeAC=null;
 function mimeAudioUnlock(){
   try{
@@ -2877,21 +2876,6 @@ function mimeWakeOn(){
 function mimeWakeOff(){
   try{ if(mimeWake){ const w=mimeWake; mimeWake=null; const p=w.release(); if(p&&p.catch) p.catch(()=>{}); } }catch(e){}
 }
-/* ---------- toujours en paysage ----------
-   Aucune page web ne peut forcer la rotation sur iOS, et le verrouillage
-   portrait du téléphone la bloque de toute façon. Donc : si la fenêtre est
-   restée en portrait, on fait pivoter le plateau nous-mêmes. Le sens vient
-   de l'accéléromètre (gravité le long de l'axe x du téléphone), pour que le
-   texte se lise droit quel que soit le côté vers lequel il a été tourné. */
-function mimeFit(){
-  const l=$('#mimelayer'); if(!l) return;
-  l.style.setProperty('--mw', l.clientWidth+'px');
-  l.style.setProperty('--mh', l.clientHeight+'px');
-  const sc=l.firstElementChild; if(!sc) return;
-  const portrait = l.clientHeight > l.clientWidth;
-  sc.classList.toggle('rot', portrait);
-  sc.classList.toggle('rot-r', portrait && mimes.rotDir<0);
-}
 function mimeOn(b){
   const l=$('#mimelayer'); if(!l) return;
   l.classList.toggle('on',!!b);
@@ -2909,11 +2893,11 @@ function mimesConfig(){
   const pair=(n%2===0 && n>=4);
   render(`
     <div class="topbar"><div class="back" onclick="gameSelect()">‹</div><div><div class="eyebrow">Le jeu des mimes</div><h2>Les réglages</h2></div></div>
-    <p class="muted">Le téléphone sur le front, les autres miment. Penche-le vers l'avant si tu trouves, vers le haut pour passer.</p>
+    <p class="muted">Le mimeur garde le téléphone en main : il lit le mot, le fait deviner, et valide. Le gagnant est celui qui en fait deviner le plus.</p>
     <div class="gap-s"></div>
     <p class="muted">${sansAlcool()
       ? "Le plus faible de la manche prend un gage."
-      : "Le plus faible de la manche boit autant de gorgées qu'il a deviné de mots."}</p>
+      : "Le plus faible de la manche boit autant de gorgées qu'il a fait deviner de mots."}</p>
     <div class="gap"></div>
     <div class="flabel">Format</div>
     <div class="grid2" id="mimeFmt">
@@ -2938,7 +2922,6 @@ function mimesConfig(){
     <div class="gap-s"></div>
     <button class="btn ghost sm" onclick="mimesJokes()"><span class="ico">✏️</span>Nos private jokes${nj?` · ${nj}`:''}</button>
     <div class="gap"></div>
-    <p class="prevention" style="margin:0 0 12px"><span>🔒</span><span><b>Verrouille la rotation de l'écran</b> avant de commencer — sinon l'image tournera dans tous les sens dès que le téléphone se penchera. iPhone : Centre de contrôle, le cadenas. Android : réglages rapides, « Rotation auto ».</span></p>
     <button class="btn good" onclick="mimesStart()">Commencer →</button>
     <div style="height:10px"></div>
   `, true);
@@ -2950,7 +2933,7 @@ function mimesTooFew(){
     <div class="card tint-cyan center">
       <div class="big">🎭</div>
       <div class="gap"></div>
-      <p>Il faut être <b>au moins 3</b> pour les mimes : un qui devine, et du monde en face pour mimer.</p>
+      <p>Il faut être <b>au moins 3</b> pour les mimes : un qui mime, et du monde en face pour deviner.</p>
       <div class="gap-s"></div>
       <p class="muted">Vous êtes ${state.players.length} pour l'instant.</p>
     </div>
@@ -2963,10 +2946,10 @@ function mimesTooFew(){
 }
 function mimesFmtHint(){
   const n=state.players.length;
-  if(mimes.format==='team') return `${n/2} équipes de 2 : dans chaque équipe, l'un mime et l'autre devine.`;
+  if(mimes.format==='team') return `${n/2} équipes de 2 : dans chaque équipe, l'un mime, l'autre devine — et lui seul.`;
   return n<4
-    ? `À ${n}, c'est forcément chacun pour soi : un devine, les deux autres miment.`
-    : `Chacun devine à son tour, tous les autres miment.`;
+    ? `À ${n}, c'est forcément chacun pour soi : un mime, les deux autres devinent.`
+    : `Chacun mime à son tour, tous les autres devinent.`;
 }
 function mimesFormat(f){
   const n=state.players.length;
@@ -2991,11 +2974,22 @@ function mimesTotal(){
   const n = mimes.format==='team' ? state.players.length/2 : state.players.length;
   return `${n} tours de ${dureeMime(mimes.duree)} · environ ${Math.round(n*mimes.duree/60)} min de jeu`;
 }
+// qui, ce soir, n'a écrit aucune joke : ceux-là mimeront des mots classiques
+function mimesSansJoke(){
+  const noms=state.players.map(p=>p.name);
+  const auteurs=(state.mimeJokes||[]).map(j=>j.by);
+  return noms.filter(n=>auteurs.indexOf(n)<0);
+}
 function mimesSrcHint(){
   const j=(state.mimeJokes||[]).length;
-  if(mimes.source==='perso') return `Vos ${j} private joke${j>1?'s':''}, et rien d'autre.`;
-  if(mimes.source==='mix')   return `Les ${MOTS_MIMES.length} mots de BEFORE mélangés à vos ${j} private joke${j>1?'s':''}.`;
-  return `${MOTS_MIMES.length} mots tirés au hasard, du grand classique au n'importe quoi.`;
+  if(mimes.source==='base') return `${MOTS_MIMES.length} mots tirés au hasard, du grand classique au n'importe quoi.`;
+  const sans=mimesSansJoke();
+  const rappel = sans.length
+    ? ` ${listeFr(sans)} n'${sans.length>1?'ont':'a'} rien écrit : ${sans.length>1?'ils auront':'il aura'} des mots classiques.`
+    : '';
+  return mimes.source==='perso'
+    ? `Vos ${j} private joke${j>1?'s':''}, et rien d'autre. Chacun mime les siennes.${rappel}`
+    : `Les ${MOTS_MIMES.length} mots de BEFORE mélangés à vos ${j} private joke${j>1?'s':''} — chacun mime les siennes.`;
 }
 function mimesSource(s){
   const j=(state.mimeJokes||[]).length;
@@ -3007,11 +3001,11 @@ function mimesSource(s){
 }
 
 /* ---------- les private jokes ----------
-   Chacun écrit ses vannes maison sous son nom. Règle du jeu : on ne devine
-   jamais sa propre joke — en solo c'est son auteur qui la mime aux autres,
-   en équipe elle est réservée aux équipes adverses. Elles sont gardées d'une
-   soirée à l'autre ; si l'auteur n'est pas là ce soir, le mot redevient
-   ordinaire et peut tomber sur n'importe qui. */
+   Chacun écrit ses vannes maison sous son nom. Règle du jeu : celui qui écrit
+   un mot est celui qui le mime — c'est la seule façon qu'il soit mimé par
+   quelqu'un qui sait de quoi il parle. Elles sont gardées d'une soirée à
+   l'autre ; si l'auteur n'est pas là ce soir, le mot redevient ordinaire et
+   peut tomber sur n'importe qui. */
 let jokeBy=null;
 function mimesJokes(){
   const noms=state.players.map(p=>p.name);
@@ -3021,7 +3015,7 @@ function mimesJokes(){
   const orphelines=list.filter(j=>noms.indexOf(j.by)<0).length;
   render(`
     <div class="topbar"><div class="back" onclick="mimesConfig()">‹</div><div><div class="eyebrow">Le jeu des mimes</div><h2>Vos private jokes</h2></div></div>
-    <p class="muted">Vos vannes maison, celles que personne d'autre ne comprend. Celui qui écrit un mot ne tombera jamais dessus : c'est lui qui le mimera aux autres.</p>
+    <p class="muted">Vos vannes maison, celles que personne d'autre ne comprend. Celui qui écrit un mot est celui qui le mimera : il ne sortira que pendant son tour.</p>
     <div class="gap"></div>
     <div class="flabel">Qui écrit ?</div>
     <div class="filters" id="jokeWho">
@@ -3039,7 +3033,7 @@ function mimesJokes(){
       <p class="muted">Touche une joke pour la supprimer.</p>
       <div class="gap-s"></div>
       <div class="wordlog" id="jokeLog">${jokeLogHTML()}</div>
-      ${orphelines?`<div class="gap-s"></div><p class="muted">${orphelines} joke${orphelines>1?'s':''} d'une autre soirée : leur auteur n'est pas là, elles peuvent tomber sur tout le monde.</p>`:''}
+      ${orphelines?`<div class="gap-s"></div><p class="muted">${orphelines} joke${orphelines>1?'s':''} d'une autre soirée : leur auteur n'est pas là, n'importe qui peut tomber dessus.</p>`:''}
     `:`
       <div class="gap"></div>
       <div class="card center"><p class="muted">Rien pour l'instant. Trois ou quatre bonnes vannes suffisent à ruiner une manche 😈</p></div>
@@ -3176,13 +3170,13 @@ function mimesEnts(){
       // à chaque manche les rôles s'inversent dans l'équipe ; « inverser » force le contraire
       const d=(mimes.manche+(mimes.swap[i]?1:0))%2;
       return { key:'t'+i, idx:i, label:t[0]+' & '+t[1], membres:t.slice(),
-               devine:t[d], mimeurs:[t[1-d]] };
+               mimeur:t[d], devineurs:[t[1-d]] };
     });
     return mimesRange(base);
   }
   return mimesRange(state.players.map((p,i)=>({
-    key:'p'+i, idx:i, label:p.name, membres:[p.name], devine:p.name,
-    mimeurs:state.players.filter(x=>x.name!==p.name).map(x=>x.name) })));
+    key:'p'+i, idx:i, label:p.name, membres:[p.name], mimeur:p.name,
+    devineurs:state.players.filter(x=>x.name!==p.name).map(x=>x.name) })));
 }
 function mimesRange(base){
   if(!mimes.order || mimes.order.length!==base.length) mimesOrdre();
@@ -3194,7 +3188,7 @@ function mimesSwap(){
   mimesTurnIntro();
 }
 
-/* ---------- passation du téléphone ---------- */
+/* ---------- passation du téléphone : il va dans la main du mimeur ---------- */
 function mimesTurnIntro(){
   const ents=mimesEnts(), e=ents[mimes.turn];
   if(!e) return mimesResults();
@@ -3204,56 +3198,43 @@ function mimesTurnIntro(){
     <p class="muted center">Tour ${mimes.turn+1} / ${ents.length}${mimes.manche?` · manche ${mimes.manche+1}`:''}</p>
     <div class="gap"></div>
     <div class="card tint-cyan center">
-      <div class="eyebrow">${team?e.label:'À toi de deviner'}</div>
+      <div class="eyebrow">${team?e.label:'À toi de mimer'}</div>
       <div class="gap-s"></div>
-      <div class="big">${e.devine}</div>
+      <div class="big">${e.mimeur}</div>
       <div class="gap-s"></div>
-      <p class="muted">${team?`<b>${e.mimeurs[0]}</b> mime, les autres se taisent 🤫`:'Tous les autres miment'}</p>
+      <p class="muted">${team
+        ? `<b>${e.devineurs[0]}</b> devine — personne d'autre ne crie la réponse 🤫`
+        : 'Tous les autres devinent'}</p>
     </div>
     <div class="spacer"></div>
     <div class="card">
-      <div class="row"><span style="font-size:21px">📱</span><span style="font-size:13.5px">Téléphone <b>à l'horizontale</b> sur le front, écran vers le groupe.</span></div>
+      <div class="row"><span style="font-size:21px">📱</span><span style="font-size:13.5px">Le téléphone reste <b>dans ta main</b> : toi seul vois le mot.</span></div>
       <div class="gap-s"></div>
-      <div class="row"><span style="font-size:21px">⬇️</span><span style="font-size:13.5px"><b style="color:var(--good)">Trouvé</b> — penche vers l'avant et tiens une demi-seconde.</span></div>
+      <div class="row"><span style="font-size:21px">🤐</span><span style="font-size:13.5px">Tu mimes. Pas un mot, pas un bruit, pas de dessin.</span></div>
       <div class="gap-s"></div>
-      <div class="row"><span style="font-size:21px">⬆️</span><span style="font-size:13.5px"><b style="color:var(--gold)">Passer</b> — relève vers le haut, pareil.</span></div>
+      <div class="row"><span style="font-size:21px">✅</span><span style="font-size:13.5px"><b style="color:var(--good)">Trouvé</b> — dès que ${team?'ton binôme dit':'quelqu\'un dit'} le mot, tu appuies : +1 et au suivant.</span></div>
       <div class="gap-s"></div>
-      <div class="row"><span style="font-size:21px">😌</span><span style="font-size:13.5px">Entre deux mots, remets le téléphone droit : c'est ce qui réarme la détection.</span></div>
+      <div class="row"><span style="font-size:21px">⏭</span><span style="font-size:13.5px"><b style="color:var(--gold)">Passer</b> — bloqué ? Mot suivant. Ça ne coûte rien, ça ne rapporte rien.</span></div>
     </div>
     <div class="gap"></div>
-    ${team?`<button class="btn ghost sm" onclick="mimesSwap()"><span class="ico">🔄</span>Inverser : ${e.mimeurs[0]} devine</button><div class="gap-s"></div>`:''}
+    ${team?`<button class="btn ghost sm" onclick="mimesSwap()"><span class="ico">🔄</span>Inverser : ${e.devineurs[0]} mime</button><div class="gap-s"></div>`:''}
     <button class="btn good" onclick="mimesGo()">C'est parti · ${mimes.duree} s →</button>
     <div style="height:8px"></div>
   `, true);
 }
 function mimesGo(){
   mimeAudioUnlock();   // doit partir d'un vrai geste : c'est le cas ici
-  const DM=window.DeviceMotionEvent;
-  if(DM && typeof DM.requestPermission==='function'){
-    // iOS 13+ : l'autorisation se demande depuis le geste, pas après
-    DM.requestPermission()
-      .then(r=>{ mimes.tilt=(r==='granted'); mimesCountdown(); })
-      .catch(()=>{ mimes.tilt=false; mimesCountdown(); });
-  }else{
-    mimes.tilt=!!DM;
-    mimesCountdown();
-  }
+  mimesCountdown();
 }
 
 /* ---------- 3 · 2 · 1 ---------- */
 function mimesCountdown(){
   mimeOn(true);
-  mimes.rotLock=false;               // le décompte sert à trouver le sens ET la position de repos
-  mimeTiltReset();
-  if(mimes.tilt) window.addEventListener('devicemotion',onMimeMotion);
-  window.addEventListener('resize',mimeFit);
-  window.addEventListener('orientationchange',mimeFit);
   let k=3;
   const paint=()=>{
     const l=$('#mimelayer'); if(!l) return;
     l.innerHTML=`<div class="mimescreen"><div class="mimeword"><div class="mimeverdict">${k>0?k:'GO !'}
-      <small>${k>0?'Téléphone à l\'horizontale, sur ton front':'Le premier mot arrive'}</small></div></div></div>`;
-    mimeFit();
+      <small>${k>0?'Garde l\'écran pour toi 🙈':'Le premier mot arrive'}</small></div></div></div>`;
   };
   paint(); mimeBip(520,.12);
   clearInterval(mimes.cd);
@@ -3267,25 +3248,16 @@ function mimesCountdown(){
 
 /* ---------- la manche ---------- */
 function mimesPlay(){
-  mimes.rotLock=true;                // à partir d'ici l'écran ne bouge plus jusqu'à la fin du tour
-  mimes.log=[]; mimes.running=true; mimes.armed=false; mimes.flash=false;
-  mimes.tiltDir=0; mimes.tiltSince=0;
-  mimes.lastAct=0; mimes.lastSec=-1; mimes.gotMotion=false;
-  mimes.tap=!mimes.tilt;
-  // ceux qui devinent ce tour-ci : leurs private jokes sont mises de côté
-  const e=mimesEnts()[mimes.turn], noms=state.players.map(p=>p.name);
-  mimes.exclus = e ? e.membres.filter(n=>noms.indexOf(n)>=0) : [];
-  mimes.word=drawMime(mimes.exclus);
+  mimes.log=[]; mimes.running=true; mimes.flash=false;
+  mimes.lastAct=0; mimes.lastSec=-1;
+  // celui qui tient le téléphone : ses private jokes, et seulement les siennes
+  const e=mimesEnts()[mimes.turn];
+  mimes.mimeur = e ? e.mimeur : '';
+  mimes.word=drawMime(mimes.mimeur);
   mimes.endAt=Date.now()+mimes.duree*1000;
   paintMime();
   clearInterval(mimes.timer);
   mimes.timer=setInterval(mimesTick,90);
-  if(mimes.tilt) window.addEventListener('devicemotion',onMimeMotion);   // déjà posé au décompte, sans doublon
-  // capteur muet (ordinateur, autorisation fantôme) → on ouvre les zones tactiles
-  clearTimeout(mimes.fallback);
-  mimes.fallback=setTimeout(()=>{
-    if(mimes.running && !mimes.gotMotion && !mimes.tap){ mimes.tap=true; paintMime(); }
-  },2600);
   mimeWakeOn();
 }
 function paintMime(){
@@ -3302,15 +3274,12 @@ function paintMime(){
       </div>
       <div class="mimebar" id="mimeBar"><i style="width:${left/(mimes.duree*10)}%"></i></div>
       <div class="mimeword" id="mimeWord"><div>${mimes.word.w}${mimes.word.by
-        ? `<span class="mimeby">🔒 la joke de ${mimes.word.by}</span>` : ''}</div></div>
-      <div class="mimehints">
-        <div class="mimehint no">⬆️ ${mimes.tap?'Touche le haut':'Relève et tiens'} · Passer</div>
-        <div class="mimehint ok">⬇️ ${mimes.tap?'Touche le bas':'Penche et tiens'} · Trouvé</div>
+        ? `<span class="mimeby">🔒 ${mimes.word.by===mimes.mimeur?'ta joke':'la joke de '+mimes.word.by}</span>` : ''}</div></div>
+      <div class="mimeacts">
+        <div class="mimebtn no" onclick="mimesHit(false)"><b>⏭</b>Passer</div>
+        <div class="mimebtn ok" onclick="mimesHit(true)"><b>✅</b>Trouvé</div>
       </div>
-      <div class="mimetap no" onclick="mimesTap(false)"></div>
-      <div class="mimetap ok" onclick="mimesTap(true)"></div>
     </div>`;
-  mimeFit();
 }
 function mimesTick(){
   if(!mimes.running) return;
@@ -3326,64 +3295,6 @@ function mimesTick(){
   if(s!==mimes.lastSec){ mimes.lastSec=s; if(s>0&&s<=5) mimeBip(760,.09,'square',.18); }
   if(left<=0) mimesEndTurn();
 }
-/* ---------- lecture de l'inclinaison ----------
-   Posé sur un front, le téléphone n'est jamais immobile : la tête tourne, les
-   bras fatiguent, le porteur rigole. Un simple seuil validait donc des mots
-   tout seul. Quatre garde-fous, dans l'ordre :
-     1. un filtre passe-bas sur la gravité — le tremblement disparaît ;
-     2. un zéro pris pendant le décompte : on mesure l'écart à SA position à
-        lui, pas à une verticale théorique que personne ne tient ;
-     3. un seuil franc : 48° d'écart, mesurés en degrés et non en projection,
-        pour que pencher vers l'avant et relever demandent le même geste ;
-     4. une tenue de 150 ms à ce seuil, hors secousse : un à-coup ne suffit pas.
-   Et après chaque mot il faut revenir près de la position de départ pour
-   réarmer — impossible d'enchaîner deux validations sans repasser par là. */
-const MIME_TILT = { fire:48, rearm:22, hold:150, lisse:.26, calme:4 };
-function mimeTiltReset(){
-  mimes.g=null; mimes.zero=0; mimes.armed=false; mimes.tiltDir=0; mimes.tiltSince=0;
-}
-function onMimeMotion(ev){
-  const a=ev.accelerationIncludingGravity; if(!a) return;
-  const x=a.x||0, y=a.y||0, z=a.z||0;
-  const m=Math.sqrt(x*x+y*y+z*z);
-  if(m<4||m>19) return;              // chute libre ou grosse secousse : la gravité est illisible
-  mimes.gotMotion=true;
-  const k=MIME_TILT.lisse;           // filtre passe-bas : on suit la gravité, pas les vibrations
-  if(!mimes.g) mimes.g={x:x/m, y:y/m, z:z/m};
-  else { const p=mimes.g; p.x+=k*(x/m-p.x); p.y+=k*(y/m-p.y); p.z+=k*(z/m-p.z); }
-  const g=mimes.g, gm=Math.sqrt(g.x*g.x+g.y*g.y+g.z*g.z)||1;
-  const nx=g.x/gm, nz=g.z/gm;        // nz : -1 = écran vers le sol · +1 = écran vers le ciel
-  const angle = -Math.asin(Math.max(-1,Math.min(1,nz)))*57.29578;   // degrés · + = penché vers l'avant
-
-  /* Avant le GO : on cherche le sens de lecture et on retient la position de
-     repos. On ne lit le sens que quand l'écran est à peu près vertical — passé
-     la verticale, un mouvement vers l'avant inverse le signe de nx et
-     retournerait l'écran alors que le téléphone n'a pas bougé de main. */
-  if(!mimes.rotLock){
-    if(Math.abs(nz)<.4 && Math.abs(nx)>.6){
-      const dir = nx>0 ? 1 : -1;
-      if(dir!==mimes.rotDir){ mimes.rotDir=dir; mimeFit(); }
-    }
-    mimes.zero = Math.max(-20, Math.min(20, angle));   // sa position à lui, sur son front
-    return;
-  }
-
-  const t=Date.now();
-  const ecart = angle - mimes.zero;  // écart à la position de départ, pas à une verticale théorique
-  if(!mimes.armed){                  // il faut revenir en position avant le mot suivant
-    if(Math.abs(ecart)<MIME_TILT.rearm){ mimes.armed=true; mimes.tiltDir=0; }
-    return;
-  }
-  const secousse = Math.abs(m-9.81)>MIME_TILT.calme;
-  const dir = ecart>=MIME_TILT.fire ? 1 : (ecart<=-MIME_TILT.fire ? -1 : 0);
-  if(!dir || secousse){ mimes.tiltDir=0; return; }
-  if(mimes.tiltDir!==dir){ mimes.tiltDir=dir; mimes.tiltSince=t; return; }
-  if(t-mimes.tiltSince>=MIME_TILT.hold){    // tenu assez longtemps : c'est un vrai geste
-    mimes.armed=false; mimes.tiltDir=0;
-    mimesHit(dir>0);
-  }
-}
-function mimesTap(ok){ if(mimes.tap) mimesHit(ok); }
 function mimesHit(ok){
   const t=Date.now();
   if(!mimes.running || mimes.flash || t-mimes.lastAct<400) return;
@@ -3397,16 +3308,13 @@ function mimesHit(ok){
   setTimeout(()=>{
     mimes.flash=false;
     if(!mimes.running) return;
-    mimes.word=drawMime(mimes.exclus);
+    mimes.word=drawMime(mimes.mimeur);
     paintMime();
-  },560);
+  },460);
 }
 function mimesStop(){
   mimes.running=false;
-  clearInterval(mimes.timer); clearInterval(mimes.cd); clearTimeout(mimes.fallback);
-  window.removeEventListener('devicemotion',onMimeMotion);
-  window.removeEventListener('resize',mimeFit);
-  window.removeEventListener('orientationchange',mimeFit);
+  clearInterval(mimes.timer); clearInterval(mimes.cd);
   mimeWakeOff();
 }
 function mimesAbort(){
@@ -3437,7 +3345,7 @@ function mimesFix(i){
 }
 function mimePtsSub(pts){
   const n=mimes.log.length;
-  return `mot${pts>1?'s':''} trouvé${pts>1?'s':''} sur ${n} tiré${n>1?'s':''}`;
+  return `mot${pts>1?'s':''} deviné${pts>1?'s':''} sur ${n} tiré${n>1?'s':''}`;
 }
 function mimesRecap(){
   const ents=mimesEnts(), e=ents[mimes.turn];
@@ -3445,7 +3353,7 @@ function mimesRecap(){
   const dernier=mimes.turn>=ents.length-1;
   render(`
     <div class="topbar"><h2 style="margin:auto">⏱️ Temps écoulé</h2></div>
-    <p class="muted center">Remets le téléphone à la verticale 🙂</p>
+    <p class="muted center">Passe le téléphone au suivant 🙂</p>
     <div class="gap"></div>
     <div class="card tint-cyan center">
       <div class="eyebrow">${e?e.label:''}</div>
@@ -3455,7 +3363,7 @@ function mimesRecap(){
     </div>
     ${mimes.log.length?`
       <div class="gap"></div>
-      <p class="muted">Le téléphone s'est trompé ? Touche un mot pour le corriger.</p>
+      <p class="muted">Une erreur de doigt ? Touche un mot pour le corriger.</p>
       <div class="gap-s"></div>
       <div class="wordlog" id="mimeLog">${mimeLogHTML()}</div>`:''}
     <div class="spacer"></div>
@@ -3481,9 +3389,9 @@ function mimesResults(){
   const min=rows[rows.length-1].pts;
   const perdants=rows.filter(r=>r.pts===min);
   const egalite=perdants.length===rows.length;
-  /* Avec alcool : le perdant boit autant de gorgées qu'il a deviné de mots — moins il
-     en trouve, moins il boit, mais il boit toujours au moins un coup. Sans alcool,
-     c'est un gage, un seul, comme partout ailleurs.
+  /* Avec alcool : le perdant boit autant de gorgées qu'il a fait deviner de mots —
+     moins il en place, moins il boit, mais il boit toujours au moins un coup. Sans
+     alcool, c'est un gage, un seul, comme partout ailleurs.
      Égalité générale : tout le monde trinque un coup. */
   const n = (egalite || sansAlcool()) ? 1 : Math.max(1,min);
   const punis=[];
@@ -3498,7 +3406,7 @@ function mimesResults(){
     ${rows.map((r,i)=>`
       <div class="rank${i<3?' p'+(i+1):''}">
         <div class="pos">${['🥇','🥈','🥉'][i]||i+1}</div>
-        <div class="rank__id"><h3>${r.label}</h3>${(!egalite&&r.pts===min)?'<div class="rank__t">💀 le maillon faible de la manche</div>':''}</div>
+        <div class="rank__id"><h3>${r.label}</h3>${(!egalite&&r.pts===min)?'<div class="rank__t">💀 le maillon faible de la manche</div>':''}${(i===0&&!egalite)?'<div class="rank__t">🎭 le meilleur mimeur</div>':''}</div>
         <div class="g">${r.pts} 🎭</div>
       </div>`).join('')}
     <div class="gap"></div>
@@ -3507,7 +3415,7 @@ function mimesResults(){
         ? `Égalité parfaite — ${sanctionGroupe(noms,n)} 😐`
         : sanctionGroupe(noms,n)}</p>
       ${(egalite || sansAlcool()) ? ''
-        : `<div class="gap-s"></div><p class="muted">Une gorgée par mot deviné${min===0?' — et un coup minimum, même à zéro':''}.</p>`}
+        : `<div class="gap-s"></div><p class="muted">Une gorgée par mot qu'il a fait deviner${min===0?' — et un coup minimum, même à zéro':''}.</p>`}
     </div>
     <div class="spacer"></div>
     ${gages

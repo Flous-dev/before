@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="BEFORE">
+  <title>BEFORE — le trinque, version nuit</title>
+  <defs>
+    <!-- Le fond du splash de l'app, cœur un peu remonté pour donner du relief. -->
+    <radialGradient id="nuit" cx="50%" cy="40%" r="80%">
+      <stop offset="0"   stop-color="#241d55"/>
+      <stop offset=".52" stop-color="#12102b"/>
+      <stop offset="1"   stop-color="#060512"/>
+    </radialGradient>
+    <!-- La lumière part du point de contact des deux verres, pas du centre du cadre. -->
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0"   stop-color="#a99bf0" stop-opacity=".42"/>
+      <stop offset=".45" stop-color="#8d7ce0" stop-opacity=".16"/>
+      <stop offset="1"   stop-color="#6d5bd0" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="bleu" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#69a8ce" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#69a8ce" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Le verre reprend le dégradé du logotype : clair en haut, bleu en bas. -->
+    <linearGradient id="verre" x1="10%" y1="0%" x2="82%" y2="100%">
+      <stop offset="0"   stop-color="#f4f1ff"/>
+      <stop offset=".44" stop-color="#bdb0f4"/>
+      <stop offset="1"   stop-color="#9dc0da"/>
+    </linearGradient>
+    <filter id="lueur" x="-55%" y="-55%" width="210%" height="210%">
+      <feDropShadow dx="0" dy="10" stdDeviation="30" flood-color="#6d5bd0" flood-opacity=".75"/>
+    </filter>
+    <filter id="etincelle" x="-120%" y="-120%" width="340%" height="340%">
+      <feDropShadow dx="0" dy="0" stdDeviation="16" flood-color="#cfc7fb" flood-opacity=".95"/>
+    </filter>
+
+    <!-- Une coupe d'un seul tenant : buvant, jambe et pied dans le même tracé. -->
+    <path id="coupe" d="M-92 -372 H92 L16 -178 V-26 H60 A14 14 0 0 1 60 2
+                        H-60 A14 14 0 0 1 -60 -26 H-16 V-178 Z"/>
+    <g id="choc">
+      <path d="M512 392 V322"/><path d="M424 414 L390 358"/><path d="M600 414 L634 358"/>
+    </g>
+  </defs>
+
+  <rect width="1024" height="1024" fill="url(#nuit)"/>
+  <ellipse cx="512" cy="400" rx="400" ry="400" fill="url(#halo)"/>
+  <ellipse cx="512" cy="900" rx="360" ry="220" fill="url(#bleu)"/>
+
+  <!-- Les deux verres sont écartés de 40 unités au point de contact : sans cet
+       écart, les deux buvants fusionnent en un seul bloc dès qu'on réduit. -->
+  <g transform="translate(512 455) scale(1.26) translate(-512 -512)">
+    <g fill="url(#verre)" filter="url(#lueur)">
+      <use href="#coupe" transform="translate(313 800) rotate(14)"/>
+      <use href="#coupe" transform="translate(711 800) rotate(-14)"/>
+    </g>
+    <g stroke="#fff" stroke-width="16" stroke-linecap="round" filter="url(#etincelle)">
+      <use href="#choc"/>
+    </g>
+  </g>
+</svg>

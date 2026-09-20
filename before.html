@@ -1037,7 +1037,7 @@ const THEMES = {
 /* Le PNJ a une chance de se racheter : trouver le mot, puis démasquer un
    scamer. S'il la gâche, c'est le plus gros raté de la manche — sans alcool
    son gage vaut plus cher. */
-function pnjRate(){ return sansAlcool() ? 3 : 2; }
+function pnjRate(){ return sansAlcool() ? 1 : 2; }
 const SNIPER_Q = [
   "Qui est le plus capable d'aimer les pieds ?",
   "Qui est le plus capable de croire aux théories du complot ?",
@@ -1211,11 +1211,12 @@ function drawCulture(){
    n'importe quel moment, quel que soit le jeu et quelle que soit la faute.
    Aucun ne demande de boire, et refuser reste toujours possible — mais ça
    coûte autant que le gage rapportait.
-   Une fois sur cinq environ, le gage laisse la place à une vérité : c'est
-   le coup de chance de la soirée. */
-const VERITE_CHANCE = .22;
+   Un peu moins d'une fois sur cinq, le gage laisse la place à une vérité :
+   ça doit rester le coup de chance de la soirée. */
+const VERITE_CHANCE = .18;
 
-const GAGES = [
+/* Les gages ordinaires. */
+const GAGES_NORMAUX = [
   "Faire 10 squats en criant le prénom de son crush.",
   "Faire une déclaration d'amour dramatique à la personne de son choix.",
   "Envoyer « tu me manques » à la 5e personne de ses DM.",
@@ -1224,7 +1225,6 @@ const GAGES = [
   "Faire un compliment sincère à la personne à sa gauche.",
   "Lire son dernier message reçu à voix haute.",
   "Laisser le groupe choisir sa photo de profil pendant 10 minutes.",
-  "Envoyer « faut qu'on parle » à quelqu'un puis ne rien expliquer pendant 5 minutes.",
   "Faire un compliment à quelqu'un que tu connais à peine.",
   "À chaque fin de phrase, faire un tour sur toi-même pendant 3 minutes.",
   "Appelle la personne à ta droite par le prénom de ton ex pendant 5 minutes.",
@@ -1241,41 +1241,49 @@ const GAGES = [
   "Envoyer « j'ai une question mais j'ose pas te la poser » à quelqu'un choisi par le groupe.",
   "Demander à quelqu'un dans la soirée quelle est sa première impression de toi.",
   "Pendant 10 minutes, appeler la personne à ta gauche « mon amour ».",
-  "Demander à quelqu'un dans la soirée de te donner ton plus gros red flag.",
-  "Envoyer « j'ai fait une connerie » à quelqu'un choisi par le groupe.",
   "Pendant 10 minutes, répondre à toutes les questions par une autre question.",
   "Faire semblant de ne connaître personne dans la pièce pendant 5 minutes.",
-  "Demander à quelqu'un de la soirée de te faire une passe D.",
   "Laisser le groupe choisir ton prochain verre.",
-  "Demander à quelqu'un dans la soirée : « Tu penses que je suis ton style ? »",
   "Demander son Instagram à quelqu'un que tu trouves attirant dans la soirée.",
-  "Appeler ton ex et lui demander « tu penses encore à moi ? »",
-  "Envoyer « j'ai quelque chose à t'avouer » à ton ex.",
   "Montrer ton temps d'écran.",
   "Faire une déclaration d'amour totalement improvisée à quelqu'un dans la soirée.",
   "Envoyer un vocal de 30 secondes à ton crush choisi par le groupe.",
   "Faire une photo avec la personne que le groupe pense être ton meilleur match dans la soirée.",
-  "Montrer ton historique de likes TikTok.",
   "Faire un compliment à la personne la plus attirante de la soirée selon toi.",
   "Aller voir quelqu'un et lui demander : « Sur 10, tu me notes combien ? »",
-  "Demander à quelqu'un quel est son type, puis lui dire lequel de ses critères tu remplis.",
   "Laisser le groupe choisir quelqu'un à qui tu dois offrir un verre.",
   "Demander à quelqu'un de te présenter la personne qu'il trouve la plus attirante dans la soirée.",
+  "Pendant 30 minutes, chaque fois que quelqu'un prononce ton prénom, tu dois répondre : « Présent, monsieur le président. »",
+  "Le groupe choisit ton nouveau prénom. Tu dois te présenter uniquement avec celui-ci pendant les 30 prochaines minutes.",
+  "Pendant 30 minutes, tu dois appeler chaque personne par un surnom différent. Interdiction d'utiliser son vrai prénom.",
+  "Aller voir quelqu'un et lui demander de te donner le prénom de la personne qu'il trouve la plus attirante dans la soirée.",
+];
+/* Les plus corsés : ceux qui demandent le plus de cran. Ils tombent comme les
+   autres, au hasard — mais c'est aussi là-dedans qu'on pioche quand le Sniper
+   rate sa revanche. Ils valent 1 🔥 comme tous les autres. */
+const GAGES_DURS = [
+  "Envoyer « faut qu'on parle » à quelqu'un puis ne rien expliquer pendant 5 minutes.",
+  "Demander à quelqu'un dans la soirée de te donner ton plus gros red flag.",
+  "Envoyer « j'ai fait une connerie » à quelqu'un choisi par le groupe.",
+  "Demander à quelqu'un de la soirée de te faire une passe D.",
+  "Demander à quelqu'un dans la soirée : « Tu penses que je suis ton style ? »",
+  "Appeler ton ex et lui demander « tu penses encore à moi ? »",
+  "Envoyer « j'ai quelque chose à t'avouer » à ton ex.",
+  "Montrer ton historique de likes TikTok.",
+  "Demander à quelqu'un quel est son type, puis lui dire lequel de ses critères tu remplis.",
   "Faire un discours improvisé d'une minute expliquant pourquoi tu es célibataire.",
   "Dire à quelqu'un : « Mes potes pensent qu'on ferait un beau couple. T'en penses quoi ? »",
   "Révéler au groupe quelque chose que personne ici ne sait sur toi.",
   "Pendant 30 minutes, la personne à ta droite devient ton manager. Tu dois lui demander son autorisation avant toute décision importante.",
   "Aller voir la personne que tu trouves la plus attirante dans la soirée et fais-lui un bisou sur la joue.",
-  "Pendant 30 minutes, chaque fois que quelqu'un prononce ton prénom, tu dois répondre : « Présent, monsieur le président. »",
-  "Le groupe choisit ton nouveau prénom. Tu dois te présenter uniquement avec celui-ci pendant les 30 prochaines minutes.",
-  "Pendant 30 minutes, tu dois appeler chaque personne par un surnom différent. Interdiction d'utiliser son vrai prénom.",
   "Faire croire pendant 15 minutes que la personne choisie par le groupe est ton/ta partenaire.",
-  "Aller voir quelqu'un et lui demander de te donner le prénom de la personne qu'il trouve la plus attirante dans la soirée.",
   "Smack la personne de ton choix.",
   "Le groupe doit choisir la personne sur qui tu vas faire un strip-tease.",
   "Lèche le cou de la personne la plus fraîche de la soirée pour toi.",
   "Bande-toi les yeux et la personne en face de toi te fera deviner une partie de son corps.",
 ];
+const GAGES = GAGES_NORMAUX.concat(GAGES_DURS);
+const EST_DUR = new Set(GAGES_DURS);
 
 /* ---- les vérités : le coup de chance ---- */
 const VERITES = [
@@ -1333,10 +1341,24 @@ function gagePioche(cle, source){
   if(!d || !d.length) d=state.gageDecks[cle]=shuffle(source.slice());
   return d.pop();
 }
-function tireGage(){
+/* `dur` : on veut un gage corsé (la revanche ratée du Sniper). On le prend dans
+   le paquet en cours pour qu'aucun gage ne revienne avant que le paquet soit
+   vide, et jamais de vérité dans ce cas-là : c'est une sanction, pas un cadeau. */
+function tireGage(dur){
+  if(dur) return { verite:false, dur:true, txt:gageDur() };
   return Math.random()<VERITE_CHANCE
     ? { verite:true,  txt:gagePioche('verite', VERITES) }
     : { verite:false, txt:gagePioche('gage',   GAGES)   };
+}
+function gageDur(){
+  if(!state.gageDecks) state.gageDecks={};
+  for(let essai=0; essai<2; essai++){
+    let d=state.gageDecks.gage;
+    if(!d || !d.length) d=state.gageDecks.gage=shuffle(GAGES);
+    for(let i=d.length-1; i>=0; i--) if(EST_DUR.has(d[i])) return d.splice(i,1)[0];
+    d.length=0;                       // le paquet n'a plus de gage corsé : on le refait
+  }
+  return GAGES_DURS[0];
 }
 
 /* ---------- mots du jeu des mimes ----------
@@ -1771,14 +1793,12 @@ function toast(msg){
 /* ---------- sanctions : gorgées ou gages selon le mode ---------- */
 const sansAlcool = () => state.mode==='sans';
 // « 2 gorgées » / « 2 gages »
-/* En mode alcool, n est un nombre de gorgées. En mode sans alcool, c'est UN gage
-   — toujours un seul, tiré au hasard — et n devient sa mise en 🔥 : plus la faute
-   est lourde, plus le gage rapporte (ou coûte, si on le refuse). */
-function unite(n){
-  return sansAlcool()
-    ? (n>1 ? `un gage à ${n} 🔥` : 'un gage')
-    : `${n} gorgée${n>1?'s':''}`;
-}
+/* En mode alcool, n est un nombre de gorgées. En mode sans alcool, toute faute
+   se paie d'UN gage, tiré au hasard, qui vaut 1 🔥 — qu'il soit simple ou corsé,
+   et quelle que soit la gravité de la faute. */
+function unite(n){ return sansAlcool() ? 'un gage' : `${n} gorgée${n>1?'s':''}`; }
+/* La valeur d'une faute : des gorgées avec alcool, un seul gage sans. */
+const coup = n => sansAlcool() ? 1 : n;
 // quand c'est vraiment une quantité à répartir (le sans-faute du Black(out) Jack)
 function uniteN(n){ return sansAlcool() ? `${n} gage${n>1?'s':''}` : `${n} gorgée${n>1?'s':''}`; }
 // « Ali boit 2 gorgées » / « Ali prend 2 gages »
@@ -1816,31 +1836,37 @@ function floatCam(){ return `<div class="floatCam" onclick="openCam()">📸</div
    écran de résultat : en mode alcool elle ne fait rien, en mode sans alcool elle
    enchaîne un défi par joueur sanctionné avant de reprendre le jeu. */
 let _gage=null;
-function gagesAfter(list, next){
+/* `opt.dur` : le gage sera pris parmi les plus corsés (revanche ratée du Sniper).
+   `opt.multi` : la valeur est un nombre de gages à relever et non une faute unique
+   — c'est le cas du sans-faute du Black(out) Jack, qui en distribue plusieurs. */
+function gagesAfter(list, next, opt){
   if(!sansAlcool()) return next;
+  opt=opt||{};
   return ()=>{
-    const file=list.filter(([,v])=>v>0);
-    const suivant=()=>{ if(!file.length) return next(); const [nom,v]=file.shift(); gageScreen(nom,v,suivant); };
+    const file=[];
+    list.forEach(([nom,v])=>{ for(let i=0, k=(opt.multi?v:(v>0?1:0)); i<k; i++) file.push(nom); });
+    const suivant=()=>{ if(!file.length) return next(); gageScreen(file.shift(), suivant, opt.dur); };
     suivant();
   };
 }
-function gageScreen(name,n,next){
-  const g=tireGage();
-  _gage={name,n,next};
+function gageScreen(name,next,dur){
+  const g=tireGage(dur);
+  _gage={name,next};
   render(`
     <div class="topbar"><h2 style="margin:auto">${g.verite?`🍀 Vérité pour ${name}`:`Gage pour ${name}`}</h2></div>
     ${counterBar()}
     <div class="spacer"></div>
     <div class="card ${g.verite?'tint-cyan':'tint-coral'} center stamp" style="padding:26px 20px">
-      <div class="badge ${g.verite?'b-ref':'b-scam'}">${g.verite?'Coup de chance · une vérité':`Gage · ${n} 🔥`}</div>
+      <div class="badge ${g.verite?'b-ref':'b-scam'}">${g.verite?'Coup de chance · une vérité':(g.dur?'Gage corsé · 1 🔥':'Gage · 1 🔥')}</div>
       <div class="gap"></div>
       <p style="font-size:19px;font-weight:800;line-height:1.35">${g.txt}</p>
-      ${g.verite?`<div class="gap-s"></div><p class="muted">Pas de gage cette fois : réponds honnêtement, ça suffira.</p>`:''}
+      ${g.verite?`<div class="gap-s"></div><p class="muted">Pas de gage cette fois : réponds honnêtement, ça suffira.</p>`
+        :(g.dur?`<div class="gap-s"></div><p class="muted">Revanche ratée : celui-là est plus dur que la moyenne. Il vaut quand même 1 🔥.</p>`:'')}
     </div>
     <div class="spacer"></div>
-    <button class="btn mint" onclick="gageDone(true)">✅ ${g.verite?'Répondu':'Relevé'} (+${n} 🔥)</button>
+    <button class="btn mint" onclick="gageDone(true)">✅ ${g.verite?'Répondu':'Relevé'} (+1 🔥)</button>
     <div class="gap-s"></div>
-    <button class="btn ghost sm" onclick="gageDone(false)">🙅 ${g.verite?'Je ne réponds pas':'Je refuse'} (−${n} 🔥)</button>
+    <button class="btn ghost sm" onclick="gageDone(false)">🙅 ${g.verite?'Je ne réponds pas':'Je refuse'} (−1 🔥)</button>
     <div style="height:8px"></div>
   `, true);
 }
@@ -1848,13 +1874,13 @@ function gageScreen(name,n,next){
    neutre, et le compteur peut très bien finir sous zéro. */
 function gageDone(ok){
   if(!_gage) return;
-  const {name,n,next}=_gage; _gage=null;
+  const {name,next}=_gage; _gage=null;
   const p=state.players.find(p=>p.name===name);
   if(p){
-    p.reussis=(p.reussis||0)+(ok?n:-n);
-    if(!ok) p.refus=(p.refus||0)+n;
+    p.reussis=(p.reussis||0)+(ok?1:-1);
+    if(!ok) p.refus=(p.refus||0)+1;
   }
-  toast(ok?`${name} : +${n} 🔥`:`${name} refuse : −${n} 🔥`);
+  toast(ok?`${name} : +1 🔥`:`${name} refuse : −1 🔥`);
   next();
 }
 
@@ -2316,8 +2342,8 @@ function qarVote(){
 }
 function qarEliminate(i){
   const p=qar.players[i]; if(!p.alive)return; p.alive=false;
-  if(p.role==='scam'){ addDrinks(p.name,2);
-    resultScreen('Scamer démasqué !',`${p.name} était un scamer. Sanction : ${unite(2)}. Bien joué au groupe.`,'b-scam',gagesAfter([[p.name,2]],qarCheckEnd)); }
+  if(p.role==='scam'){ const n=coup(2); addDrinks(p.name,n);
+    resultScreen('Scamer démasqué !',`${p.name} était un scamer. Sanction : ${unite(2)}. Bien joué au groupe.`,'b-scam',gagesAfter([[p.name,n]],qarCheckEnd)); }
   else if(p.role==='ref'){ addDrinks(p.name,1);
     resultScreen('Raté…',`${p.name} avait la ref ! Sanction : ${unite(1)}. Le groupe perd un allié.`,'b-ref',gagesAfter([[p.name,1]],qarCheckEnd)); }
   else { qarPnjGuess(p); }
@@ -2396,11 +2422,11 @@ function qarBloque(impos,refs){
        ${impos.length>1?'Les imposteurs':(impos[0].role==='scam'?'Le scamer':'Le PNJ')} rafle${impos.length>1?'nt':''} la manche.
        ${noms(refs)} ${refs.length>1?'se sont fait avoir':'s\'est fait avoir'} jusqu'au bout : ${unite(QAR_BLOC)}${refs.length>1?' chacun·e':''}.`
     : `Plus personne n'avait la ref. ${roles(impos)} ${impos.length>1?'ont tenu':'a tenu'} jusqu'au bout : la manche est à ${impos.length>1?'eux':'lui/elle'}.`;
-  refs.forEach(p=>addDrinks(p.name,QAR_BLOC));
+  refs.forEach(p=>addDrinks(p.name,coup(QAR_BLOC)));
   const fin=()=>qarEndRound(txt);
   if(sansAlcool() && refs.length)
     resultScreen('🕵️ Les imposteurs gagnent', txt, 'b-scam',
-                 gagesAfter(refs.map(p=>[p.name,QAR_BLOC]), fin));
+                 gagesAfter(refs.map(p=>[p.name,coup(QAR_BLOC)]), fin));
   else fin();
 }
 function qarEndRound(bloc){
@@ -2473,7 +2499,7 @@ function sniperPicked(name){
       <div class="big">🎯</div>
       <p><b>${name}</b> a été désigné. Tu peux assumer… ou tenter ta revanche.</p>
       <div class="gap-s"></div>
-      <p class="muted">La revanche, c'est une question de culture générale en ${QUIZ_SEC} secondes. Réussie, quelqu'un d'autre paie ${unite(SNIPER_MISE)} à ta place. Ratée, c'est ${unite(sniperRate())} pour toi.</p>
+      <p class="muted">La revanche, c'est une question de culture générale en ${QUIZ_SEC} secondes. Réussie, quelqu'un d'autre paie ${unite(SNIPER_MISE)} à ta place. Ratée, c'est ${sansAlcool()?'un gage corsé':unite(sniperRate())} pour toi.</p>
     </div>
     <div class="spacer"></div>
     <button class="btn accent" onclick="sniperRevanche('${name.replace(/'/g,"\\'")}')">🧠 Question Culture Générale</button>
@@ -2494,9 +2520,10 @@ function sniperAssume(name){
    même dans les deux sens : c'est un pile ou face qu'il a demandé. */
 const QUIZ_SEC = 10;
 const SNIPER_MISE = 2;
-/* Rater sa revanche est plus lourd qu'assumer tout de suite : sans alcool le
-   gage vaut 3 🔥 au lieu de 2, avec alcool la mise reste la même. */
-function sniperRate(){ return sansAlcool() ? 3 : SNIPER_MISE; }
+/* Rater sa revanche coûte plus cher qu'assumer tout de suite. Avec alcool, la
+   mise reste la même. Sans alcool, le gage vaut toujours 1 🔥 comme les autres —
+   mais il est pioché parmi les plus corsés : c'est le risque de la revanche. */
+function sniperRate(){ return sansAlcool() ? 1 : SNIPER_MISE; }
 let snip={};
 function sniperRevanche(name){
   const q=drawCulture();
@@ -2511,7 +2538,7 @@ function sniperRevanche(name){
       <div class="gap"></div>
       <p style="font-size:16px"><b>${name}</b>, passe-toi le téléphone.<br>Une question de culture générale, <b>${QUIZ_SEC} secondes</b> pour répondre.</p>
       <div class="gap-s"></div>
-      <p class="muted">Bonne réponse : tu désignes qui prend ta place (${unite(SNIPER_MISE)}). Mauvaise, ou hors délai : ${unite(sniperRate())} pour toi.</p>
+      <p class="muted">Bonne réponse : tu désignes qui prend ta place (${unite(SNIPER_MISE)}). Mauvaise, ou hors délai : ${sansAlcool()?'un gage corsé':unite(sniperRate())} pour toi.</p>
     </div>
     <div class="spacer"></div>
     <button class="btn accent" onclick="sniperQuizGo()">Je suis prêt·e →</button>
@@ -2578,16 +2605,16 @@ function sniperQuizReveal(i){
     <div class="gap"></div>
     <p class="center ${ok?'':'shakeko'}" style="font-size:16px">${ok
       ? `<b>${snip.name}</b> s'en sort. À toi de désigner qui prend ta place.`
-      : `${sanction(snip.name,sniperRate())} ${sansAlcool()?'🔥':'🍺'}`}</p>
+      : `${sansAlcool()?`${snip.name} prend un gage corsé`:sanction(snip.name,sniperRate())} ${sansAlcool()?'🔥':'🍺'}`}</p>
     <div class="spacer"></div>
-    ${autoBar(ok?3000:4200, ok ? 'À toi de désigner…' : (sansAlcool()?'Le gage arrive…':'Manche suivante…'))}
+    ${autoBar(ok?3000:4200, ok ? 'À toi de désigner…' : (sansAlcool()?'Le gage corsé arrive…':'Manche suivante…'))}
     <div style="height:6px"></div>
   `, true);
   // le verdict se lit, il ne se valide pas : la suite vient toute seule
   autoNext(ok?3000:4200, ok ? sniperQuizWin : sniperQuizFin);
 }
 function sniperQuizFin(){
-  gagesAfter([[snip.name,sniperRate()]], sniperRound)();
+  gagesAfter([[snip.name,sniperRate()]], sniperRound, {dur:true})();
 }
 function sniperQuizWin(){
   render(`
@@ -2604,9 +2631,9 @@ function sniperQuizWin(){
   `, true);
 }
 function sniperQuizGive(autre){
-  addDrinks(autre, SNIPER_MISE, snip.name);   // c'est le gagnant de la revanche qui l'inflige
+  addDrinks(autre, coup(SNIPER_MISE), snip.name);   // c'est le gagnant de la revanche qui l'inflige
   toast(sanction(autre,SNIPER_MISE));
-  gagesAfter([[autre,SNIPER_MISE]], sniperRound)();
+  gagesAfter([[autre,coup(SNIPER_MISE)]], sniperRound)();
 }
 
 /* ============================================================
@@ -2706,8 +2733,8 @@ function bjAnswer(rep){
   bj.cards.push(c);
   if(bjJuge(c)) return bjReveal(true,0);
   const n=bj.step+1;                       // 1ʳᵉ étape ratée = 1, 2ᵉ = 2, 3ᵉ = 3, 4ᵉ = 4
-  addDrinks(bj.player,n);
-  bj.pending=n;
+  addDrinks(bj.player,coup(n));
+  bj.pending=coup(n);
   bjReveal(false,n);
 }
 function bjDit(){
@@ -2782,7 +2809,7 @@ function bjJackpotDone(){
   parts.forEach(([n,v])=>addDrinks(n,v,bj.player));    // le sans-faute : c'est lui qui distribue
   toast('Partage enregistré '+(sansAlcool()?'🔥':'🍺'));
   compteManche('bj');
-  gagesAfter(parts, ()=>{ bj.turn++; bjPlayer(); })();
+  gagesAfter(parts, ()=>{ bj.turn++; bjPlayer(); }, {multi:true})();
 }
 
 /* ============================================================
@@ -3444,12 +3471,10 @@ function mimesResults(){
   const perdants=rows.filter(r=>r.pts===min);
   const egalite=perdants.length===rows.length;
   /* Avec alcool : le perdant boit autant de gorgées qu'il a deviné de mots — moins il
-     en trouve, moins il boit, mais il boit toujours au moins un coup. Sans alcool on
-     garde la même échelle (1 à 3), mais elle chiffre la mise du gage et non sa
-     difficulté : zéro mot trouvé = un gage qui vaut cher. Égalité générale : tout le monde trinque un coup. */
-  const n = egalite ? 1
-          : sansAlcool() ? (min===0 ? 3 : 2)
-          : Math.max(1,min);
+     en trouve, moins il boit, mais il boit toujours au moins un coup. Sans alcool,
+     c'est un gage, un seul, comme partout ailleurs.
+     Égalité générale : tout le monde trinque un coup. */
+  const n = (egalite || sansAlcool()) ? 1 : Math.max(1,min);
   const punis=[];
   perdants.forEach(r=>r.membres.forEach(m=>{ addDrinks(m,n); punis.push([m,n]); }));
   const noms=punis.map(p=>p[0]);
@@ -3470,8 +3495,7 @@ function mimesResults(){
       <p style="font-size:16px;font-weight:750">${egalite
         ? `Égalité parfaite — ${sanctionGroupe(noms,n)} 😐`
         : sanctionGroupe(noms,n)}</p>
-      ${egalite ? '' : sansAlcool()
-        ? (min===0 ? `<div class="gap-s"></div><p class="muted">Zéro mot trouvé : la sanction est majorée.</p>` : '')
+      ${(egalite || sansAlcool()) ? ''
         : `<div class="gap-s"></div><p class="muted">Une gorgée par mot deviné${min===0?' — et un coup minimum, même à zéro':''}.</p>`}
     </div>
     <div class="spacer"></div>

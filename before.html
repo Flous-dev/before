@@ -788,6 +788,30 @@
 /* ============================================================
    BEFORE — prototype interactif
    ============================================================ */
+
+/* ---------- toujours la dernière version ----------
+   GitHub Pages laisse le navigateur garder la page 10 min en cache, et
+   l'app ajoutée à l'écran d'accueil peut la garder bien plus longtemps.
+   Au lancement, on demande la version publiée sans passer par le cache ;
+   si elle est plus récente, on recharge. Uniquement tant qu'aucune partie
+   n'a commencé : les joueurs ne sont pas sauvegardés, un rechargement en
+   pleine soirée les effacerait. BUILD est tamponné par publier.sh. */
+const BUILD='20260921190829';
+(function(){
+  try{
+    fetch('version.txt?t='+Date.now(),{cache:'no-store'})
+      .then(r=>r.ok?r.text():'')
+      .then(v=>{
+        v=(v||'').trim();
+        if(!v || v===BUILD) return;
+        if(state.players.length) return;               // partie en cours : on ne touche à rien
+        const k='before.maj.'+v;
+        try{ if(sessionStorage.getItem(k)) return; sessionStorage.setItem(k,'1'); }catch(e){ return; }
+        location.replace(location.pathname+'?v='+v+location.hash);   // une seule tentative, jamais de boucle
+      }).catch(()=>{});
+  }catch(e){}
+})();
+
 const state = {
   players: [],            // {name, drinks, gages, reussis, refus}
   mode:'alcool',          // 'alcool' → gorgées · 'sans' → gages à relever

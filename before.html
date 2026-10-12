@@ -355,6 +355,7 @@
   }
   .selcard .e{font-size:29px;line-height:1.1;opacity:.95;}
   .selcard div{font-weight:700;font-size:13.5px;margin-top:7px;}
+  .selcard small{display:block;margin-top:4px;font-size:11.5px;font-weight:500;color:var(--muted);letter-spacing:0;}
 
   .stepper{
     display:flex;align-items:center;gap:14px;justify-content:space-between;
@@ -747,7 +748,6 @@
   #mimeDurees .chipf{padding:7px 10px;}
   .teamacts .btn{white-space:nowrap;justify-content:center;gap:7px;padding-left:10px;padding-right:10px;}
   /* les trois sources de mots doivent tenir sur une ligne */
-  #mimeSrc .chipf{display:flex;align-items:center;gap:5px;padding:7px 11px;}
   .wordlog{display:flex;flex-wrap:wrap;gap:7px;}
   .wchip{
     display:flex;align-items:center;gap:7px;padding:8px 12px;border-radius:999px;cursor:pointer;
@@ -796,7 +796,7 @@
    si elle est plus récente, on recharge. Uniquement tant qu'aucune partie
    n'a commencé : les joueurs ne sont pas sauvegardés, un rechargement en
    pleine soirée les effacerait. BUILD est tamponné par publier.sh. */
-const BUILD='20260921190829';
+const BUILD='20261012111852';
 (function(){
   try{
     fetch('version.txt?t='+Date.now(),{cache:'no-store'})
@@ -1712,10 +1712,12 @@ Le dernier morceau de pizza
 `);
 
 /* ---------- private jokes ----------
-   Chaque mot ajouté garde le nom de celui qui l'a écrit : c'est lui, et lui
-   seul, qui le mimera. Une joke signée ne sort donc que pendant le tour de
-   son auteur — les autres ne la verront jamais à l'écran.
-   Elles survivent d'une soirée à l'autre — on ne réécrit pas ses classiques. */
+   Une seule par joueur, et elle garde le nom de son auteur. En solo, c'est lui
+   qui la mime. En équipe, c'est à l'équipe adverse de s'y coller : son camp
+   sait très bien de quoi il s'agit, l'autre doit se débrouiller.
+   Elles entrent directement dans le paquet avec les mots du jeu : rien à
+   régler, et pas de partie « jokes seulement ». Elles survivent d'une soirée à
+   l'autre — si l'auteur n'est pas là ce soir, le mot redevient ordinaire. */
 const JOKES_KEY='before.jokes';
 function loadJokes(){
   try{ const raw=localStorage.getItem(JOKES_KEY); state.mimeJokes = raw ? (JSON.parse(raw)||[]) : []; }
@@ -1726,40 +1728,41 @@ function saveJokes(){
 }
 
 /* ---------- tirage des mots, sans doublon dans la soirée ----------
-   Un paquet mélangé, on pioche dedans ; quand il est vide (soirée marathon)
-   on remélange tout. `mimeur` = celui qui tient le téléphone : seules ses
-   propres jokes peuvent sortir, celles des autres retournent sous la pile.
-   Une joke dont l'auteur n'est pas là ce soir redevient un mot ordinaire. */
+   Un seul paquet mélangé : les mots de BEFORE plus les private jokes. On
+   pioche dedans ; quand il est vide (soirée marathon) on remélange tout.
+   Une joke qui n'est pas pour le joueur en cours retourne sous la pile. */
 function mimePool(){
   const jokes=(state.mimeJokes||[]).map(j=>({w:j.w, by:j.by}));
-  if(mimes.source==='perso') return jokes;
-  const base=MOTS_MIMES.map(w=>({w, by:null}));
-  return mimes.source==='mix' ? base.concat(jokes) : base;
+  return MOTS_MIMES.map(w=>({w, by:null})).concat(jokes);
 }
-function resetMimeDecks(){
-  state.mimeDecks={ src:(typeof mimes!=='undefined'?mimes.source:'base'), deck:shuffle(mimePool()) };
-}
-function mimeJouable(c, mimeur, presents){
+function resetMimeDecks(){ state.mimeDecks={ deck:shuffle(mimePool()) }; }
+/* `camp` = le mimeur et ceux qui devinent avec lui. En solo, une joke est pour
+   son auteur. En équipe, elle est pour le camp d'en face : celui qui l'a
+   écrite regarde son adversaire se débattre avec sa propre vanne. */
+function mimeJouable(c, mimeur, camp, presents){
   if(!c.by) return true;                   // mot classique : pour tout le monde
   if(presents.indexOf(c.by)<0) return true;// son auteur n'est pas de la soirée
-  return c.by===mimeur;                    // sinon : réservée à celui qui l'a écrite
+  return mimes.format==='team'
+    ? camp.indexOf(c.by)<0                 // en équipe : à l'adversaire de la mimer
+    : c.by===mimeur;                       // en solo : son auteur la mime
 }
-function drawMime(mimeur){
+function drawMime(mimeur, camp){
   const presents=state.players.map(p=>p.name);
-  if(!state.mimeDecks || state.mimeDecks.src!==mimes.source) resetMimeDecks();
+  camp = (camp && camp.length) ? camp : [mimeur];
+  if(!state.mimeDecks || !state.mimeDecks.deck) resetMimeDecks();
   for(let essai=0; essai<2; essai++){
     const d=state.mimeDecks.deck, garde=[];
     let pris=null;
     while(d.length){
       const c=d.pop();
-      if(mimeJouable(c,mimeur,presents)){ pris=c; break; }
-      garde.push(c);                       // la joke d'un autre : elle retourne sous la pile
+      if(mimeJouable(c,mimeur,camp,presents)){ pris=c; break; }
+      garde.push(c);                       // pas pour ce camp : elle retourne sous la pile
     }
     state.mimeDecks.deck = garde.concat(d);
     if(pris) return pris;
     resetMimeDecks();                      // paquet vide : on remélange et on retente
   }
-  return { w: rnd(MOTS_MIMES), by:null };  // filet : il n'a écrit aucune joke
+  return { w: rnd(MOTS_MIMES), by:null };  // filet
 }
 
 /* ---------- utils ---------- */
@@ -2862,8 +2865,8 @@ function bjJackpotDone(){
    plus d'inclinaison à lire, plus rien à verrouiller avant de jouer.
    ============================================================ */
 const MIME_DUREES = [90,120,150,180,210];   // 1m30 · 2min · 2m30 · 3min · 3m30
-let mimes = { format:'solo', duree:120, source:'base', manche:0,
-              swap:{}, scores:{}, teams:null, turn:0, log:[], order:null, mimeur:'' };
+let mimes = { format:'solo', duree:120, manche:0, swap:{}, scores:{}, teams:null,
+              turn:0, log:[], order:null, mimeur:'', camp:[] };
 
 /* ---------- son : le mimeur a les yeux sur le groupe, pas sur le chrono ---------- */
 let mimeAC=null;
@@ -2913,23 +2916,15 @@ function mimesConfig(){
   // les binômes demandent un nombre pair, et au moins deux équipes
   if(mimes.format==='team' && (n%2 || n<4)) mimes.format='solo';
   const nj=(state.mimeJokes||[]).length;
-  if(mimes.source!=='base' && !nj) mimes.source='base';   // les jokes ont été effacées entre-temps
   const pair=(n%2===0 && n>=4);
   render(`
     <div class="topbar"><div class="back" onclick="gameSelect()">‹</div><div><div class="eyebrow">Le jeu des mimes</div><h2>Les réglages</h2></div></div>
-    <p class="muted">Le mimeur garde le téléphone en main : il lit le mot, le fait deviner, et valide. Le gagnant est celui qui en fait deviner le plus.</p>
     <div class="gap-s"></div>
-    <p class="muted">${sansAlcool()
-      ? "Le plus faible de la manche prend un gage."
-      : "Le plus faible de la manche boit autant de gorgées qu'il a fait deviner de mots."}</p>
-    <div class="gap"></div>
     <div class="flabel">Format</div>
     <div class="grid2" id="mimeFmt">
-      <div class="selcard${mimes.format==='solo'?' on':''}" data-f="solo" onclick="mimesFormat('solo')"><div class="e">🙋</div><div>Chacun pour soi</div></div>
-      <div class="selcard${mimes.format==='team'?' on':''}${pair?'':' off'}" data-f="team" onclick="mimesFormat('team')"><div class="e">👯</div><div>En équipe de 2</div></div>
+      <div class="selcard${mimes.format==='solo'?' on':''}" data-f="solo" onclick="mimesFormat('solo')"><div class="e">🙋</div><div>Chacun pour soi</div><small>tout le monde devine</small></div>
+      <div class="selcard${mimes.format==='team'?' on':''}${pair?'':' off'}" data-f="team" onclick="mimesFormat('team')"><div class="e">👯</div><div>En équipe de 2</div><small>${pair?'ton binôme devine':'nombre pair requis'}</small></div>
     </div>
-    <div class="gap-s"></div>
-    <p class="muted" id="mimeFmtHint">${mimesFmtHint()}</p>
     <div class="gap"></div>
     <div class="flabel">Temps par joueur</div>
     <div class="filters" id="mimeDurees">
@@ -2937,15 +2932,8 @@ function mimesConfig(){
     </div>
     <p class="muted" id="mimeTot">${mimesTotal()}</p>
     <div class="gap"></div>
-    <div class="flabel">Les mots</div>
-    <div class="filters" id="mimeSrc">
-      ${[['base','🎲','Classiques'],['mix','🔀','Mélange'],['perso','🔒','Nos jokes']]
-        .map(([k,e,l])=>`<div class="chipf${mimes.source===k?' on':''}" data-s="${k}" onclick="mimesSource('${k}')"><span>${e}</span>${l}</div>`).join('')}
-    </div>
-    <p class="muted" id="mimeSrcHint">${mimesSrcHint()}</p>
-    <div class="gap-s"></div>
-    <button class="btn ghost sm" onclick="mimesJokes()"><span class="ico">✏️</span>Nos private jokes${nj?` · ${nj}`:''}</button>
-    <div class="gap"></div>
+    <button class="btn gold sm" onclick="mimesJokes()"><span class="ico">🔒</span><span class="col">Private jokes<small>${nj?`${nj} en réserve · elles sont dans le paquet`:'Un mot maison par joueur'}</small></span></button>
+    <div class="spacer"></div>
     <button class="btn good" onclick="mimesStart()">Commencer →</button>
     <div style="height:10px"></div>
   `, true);
@@ -2968,13 +2956,6 @@ function mimesTooFew(){
     <div style="height:8px"></div>
   `, true);
 }
-function mimesFmtHint(){
-  const n=state.players.length;
-  if(mimes.format==='team') return `${n/2} équipes de 2 : dans chaque équipe, l'un mime, l'autre devine — et lui seul.`;
-  return n<4
-    ? `À ${n}, c'est forcément chacun pour soi : un mime, les deux autres devinent.`
-    : `Chacun mime à son tour, tous les autres devinent.`;
-}
 function mimesFormat(f){
   const n=state.players.length;
   if(f==='team' && (n%2 || n<4)){
@@ -2984,7 +2965,6 @@ function mimesFormat(f){
   }
   mimes.format=f;
   document.querySelectorAll('#mimeFmt .selcard').forEach(c=>c.classList.toggle('on',c.dataset.f===f));
-  const h=$('#mimeFmtHint'); if(h) h.textContent=mimesFmtHint();
   const t=$('#mimeTot'); if(t) t.textContent=mimesTotal();
 }
 function mimesDur(d){
@@ -2998,69 +2978,48 @@ function mimesTotal(){
   const n = mimes.format==='team' ? state.players.length/2 : state.players.length;
   return `${n} tours de ${dureeMime(mimes.duree)} · environ ${Math.round(n*mimes.duree/60)} min de jeu`;
 }
-// qui, ce soir, n'a écrit aucune joke : ceux-là mimeront des mots classiques
-function mimesSansJoke(){
-  const noms=state.players.map(p=>p.name);
-  const auteurs=(state.mimeJokes||[]).map(j=>j.by);
-  return noms.filter(n=>auteurs.indexOf(n)<0);
-}
-function mimesSrcHint(){
-  const j=(state.mimeJokes||[]).length;
-  if(mimes.source==='base') return `${MOTS_MIMES.length} mots tirés au hasard, du grand classique au n'importe quoi.`;
-  const sans=mimesSansJoke();
-  const rappel = sans.length
-    ? ` ${listeFr(sans)} n'${sans.length>1?'ont':'a'} rien écrit : ${sans.length>1?'ils auront':'il aura'} des mots classiques.`
-    : '';
-  return mimes.source==='perso'
-    ? `Vos ${j} private joke${j>1?'s':''}, et rien d'autre. Chacun mime les siennes.${rappel}`
-    : `Les ${MOTS_MIMES.length} mots de BEFORE mélangés à vos ${j} private joke${j>1?'s':''} — chacun mime les siennes.`;
-}
-function mimesSource(s){
-  const j=(state.mimeJokes||[]).length;
-  if(s!=='base' && !j){ toast('Écrivez d\'abord vos private jokes ✏️'); return mimesJokes(); }
-  mimes.source=s;
-  if(s==='perso' && j<10) toast(`${j} private joke${j>1?'s':''} : ça va tourner vite`);
-  document.querySelectorAll('#mimeSrc .chipf').forEach(c=>c.classList.toggle('on',c.dataset.s===s));
-  const h=$('#mimeSrcHint'); if(h) h.textContent=mimesSrcHint();
-}
-
 /* ---------- les private jokes ----------
-   Chacun écrit ses vannes maison sous son nom. Règle du jeu : celui qui écrit
-   un mot est celui qui le mime — c'est la seule façon qu'il soit mimé par
-   quelqu'un qui sait de quoi il parle. Elles sont gardées d'une soirée à
-   l'autre ; si l'auteur n'est pas là ce soir, le mot redevient ordinaire et
-   peut tomber sur n'importe qui. */
+   Un mot par joueur, pas deux : c'est ce qui en fait un bon mot. En solo son
+   auteur le mime ; en équipe c'est l'équipe adverse qui doit le faire deviner.
+   Gardées d'une soirée à l'autre ; si l'auteur n'est pas là ce soir, le mot
+   redevient ordinaire et peut tomber sur n'importe qui. */
 let jokeBy=null;
+// « de Karim », mais « d'Inès » : sans l'élision, chaque écran pique un peu
+function dDe(n){ return /^[aeiouyàâäéèêëîïôöûü]/i.test(n||'') ? "d'"+n : 'de '+n; }
+function jokeDe(nom){ return (state.mimeJokes||[]).find(j=>j.by===nom)||null; }
 function mimesJokes(){
   const noms=state.players.map(p=>p.name);
   if(jokeBy && noms.indexOf(jokeBy)<0) jokeBy=null;
-  if(!jokeBy && noms.length) jokeBy=noms[0];
+  if(!jokeBy) jokeBy = noms.find(n=>!jokeDe(n)) || noms[0] || null;
   const list=state.mimeJokes||[];
+  const sienne=jokeBy?jokeDe(jokeBy):null;
   const orphelines=list.filter(j=>noms.indexOf(j.by)<0).length;
+  const manquants=noms.filter(n=>!jokeDe(n)).length;
   render(`
-    <div class="topbar"><div class="back" onclick="mimesConfig()">‹</div><div><div class="eyebrow">Le jeu des mimes</div><h2>Vos private jokes</h2></div></div>
-    <p class="muted">Vos vannes maison, celles que personne d'autre ne comprend. Celui qui écrit un mot est celui qui le mimera : il ne sortira que pendant son tour.</p>
+    <div class="topbar"><div class="back" onclick="mimesConfig()">‹</div><div><div class="eyebrow">Le jeu des mimes</div><h2>Private jokes</h2></div></div>
+    <p class="muted">Un mot maison par joueur. ${mimes.format==='team'
+      ? "En équipe, c'est l'équipe d'en face qui devra le mimer 😈"
+      : "Chacun mime le sien, personne d'autre ne le voit."}</p>
     <div class="gap"></div>
     <div class="flabel">Qui écrit ?</div>
     <div class="filters" id="jokeWho">
-      ${noms.map(n=>`<div class="chipf${jokeBy===n?' on':''}" data-n="${n}" onclick="mimesJokeBy('${n.replace(/'/g,"\\'")}')">${n}</div>`).join('')}
+      ${noms.map(n=>`<div class="chipf${jokeBy===n?' on':''}" data-n="${n}" onclick="mimesJokeBy('${n.replace(/'/g,"\\'")}')">${jokeDe(n)?'🔒 ':''}${n}</div>`).join('')}
     </div>
     <div class="card">
       <div class="row"><input id="jokeIn" placeholder="Un souvenir, un surnom, une phrase culte…" autocomplete="off" maxlength="42"
         onkeydown="if(event.key==='Enter'){event.preventDefault();mimesAddJoke();}"></div>
     </div>
     <div class="gap-s"></div>
-    <button class="btn accent sm" onclick="mimesAddJoke()"><span class="ico">＋</span>Ajouter à la liste</button>
+    <button class="btn accent sm" onclick="mimesAddJoke()"><span class="ico">＋</span>${sienne?`Remplacer celui ${dDe(jokeBy)}`:(jokeBy?`C'est le mot ${dDe(jokeBy)}`:'Ajouter')}</button>
     ${list.length?`
       <div class="gap"></div>
-      <div class="flabel">${list.length} joke${list.length>1?'s':''} en réserve</div>
-      <p class="muted">Touche une joke pour la supprimer.</p>
-      <div class="gap-s"></div>
+      <div class="flabel">${list.length} dans le paquet</div>
       <div class="wordlog" id="jokeLog">${jokeLogHTML()}</div>
-      ${orphelines?`<div class="gap-s"></div><p class="muted">${orphelines} joke${orphelines>1?'s':''} d'une autre soirée : leur auteur n'est pas là, n'importe qui peut tomber dessus.</p>`:''}
+      <div class="gap-s"></div>
+      <p class="muted">Touche un mot pour le supprimer.${manquants?` ${manquants} joueur${manquants>1?'s n\'ont':' n\'a'} pas encore écrit.`:''}${orphelines?` ${orphelines} vien${orphelines>1?'nent':'t'} d'une autre soirée : leur auteur n'est pas là, n'importe qui peut tomber dessus.`:''}</p>
     `:`
       <div class="gap"></div>
-      <div class="card center"><p class="muted">Rien pour l'instant. Trois ou quatre bonnes vannes suffisent à ruiner une manche 😈</p></div>
+      <div class="card center"><p class="muted">Rien pour l'instant. Une bonne vanne par personne et la manche part en fumée 😈</p></div>
     `}
     <div class="spacer"></div>
     <button class="btn good" onclick="mimesConfig()">Terminé →</button>
@@ -3084,11 +3043,17 @@ function mimesAddJoke(){
   if(!v){ toast('Écris quelque chose 🙂'); return; }
   if(!jokeBy){ toast('Choisis qui écrit'); return; }
   if(!state.mimeJokes) state.mimeJokes=[];
-  if(state.mimeJokes.some(j=>j.w.toLowerCase()===v.toLowerCase())){ toast('Déjà dans la liste'); i.value=''; return; }
-  state.mimeJokes.push({w:v, by:jokeBy});
+  const dbl=state.mimeJokes.find(j=>j.w.toLowerCase()===v.toLowerCase() && j.by!==jokeBy);
+  if(dbl){ toast(`Déjà pris par ${dbl.by}`); i.value=''; return; }
+  // un seul mot par joueur : le nouveau remplace le précédent
+  const k=state.mimeJokes.findIndex(j=>j.by===jokeBy);
+  const avant = k<0 ? null : state.mimeJokes[k].w;
+  if(k<0) state.mimeJokes.push({w:v, by:jokeBy}); else state.mimeJokes[k]={w:v, by:jokeBy};
   saveJokes();
   state.mimeDecks=null;                    // le paquet change : on le refera au prochain tirage
-  toast(`« ${v} » ajoutée 🔒`);
+  toast(avant ? `${jokeBy} : « ${v} » à la place de « ${avant} » 🔒` : `« ${v} » ajouté 🔒`);
+  // et on passe la main au premier qui n'a rien écrit
+  jokeBy = state.players.map(p=>p.name).find(n=>!jokeDe(n)) || jokeBy;
   mimesJokes();                            // l'écran se recompose, le champ reste actif
 }
 function mimesDelJoke(i){
@@ -3096,8 +3061,8 @@ function mimesDelJoke(i){
   state.mimeJokes.splice(i,1);
   saveJokes();
   state.mimeDecks=null;
-  if(!state.mimeJokes.length && mimes.source!=='base') mimes.source='base';
-  toast(`« ${j.w} » supprimée`);
+  jokeBy=j.by;                             // on rouvre sur celui dont on vient d'effacer le mot
+  toast(`« ${j.w} » supprimé`);
   mimesJokes();
 }
 function mimesStart(){
@@ -3217,6 +3182,7 @@ function mimesTurnIntro(){
   const ents=mimesEnts(), e=ents[mimes.turn];
   if(!e) return mimesResults();
   const team=mimes.format==='team';
+  const premier=(mimes.manche===0 && mimes.turn===0);   // les règles en entier, puis un rappel
   render(`
     <div class="topbar"><div class="back" onclick="gameSelect()">‹</div><h2>🎭 Les mimes</h2></div>
     <p class="muted center">Tour ${mimes.turn+1} / ${ents.length}${mimes.manche?` · manche ${mimes.manche+1}`:''}</p>
@@ -3231,6 +3197,7 @@ function mimesTurnIntro(){
         : 'Tous les autres devinent'}</p>
     </div>
     <div class="spacer"></div>
+    ${premier?`
     <div class="card">
       <div class="row"><span style="font-size:21px">📱</span><span style="font-size:13.5px">Le téléphone reste <b>dans ta main</b> : toi seul vois le mot.</span></div>
       <div class="gap-s"></div>
@@ -3239,7 +3206,8 @@ function mimesTurnIntro(){
       <div class="row"><span style="font-size:21px">✅</span><span style="font-size:13.5px"><b style="color:var(--good)">Trouvé</b> — dès que ${team?'ton binôme dit':'quelqu\'un dit'} le mot, tu appuies : +1 et au suivant.</span></div>
       <div class="gap-s"></div>
       <div class="row"><span style="font-size:21px">⏭</span><span style="font-size:13.5px"><b style="color:var(--gold)">Passer</b> — bloqué ? Mot suivant. Ça ne coûte rien, ça ne rapporte rien.</span></div>
-    </div>
+    </div>`:`
+    <p class="muted center">📱 dans ta main · 🤐 pas un mot · ✅ trouvé · ⏭ passer</p>`}
     <div class="gap"></div>
     ${team?`<button class="btn ghost sm" onclick="mimesSwap()"><span class="ico">🔄</span>Inverser : ${e.devineurs[0]} mime</button><div class="gap-s"></div>`:''}
     <button class="btn good" onclick="mimesGo()">C'est parti · ${mimes.duree} s →</button>
@@ -3274,10 +3242,11 @@ function mimesCountdown(){
 function mimesPlay(){
   mimes.log=[]; mimes.running=true; mimes.flash=false;
   mimes.lastAct=0; mimes.lastSec=-1;
-  // celui qui tient le téléphone : ses private jokes, et seulement les siennes
+  // celui qui tient le téléphone, et le camp qui joue avec lui
   const e=mimesEnts()[mimes.turn];
   mimes.mimeur = e ? e.mimeur : '';
-  mimes.word=drawMime(mimes.mimeur);
+  mimes.camp   = e ? e.membres.slice() : [];
+  mimes.word=drawMime(mimes.mimeur, mimes.camp);
   mimes.endAt=Date.now()+mimes.duree*1000;
   paintMime();
   clearInterval(mimes.timer);
@@ -3298,7 +3267,7 @@ function paintMime(){
       </div>
       <div class="mimebar" id="mimeBar"><i style="width:${left/(mimes.duree*10)}%"></i></div>
       <div class="mimeword" id="mimeWord"><div>${mimes.word.w}${mimes.word.by
-        ? `<span class="mimeby">🔒 ${mimes.word.by===mimes.mimeur?'ta joke':'la joke de '+mimes.word.by}</span>` : ''}</div></div>
+        ? `<span class="mimeby">🔒 ${mimes.word.by===mimes.mimeur?'ta joke':'la joke '+dDe(mimes.word.by)}</span>` : ''}</div></div>
       <div class="mimeacts">
         <div class="mimebtn no" onclick="mimesHit(false)"><b>⏭</b>Passer</div>
         <div class="mimebtn ok" onclick="mimesHit(true)"><b>✅</b>Trouvé</div>
@@ -3332,7 +3301,7 @@ function mimesHit(ok){
   setTimeout(()=>{
     mimes.flash=false;
     if(!mimes.running) return;
-    mimes.word=drawMime(mimes.mimeur);
+    mimes.word=drawMime(mimes.mimeur, mimes.camp);
     paintMime();
   },460);
 }

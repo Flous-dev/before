@@ -796,7 +796,7 @@
    si elle est plus récente, on recharge. Uniquement tant qu'aucune partie
    n'a commencé : les joueurs ne sont pas sauvegardés, un rechargement en
    pleine soirée les effacerait. BUILD est tamponné par publier.sh. */
-const BUILD='20261012111852';
+const BUILD='20261012112906';
 (function(){
   try{
     fetch('version.txt?t='+Date.now(),{cache:'no-store'})
@@ -2994,12 +2994,13 @@ function mimesJokes(){
   const list=state.mimeJokes||[];
   const sienne=jokeBy?jokeDe(jokeBy):null;
   const orphelines=list.filter(j=>noms.indexOf(j.by)<0).length;
-  const manquants=noms.filter(n=>!jokeDe(n)).length;
+  const manquants=noms.filter(n=>!jokeDe(n));
+  const ecrits=noms.filter(n=>jokeDe(n)).length;
   render(`
-    <div class="topbar"><div class="back" onclick="mimesConfig()">‹</div><div><div class="eyebrow">Le jeu des mimes</div><h2>Private jokes</h2></div></div>
-    <p class="muted">Un mot maison par joueur. ${mimes.format==='team'
-      ? "En équipe, c'est l'équipe d'en face qui devra le mimer 😈"
-      : "Chacun mime le sien, personne d'autre ne le voit."}</p>
+    <div class="topbar"><div class="back" onclick="mimesJokesDone()">‹</div><div><div class="eyebrow">Le jeu des mimes</div><h2>Private jokes</h2></div></div>
+    <p class="muted">Un mot par joueur, et toi seul vois le tien 🤫 ${mimes.format==='team'
+      ? "C'est l'équipe d'en face qui devra le mimer 😈"
+      : "Tu le mimeras à ton tour."}</p>
     <div class="gap"></div>
     <div class="flabel">Qui écrit ?</div>
     <div class="filters" id="jokeWho">
@@ -3011,50 +3012,73 @@ function mimesJokes(){
     </div>
     <div class="gap-s"></div>
     <button class="btn accent sm" onclick="mimesAddJoke()"><span class="ico">＋</span>${sienne?`Remplacer celui ${dDe(jokeBy)}`:(jokeBy?`C'est le mot ${dDe(jokeBy)}`:'Ajouter')}</button>
-    ${list.length?`
+    ${ecrits?`
       <div class="gap"></div>
-      <div class="flabel">${list.length} dans le paquet</div>
+      <div class="flabel">${ecrits} mot${ecrits>1?'s':''} sous clé</div>
       <div class="wordlog" id="jokeLog">${jokeLogHTML()}</div>
       <div class="gap-s"></div>
-      <p class="muted">Touche un mot pour le supprimer.${manquants?` ${manquants} joueur${manquants>1?'s n\'ont':' n\'a'} pas encore écrit.`:''}${orphelines?` ${orphelines} vien${orphelines>1?'nent':'t'} d'une autre soirée : leur auteur n'est pas là, n'importe qui peut tomber dessus.`:''}</p>
+      <p class="muted">Touche un nom pour effacer son mot.${manquants.length?` Il manque ${listeFr(manquants)}.`:''}</p>
     `:`
       <div class="gap"></div>
       <div class="card center"><p class="muted">Rien pour l'instant. Une bonne vanne par personne et la manche part en fumée 😈</p></div>
     `}
+    ${orphelines?`
+      <div class="gap-s"></div>
+      <button class="btn ghost sm" onclick="mimesOublierOrphelines()"><span class="ico">🗑</span>Oublier ${orphelines} mot${orphelines>1?'s':''} d'anciennes soirées</button>
+      <div class="gap-s"></div>
+      <p class="muted">Leur auteur n'est pas là ce soir : ils sont dans le paquet et peuvent tomber sur n'importe qui.</p>
+    `:''}
     <div class="spacer"></div>
-    <button class="btn good" onclick="mimesConfig()">Terminé →</button>
+    <button class="btn good" onclick="mimesJokesDone()">Terminé →</button>
     <div style="height:8px"></div>
   `, true);
   const i=$('#jokeIn'); if(i) i.focus();
 }
+/* le mot n'apparaît nulle part : seulement le nom de celui qui l'a déposé */
 function jokeLogHTML(){
   const noms=state.players.map(p=>p.name);
-  return (state.mimeJokes||[]).map((j,i)=>
-    `<div class="wchip${noms.indexOf(j.by)<0?'':' ok'}" onclick="mimesDelJoke(${i})">${j.w} · ${j.by} ✕</div>`).join('');
+  return (state.mimeJokes||[]).map((j,i)=>({j,i}))
+    .filter(x=>noms.indexOf(x.j.by)>=0)
+    .map(x=>`<div class="wchip ok" onclick="mimesDelJoke(${x.i})">🔒 ${x.j.by} ✕</div>`).join('');
 }
 function mimesJokeBy(n){
   jokeBy=n;
-  document.querySelectorAll('#jokeWho .chipf').forEach(c=>c.classList.toggle('on',c.dataset.n===n));
-  const i=$('#jokeIn'); if(i) i.focus();
+  mimesJokes();   // le bouton et l'état se remettent d'équerre, et le champ repart vide
 }
-function mimesAddJoke(){
-  const i=$('#jokeIn'); if(!i) return;
+/* Enregistre ce qu'il y a dans le champ. Un seul mot par joueur : le nouveau
+   remplace l'ancien. Les toasts ne répètent jamais le mot — le téléphone est
+   peut-être déjà dans la main du suivant. */
+function jokeSave(){
+  const i=$('#jokeIn'); if(!i) return false;
   const v=i.value.trim().replace(/\s+/g,' ');
-  if(!v){ toast('Écris quelque chose 🙂'); return; }
-  if(!jokeBy){ toast('Choisis qui écrit'); return; }
+  if(!v) return false;
+  if(!jokeBy){ toast('Choisis qui écrit'); return false; }
   if(!state.mimeJokes) state.mimeJokes=[];
-  const dbl=state.mimeJokes.find(j=>j.w.toLowerCase()===v.toLowerCase() && j.by!==jokeBy);
-  if(dbl){ toast(`Déjà pris par ${dbl.by}`); i.value=''; return; }
-  // un seul mot par joueur : le nouveau remplace le précédent
   const k=state.mimeJokes.findIndex(j=>j.by===jokeBy);
-  const avant = k<0 ? null : state.mimeJokes[k].w;
   if(k<0) state.mimeJokes.push({w:v, by:jokeBy}); else state.mimeJokes[k]={w:v, by:jokeBy};
   saveJokes();
   state.mimeDecks=null;                    // le paquet change : on le refera au prochain tirage
-  toast(avant ? `${jokeBy} : « ${v} » à la place de « ${avant} » 🔒` : `« ${v} » ajouté 🔒`);
+  i.value='';
+  toast(k<0 ? `${jokeBy} : c'est noté 🔒` : `${jokeBy} : nouveau mot enregistré 🔒`);
+  return true;
+}
+function mimesAddJoke(){
+  const i=$('#jokeIn');
+  if(i && !i.value.trim()){ toast('Écris quelque chose 🙂'); return; }
+  if(!jokeSave()) return;
   // et on passe la main au premier qui n'a rien écrit
   jokeBy = state.players.map(p=>p.name).find(n=>!jokeDe(n)) || jokeBy;
-  mimesJokes();                            // l'écran se recompose, le champ reste actif
+  mimesJokes();
+}
+// « Terminé » (ou la flèche retour) enregistre ce qui est encore dans le champ
+function mimesJokesDone(){ jokeSave(); mimesConfig(); }
+function mimesOublierOrphelines(){
+  const noms=state.players.map(p=>p.name);
+  const n=(state.mimeJokes||[]).length;
+  state.mimeJokes=(state.mimeJokes||[]).filter(j=>noms.indexOf(j.by)>=0);
+  saveJokes(); state.mimeDecks=null;
+  toast(`${n-state.mimeJokes.length} mot(s) oublié(s)`);
+  mimesJokes();
 }
 function mimesDelJoke(i){
   const j=(state.mimeJokes||[])[i]; if(!j) return;
@@ -3062,7 +3086,7 @@ function mimesDelJoke(i){
   saveJokes();
   state.mimeDecks=null;
   jokeBy=j.by;                             // on rouvre sur celui dont on vient d'effacer le mot
-  toast(`« ${j.w} » supprimé`);
+  toast(`Le mot ${dDe(j.by)} est effacé`);
   mimesJokes();
 }
 function mimesStart(){

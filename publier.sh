@@ -13,7 +13,7 @@ sed -i '' -E "s/^const BUILD='[0-9]+';/const BUILD='$v';/" before.html
 grep -q "^const BUILD='$v';" before.html || { echo "Tampon BUILD introuvable"; exit 1; }
 echo "$v" > version.txt
 git add before.html version.txt "$@"
-git commit -q -m "$msg" -m "Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
+git commit -q -m "$msg" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 git push -q origin main
 for i in $(seq 1 24); do
   sleep 5

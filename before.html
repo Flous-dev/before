@@ -327,18 +327,6 @@
     font-size:12.5px;color:#e6d3ad;display:flex;gap:11px;align-items:center;line-height:1.45;
   }
 
-  /* ===== compteur de gorgées ===== */
-  .counter{display:flex;gap:8px;overflow-x:auto;padding:4px 0 6px;margin:0 -20px;padding-left:20px;padding-right:20px;}
-  .counter::-webkit-scrollbar{display:none;}
-  .chip{
-    flex:none;border-radius:var(--r-md);padding:9px 13px;min-width:70px;
-    background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.018));
-    border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:1px;
-  }
-  .chip b{font-size:12.5px;font-weight:650;max-width:76px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);}
-  .chip span{font-size:19px;font-weight:800;color:var(--gold);letter-spacing:-.5px;}
-  .chip span small{font-size:11px;color:var(--muted);font-weight:500;}
-
   /* ===== sélection ===== */
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
   /* nombre impair de cartes : la dernière prend toute la largeur au lieu de rester orpheline */
@@ -449,6 +437,42 @@
     30%,50%,70%{transform:translateX(-7px);}40%,60%{transform:translateX(7px);}
     0%,100%{transform:none;}}
   .stamp{animation:stamp .46s cubic-bezier(.16,1,.3,1) both;}
+
+  /* ===== la roulette des gages ===== */
+  .roue{
+    position:relative;height:118px;border-radius:var(--r-xl);overflow:hidden;cursor:pointer;flex:none;
+    background:linear-gradient(180deg,#100f24,#0a0918);border:1px solid var(--line2);
+    box-shadow:inset 0 10px 30px -18px rgba(0,0,0,.9);
+    -webkit-mask-image:linear-gradient(90deg,transparent,#000 16%,#000 84%,transparent);
+            mask-image:linear-gradient(90deg,transparent,#000 16%,#000 84%,transparent);
+  }
+  .roue__piste{position:absolute;left:0;top:11px;bottom:11px;display:flex;gap:8px;will-change:transform;}
+  .rt{
+    --tint:var(--rgb-violet);
+    flex:0 0 96px;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+    border:1px solid rgba(var(--tint),.32);
+    background:linear-gradient(160deg,rgba(var(--tint),.30),rgba(var(--tint),.06)),#121128;
+  }
+  .rt span{font-size:30px;line-height:1;}
+  .rt b{font-size:12px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:rgb(var(--tint));}
+  .rt-gage{--tint:var(--rgb-violet);}
+  .rt-dur{--tint:var(--rgb-coral);}
+  .rt-verite{--tint:var(--rgb-mint);}
+  .rt.win{
+    border-color:rgba(var(--tint),.9);
+    box-shadow:0 0 0 2px rgba(var(--tint),.45),0 0 26px rgba(var(--tint),.55);
+    animation:rtwin .6s cubic-bezier(.2,1.4,.4,1) both;
+  }
+  @keyframes rtwin{0%{transform:scale(1);}45%{transform:scale(1.12);}100%{transform:scale(1.05);}}
+  .roue__repere{
+    position:absolute;left:50%;top:0;bottom:0;width:2px;margin-left:-1px;pointer-events:none;
+    background:linear-gradient(var(--gold),rgba(220,174,96,.3) 50%,var(--gold));
+    box-shadow:0 0 12px rgba(220,174,96,.7);
+  }
+  .roue__repere::before,.roue__repere::after{content:"";position:absolute;left:50%;margin-left:-7px;border:7px solid transparent;}
+  .roue__repere::before{top:0;border-top-color:var(--gold);}
+  .roue__repere::after{bottom:0;border-bottom-color:var(--gold);}
+  .gagebtns{animation:fade .42s .1s cubic-bezier(.16,1,.3,1) both;}
   @keyframes stamp{from{opacity:0;transform:scale(1.13) rotate(-1.5deg);}to{opacity:1;transform:none;}}
   .pulseok{animation:pulseok .7s ease both;}
   @keyframes pulseok{from{box-shadow:0 0 0 0 rgba(107,195,156,.4);}to{box-shadow:0 0 0 20px rgba(107,195,156,0);}}
@@ -456,13 +480,6 @@
     box-shadow:none;color:rgba(255,255,255,.18);font-size:22px;font-weight:800;
     align-items:center;justify-content:center;}
   /* ===== Sniper : la question de culture générale ===== */
-  .quizsec{min-width:46px;text-align:center;font-size:23px;font-weight:800;
-    letter-spacing:-.5px;font-variant-numeric:tabular-nums;}
-  .quizsec.hot{color:var(--bad);animation:hotbeat .5s ease-in-out infinite;}
-  .quizbar{flex:1;height:5px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;}
-  .quizbar i{display:block;height:100%;border-radius:999px;
-    background:linear-gradient(90deg,var(--violet2),var(--cyan));transition:width .12s linear;}
-  .quizbar.hot i{background:linear-gradient(90deg,var(--coral),var(--gold));}
   .quizopts{display:flex;flex-direction:column;gap:9px;}
   .quizopts .btn{justify-content:flex-start;text-align:left;}
   .quizrep{display:flex;align-items:center;gap:9px;padding:12px 15px;border-radius:var(--r-md);
@@ -796,7 +813,7 @@
    si elle est plus récente, on recharge. Uniquement tant qu'aucune partie
    n'a commencé : les joueurs ne sont pas sauvegardés, un rechargement en
    pleine soirée les effacerait. BUILD est tamponné par publier.sh. */
-const BUILD='20261012112906';
+const BUILD='20261015111416';
 (function(){
   try{
     fetch('version.txt?t='+Date.now(),{cache:'no-store'})
@@ -814,7 +831,7 @@ const BUILD='20261012112906';
 
 const state = {
   players: [],            // {name, drinks, gages, reussis, refus}
-  mode:'alcool',          // 'alcool' → gorgées · 'sans' → gages à relever
+  mode:'alcool',          // une faute = un gage ; refusé : gorgées ('alcool') ou sentence ('sans')
   stats:null,             // {debut, manches:{qar,sniper,bj}} — voir resetStats
   album: { name:null, photos:[] },
   albums: [],             // soirées terminées : {id, name, photos:[{src,label}], ranking:[{name,drinks}], date}
@@ -1238,11 +1255,11 @@ function drawCulture(){
   if(!state.cultureDeck || !state.cultureDeck.length) resetCultureDeck();
   return CULTURE[state.cultureDeck.pop()];
 }
-/* ---------- gages & vérités du mode sans alcool ----------
-   Un seul paquet de gages, sans niveaux : n'importe lequel peut tomber à
-   n'importe quel moment, quel que soit le jeu et quelle que soit la faute.
-   Aucun ne demande de boire, et refuser reste toujours possible — mais ça
-   coûte autant que le gage rapportait.
+/* ---------- gages & vérités ----------
+   Dans les deux modes, une faute se paie d'abord en gage. Un seul paquet, sans
+   niveaux : n'importe lequel peut tomber à n'importe quel moment, quel que soit
+   le jeu. Aucun ne demande de boire. Le refuser reste possible, mais ça se paie :
+   en gorgées avec alcool, par une sentence sans alcool (voir SENTENCES).
    Un peu moins d'une fois sur cinq, le gage laisse la place à une vérité :
    ça doit rester le coup de chance de la soirée. */
 const VERITE_CHANCE = .18;
@@ -1365,7 +1382,27 @@ const VERITES = [
   "Dis la vérité, tu as ramené des capotes avec toi ce soir ?",
 ];
 
-/* ---- tirage sans doublon : un paquet de gages, un paquet de vérités ---- */
+/* ---- les sentences : le prix d'un gage refusé, sans alcool ----
+   Ce n'est pas un gage de plus : c'est court, physique, un peu désagréable,
+   et ça ne se refuse pas. Elles tiennent le rôle des gorgées du mode alcool.
+   Rien de dangereux, de petites quantités, et une seule relance permise quand
+   il manque l'ingrédient ou en cas d'allergie (voir sentenceScreen). */
+const SENTENCES = [
+  "Croquer dans un quartier de citron et le garder 5 secondes en bouche.",
+  "Une cuillère à café de moutarde, sans rien à côté.",
+  "Un grand verre d'eau, cul sec.",
+  "Une goutte de sauce piquante sur le bout de la langue.",
+  "Le groupe te prépare un mélange sans alcool avec ce qu'il trouve dans le frigo. Tu en bois une gorgée.",
+  "Gainage pendant 45 secondes. Le groupe compte à voix haute.",
+  "La chaise contre le mur pendant 40 secondes — sans la chaise.",
+  "15 squats, en comptant à voix haute.",
+  "Tenir un glaçon dans le poing pendant 60 secondes.",
+  "Assis par terre jusqu'à la fin de la prochaine manche.",
+  "Tu deviens le serveur : tu ressers tout le groupe jusqu'à la fin de la prochaine manche.",
+  "Le groupe choisit ton fond d'écran. Tu le gardes jusqu'à demain midi.",
+];
+
+/* ---- tirage sans doublon : gages, vérités et sentences ont chacun leur paquet ---- */
 function resetGageDecks(){ state.gageDecks={}; }
 function gagePioche(cle, source){
   if(!state.gageDecks) state.gageDecks={};
@@ -1832,99 +1869,241 @@ function toast(msg){
   const t=$('#toast');t.textContent=msg;t.classList.add('show');
   clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2200);
 }
-/* ---------- sanctions : gorgées ou gages selon le mode ---------- */
+/* ---------- sanctions : un gage d'abord, dans les deux modes ----------
+   Toute faute vaut un gage. Ce qui change d'un mode à l'autre, c'est le prix
+   du refus : n gorgées avec alcool, une sentence sans alcool. n reste donc la
+   « mise » de la faute, et elle ne se boit que si le gage est refusé. */
 const sansAlcool = () => state.mode==='sans';
-// « 2 gorgées » / « 2 gages »
-/* En mode alcool, n est un nombre de gorgées. En mode sans alcool, toute faute
-   se paie d'UN gage, tiré au hasard, qui vaut 1 🔥 — qu'il soit simple ou corsé,
-   et quelle que soit la gravité de la faute. */
-function unite(n){ return sansAlcool() ? 'un gage' : `${n} gorgée${n>1?'s':''}`; }
-/* La valeur d'une faute : des gorgées avec alcool, un seul gage sans. */
+function gorgees(n){ return `${n} gorgée${n>1?'s':''}`; }
+// « un gage ou 2 gorgées » / « un gage »
+function unite(n){ return sansAlcool() ? 'un gage' : `un gage ou ${gorgees(n)}`; }
+/* La mise d'une faute : des gorgées avec alcool, un seul gage sans. */
 const coup = n => sansAlcool() ? 1 : n;
 // quand c'est vraiment une quantité à répartir (le sans-faute du Black(out) Jack)
-function uniteN(n){ return sansAlcool() ? `${n} gage${n>1?'s':''}` : `${n} gorgée${n>1?'s':''}`; }
-// « Ali boit 2 gorgées » / « Ali prend 2 gages »
-function sanction(name,n){ return `${name} ${sansAlcool()?'prend':'boit'} ${unite(n)}`; }
-/* `par` = qui inflige la sanction, quand c'est la décision d'un joueur et non du groupe.
-   Sert au « plus grand distributeur » des statistiques de fin de soirée. */
-function addDrinks(name,n,par){
+function uniteN(n){ return sansAlcool() ? `${n} gage${n>1?'s':''}` : gorgees(n); }
+// « Ali prend un gage »
+function sanction(name){ return `${name} prend un gage`; }
+/* Enregistre la faute, pas encore sa sanction : les gorgées ne comptent qu'au
+   refus du gage (voir gageDone). `par` = qui inflige, quand c'est la décision
+   d'un joueur et non du groupe : sert au « plus grand distributeur ». */
+function faute(name,n,par){
   const p=state.players.find(p=>p.name===name); if(!p) return;
-  // en mode sans alcool, le score ne monte qu'une fois le gage relevé (voir gageDone)
-  if(sansAlcool()) p.gages=(p.gages||0)+n; else p.drinks+=n;
-  p.subies=(p.subies||0)+n;              // volume total encaissé, quel que soit le mode
+  p.subies=(p.subies||0)+n;              // la mise totale encaissée
   p.defaites=(p.defaites||0)+1;          // nombre de fois où il/elle s'est fait avoir
   if(par && par!==name){
     const q=state.players.find(x=>x.name===par);
-    if(q) q.donnees=(q.donnees||0)+n;    // sanctions distribuées aux autres
+    if(q) q.donnees=(q.donnees||0)+1;    // gages infligés aux autres
   }
 }
 function resetStats(){
   state.stats={ debut:Date.now(), manches:{qar:0,sniper:0,bj:0,mimes:0} };
 }
 function compteManche(jeu){ if(state.stats) state.stats.manches[jeu]=(state.stats.manches[jeu]||0)+1; }
-function score(p){ return sansAlcool() ? (p.reussis||0) : (p.drinks||0); }
-function counterBar(){
-  if(!state.players.length) return '';
-  return `<div class="counter">${state.players.map(p=>
-    `<div class="chip"><b>${p.name}</b><span>${score(p)}<small> ${sansAlcool()?'🔥':'🍺'}</small></span></div>`).join('')}</div>`;
-}
 function floatCam(){ return `<div class="floatCam" onclick="openCam()">📸</div>`; }
 
 /* ============================================================
    NAVIGATION
    ============================================================ */
-/* ---------- le gage (mode sans alcool) ----------
-   gagesAfter([[nom,points],…], suite) rend une fonction à passer en « suite » d'un
-   écran de résultat : en mode alcool elle ne fait rien, en mode sans alcool elle
-   enchaîne un défi par joueur sanctionné avant de reprendre le jeu. */
+/* ---------- le gage, dans les deux modes ----------
+   gagesAfter([[nom,mise],…], suite) rend une fonction à passer en « suite » d'un
+   écran de résultat : elle enchaîne un gage par joueur sanctionné, puis reprend
+   le jeu. La roulette tourne d'abord, le gage tombe ensuite ; le refuser coûte
+   la mise en gorgées avec alcool, une sentence sans alcool. */
 let _gage=null;
-/* `opt.dur` : le gage sera pris parmi les plus corsés (revanche ratée du Sniper).
-   `opt.multi` : la valeur est un nombre de gages à relever et non une faute unique
-   — c'est le cas du sans-faute du Black(out) Jack, qui en distribue plusieurs. */
+/* `opt.dur` : la roulette ne peut tomber que sur un corsé (revanche ratée du Sniper).
+   `opt.multi` : sans alcool, la mise est un nombre de gages à relever (le sans-faute
+   du Black(out) Jack). Avec alcool, c'est toujours un seul gage par joueur, et la
+   mise devient le prix du refus. */
 function gagesAfter(list, next, opt){
-  if(!sansAlcool()) return next;
   opt=opt||{};
   return ()=>{
     const file=[];
-    list.forEach(([nom,v])=>{ for(let i=0, k=(opt.multi?v:(v>0?1:0)); i<k; i++) file.push(nom); });
-    const suivant=()=>{ if(!file.length) return next(); gageScreen(file.shift(), suivant, opt.dur); };
+    list.forEach(([nom,v])=>{
+      if(!(v>0)) return;
+      if(opt.multi && sansAlcool()) for(let i=0;i<v;i++) file.push([nom,1]);
+      else file.push([nom,v]);
+    });
+    const suivant=()=>{
+      if(!file.length) return next();
+      const [nom,v]=file.shift();
+      gageScreen(nom, v, suivant, opt.dur);
+    };
     suivant();
   };
 }
-function gageScreen(name,next,dur){
+
+/* ---------- la roulette : le suspense avant le gage ----------
+   Une bande de cases défile sous un repère et ralentit jusqu'à s'arrêter sur le
+   type du gage, déjà tiré : la bande ne décide rien, elle met en scène. Elle
+   frôle toujours l'issue d'à côté — la case juste après le repère est la plus
+   tentante — parce que c'est ça, le suspense. Un toucher l'arrête net. */
+const ROUE_TYPES = {
+  gage:   { e:'🎲', t:'Gage',   cls:'rt-gage'   },
+  dur:    { e:'🌶️', t:'Corsé',  cls:'rt-dur'    },
+  verite: { e:'🍀', t:'Vérité', cls:'rt-verite' },
+};
+const ROUE_PAS = 104, ROUE_N = 34, ROUE_CIBLE = 28, ROUE_MS = 2600;
+function roueBande(type){
+  const pool=['gage','gage','gage','gage','dur','dur','verite','verite'];
+  const b=[];
+  for(let i=0;i<ROUE_N;i++) b.push(rnd(pool));
+  b[ROUE_CIBLE]=type;
+  b[ROUE_CIBLE+1] = type==='verite' ? 'dur' : 'verite';   // le frôlement
+  b[ROUE_CIBLE-1] = type==='gage' ? 'dur' : 'gage';
+  return b.map(k=>{ const r=ROUE_TYPES[k]; return `<div class="rt ${r.cls}"><span>${r.e}</span><b>${r.t}</b></div>`; }).join('');
+}
+let _roue=null;
+function roueGo(){
+  const roue=$('#roue'), piste=$('#piste'); if(!roue||!piste) return;
+  const W=roue.clientWidth;
+  const fin = W/2 - (ROUE_CIBLE*ROUE_PAS + (ROUE_PAS-8)/2) + (Math.random()*2-1)*ROUE_PAS*.26;
+  const reduit = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const ms = reduit ? 250 : ROUE_MS;
+  const a = piste.animate([{transform:'translateX(0px)'},{transform:`translateX(${fin}px)`}],
+                          {duration: ms, easing:'cubic-bezier(.06,.55,.1,1)', fill:'forwards'});
+  const r = _roue = {a, fini:false};
+  // l'arrivée cale toujours la bande sur sa case, même si le filet a parlé avant la fin
+  r.arrive = ()=>{ if(_roue!==r || r.fini) return; r.fini=true; try{ a.finish(); }catch(e){} roueArrivee(); };
+  let der=-1;
+  const tic=()=>{
+    if(_roue!==r || r.fini || !piste.isConnected) return;
+    const x=new DOMMatrixReadOnly(getComputedStyle(piste).transform).m41;
+    const k=Math.floor((W/2-x)/ROUE_PAS);
+    if(k!==der){ if(der>=0) mimeBip(1500,.02,'square',.04); der=k; }
+    requestAnimationFrame(tic);
+  };
+  requestAnimationFrame(tic);
+  a.onfinish = r.arrive;
+  // filet : un écran qui ne se repeint pas (veille, WebView) retient l'événement de fin
+  setTimeout(r.arrive, ms+80);
+}
+function roueStop(){ if(_roue && !_roue.fini) _roue.arrive(); }
+function roueArrivee(){
+  const piste=$('#piste'); if(!piste || !_gage) return;
+  const c=piste.children[ROUE_CIBLE]; if(c) c.classList.add('win');
+  const t=_gage.g.type;
+  if(t==='verite') mimeDing(true);
+  else if(t==='dur') mimeBip(170,.28,'sawtooth',.16);
+  else mimeBip(440,.14,'triangle',.2);
+  if(navigator.vibrate) navigator.vibrate(30);
+  setTimeout(gageReveal, 420);
+}
+
+function gageScreen(name,v,next,dur){
   const g=tireGage(dur);
-  _gage={name,next};
+  g.type = g.verite ? 'verite' : ((g.dur || EST_DUR.has(g.txt)) ? 'dur' : 'gage');
+  _gage={name,v,next,g,pret:false};
+  const p=state.players.find(p=>p.name===name); if(p) p.gages=(p.gages||0)+1;
   render(`
-    <div class="topbar"><h2 style="margin:auto">${g.verite?`🍀 Vérité pour ${name}`:`Gage pour ${name}`}</h2></div>
-    ${counterBar()}
+    <div class="topbar"><h2 style="margin:auto" id="gageTitre">${dur?'⚔️ Revanche ratée':'🎰 Au tour '+dDe(name)}</h2></div>
+    <p class="muted center" id="gageSous">${dur?`${name}, la roulette ne fera pas de cadeau…`:`${name}, la roulette décide…`}</p>
+    <div class="gap"></div>
+    <div class="roue" id="roue" onclick="roueStop()">
+      <div class="roue__piste" id="piste">${roueBande(g.type)}</div>
+      <div class="roue__repere"></div>
+    </div>
+    <div class="gap"></div>
+    <div id="gageZone"></div>
     <div class="spacer"></div>
-    <div class="card ${g.verite?'tint-cyan':'tint-coral'} center stamp" style="padding:26px 20px">
-      <div class="badge ${g.verite?'b-ref':'b-scam'}">${g.verite?'Coup de chance · une vérité':(g.dur?'Gage corsé · 1 🔥':'Gage · 1 🔥')}</div>
+    <div id="gageBtns"></div>
+    <div style="height:8px"></div>
+  `, true);
+  roueGo();
+}
+function gageReveal(){
+  if(!_gage || _gage.pret) return;
+  const zone=$('#gageZone'), btns=$('#gageBtns'); if(!zone || !btns) return;
+  const {name,v,g}=_gage; _gage.pret=true;
+  const T={
+    gage:   { titre:`Gage pour ${name}`,           badge:'b-scam', tint:'tint-coral', lab:'Gage' },
+    dur:    { titre:`🌶️ Gage corsé pour ${name}`,  badge:'b-scam', tint:'tint-coral', lab:'Gage corsé' },
+    verite: { titre:`🍀 Vérité pour ${name}`,      badge:'b-ref',  tint:'tint-cyan',  lab:'Coup de chance · une vérité' },
+  }[g.type];
+  const h=$('#gageTitre'); if(h) h.textContent=T.titre;
+  const sous=$('#gageSous'); if(sous) sous.textContent = g.verite
+    ? 'Pas de gage cette fois : réponds honnêtement, ça suffira.'
+    : (sansAlcool() ? 'Tu le relèves, ou c\'est la sentence.' : `Tu le relèves, ou tu bois ${gorgees(v)}.`);
+  zone.innerHTML=`
+    <div class="card ${T.tint} center stamp" style="padding:24px 20px">
+      <div class="badge ${T.badge}">${T.lab}${sansAlcool()?' · 1 🔥':''}</div>
       <div class="gap"></div>
       <p style="font-size:19px;font-weight:800;line-height:1.35">${g.txt}</p>
-      ${g.verite?`<div class="gap-s"></div><p class="muted">Pas de gage cette fois : réponds honnêtement, ça suffira.</p>`
-        :(g.dur?`<div class="gap-s"></div><p class="muted">Revanche ratée : celui-là est plus dur que la moyenne. Il vaut quand même 1 🔥.</p>`:'')}
+      ${g.dur?`<div class="gap-s"></div><p class="muted">Revanche ratée : la roulette ne pouvait tomber que sur un corsé.</p>`:''}
+    </div>`;
+  btns.className='gagebtns';
+  btns.innerHTML=`
+    <button class="btn mint" onclick="gageDone(true)">✅ ${g.verite?'Répondu':'Relevé'}${sansAlcool()?' (+1 🔥)':''}</button>
+    <div class="gap-s"></div>
+    <button class="btn ghost sm" onclick="gageDone(false)">🙅 ${g.verite?'Je ne réponds pas':'Je refuse'} · ${sansAlcool()?'la sentence':gorgees(v)+' 🍺'}</button>`;
+}
+/* Relever passe à la suite. Refuser se paie : la mise en gorgées avec alcool,
+   une sentence sans alcool — et 1 🔥 de moins, le compteur peut passer sous zéro. */
+function gageDone(ok){
+  if(!_gage || !_gage.pret) return;
+  const {name,v,next}=_gage; _gage=null;
+  const p=state.players.find(p=>p.name===name);
+  if(ok){
+    if(p){ p.releves=(p.releves||0)+1; if(sansAlcool()) p.reussis=(p.reussis||0)+1; }
+    toast(sansAlcool() ? `${name} : +1 🔥` : `${name} a relevé son gage 💪`);
+    return next();
+  }
+  if(p) p.refus=(p.refus||0)+1;
+  if(sansAlcool()){
+    if(p) p.reussis=(p.reussis||0)-1;
+    return sentenceScreen(name,next);
+  }
+  if(p) p.drinks=(p.drinks||0)+v;
+  boireScreen(name,v,next);
+}
+
+/* ---------- le refus, avec alcool : la mise se boit ---------- */
+let _apres=null;
+function apres(){ const f=_apres; _apres=null; if(f) f(); }
+function boireScreen(name,v,next){
+  _apres=next;
+  mimeBuzz();
+  render(`
+    <div class="topbar"><h2 style="margin:auto">🙅 ${name} refuse</h2></div>
+    <div class="spacer"></div>
+    <div class="card tint-gold center stamp" style="padding:30px 20px">
+      <div class="big">🍺</div>
+      <div class="gap"></div>
+      <p style="font-size:22px;font-weight:800;letter-spacing:-.3px">${name} boit ${gorgees(v)}.</p>
+      <div class="gap-s"></div>
+      <p class="muted">Le gage ne se fait pas ? Alors ça se boit, et tout de suite.</p>
     </div>
     <div class="spacer"></div>
-    <button class="btn mint" onclick="gageDone(true)">✅ ${g.verite?'Répondu':'Relevé'} (+1 🔥)</button>
-    <div class="gap-s"></div>
-    <button class="btn ghost sm" onclick="gageDone(false)">🙅 ${g.verite?'Je ne réponds pas':'Je refuse'} (−1 🔥)</button>
+    <button class="btn gold" onclick="apres()">🍺 C'est bu</button>
     <div style="height:8px"></div>
   `, true);
 }
-/* Relever rapporte, refuser coûte exactement autant : il n'y a pas d'option
-   neutre, et le compteur peut très bien finir sous zéro. */
-function gageDone(ok){
-  if(!_gage) return;
-  const {name,next}=_gage; _gage=null;
-  const p=state.players.find(p=>p.name===name);
-  if(p){
-    p.reussis=(p.reussis||0)+(ok?1:-1);
-    if(!ok) p.refus=(p.refus||0)+1;
-  }
-  toast(ok?`${name} : +1 🔥`:`${name} refuse : −1 🔥`);
-  next();
+
+/* ---------- le refus, sans alcool : la sentence ----------
+   Une seule relance, pour l'allergie ou l'ingrédient qui manque : au-delà,
+   ce serait un menu, plus une sentence. */
+let _sentence=null;
+function sentenceScreen(name,next,relance){
+  _apres=next;
+  _sentence={name, relance:!!relance};
+  const txt=gagePioche('sentence', SENTENCES);
+  if(!relance) mimeBuzz();
+  render(`
+    <div class="topbar"><h2 style="margin:auto">⚖️ La sentence</h2></div>
+    <p class="muted center">${name} a refusé son gage. Celle-ci ne se refuse pas.</p>
+    <div class="spacer"></div>
+    <div class="card tint-gold center stamp" style="padding:28px 20px">
+      <div class="badge b-pnj">Sans appel · −1 🔥</div>
+      <div class="gap"></div>
+      <p style="font-size:20px;font-weight:800;line-height:1.35">${txt}</p>
+    </div>
+    <div class="gap-s"></div>
+    ${relance ? '' : `<button class="btn ghost sm" onclick="sentenceRelance()">🔄 Allergie, ou on n'a pas ça : une autre</button>`}
+    <div class="spacer"></div>
+    <button class="btn gold" onclick="apres()">⚖️ Sentence exécutée</button>
+    <div style="height:8px"></div>
+  `, true);
 }
+function sentenceRelance(){ if(_sentence && !_sentence.relance) sentenceScreen(_sentence.name, _apres, true); }
 
 /* ---------- l'enchaînement automatique ----------
    Après un verdict, le joueur n'a rien à valider : on lui laisse le temps de
@@ -1982,7 +2161,7 @@ function home(){
     <div class="prevention">
       ${sansAlcool()
         ? `<span style="font-size:22px">🔥</span>
-           <span style="font-weight:700">Mode sans alcool : ce soir on paie en gages. Personne n'est jamais obligé — mais refuser coûte autant de 🔥 que le gage en rapportait.</span>`
+           <span style="font-weight:700">Mode sans alcool : ce soir, une erreur, c'est un gage. Le refuser, c'est la sentence — et elle, elle ne se refuse pas.</span>`
         : `<span style="font-size:22px">🍻</span>
            <span style="font-weight:700">L'abus d'alcool est dangereux pour ta dignité (et ta santé). Bois de l'eau, garde tes potes en vie, et appelle un taxi — ton lit t'attend, pas le caniveau.</span>`}
     </div>
@@ -2033,21 +2212,21 @@ function modeSelect(){
     <div class="gap"></div>
     <button class="btn alt" onclick="pickMode('alcool')">
       <span class="ico">🍻</span>
-      <span class="col">Avec alcool<small>Chaque erreur se paie en gorgées. Classement des gorgées à la fin.</small></span>
+      <span class="col">Avec alcool<small>Chaque erreur, c'est un gage. Tu refuses ? Tu bois.</small></span>
     </button>
     <div class="gap-s"></div>
     <button class="btn alt" onclick="pickMode('sans')">
       <span class="ico">🔥</span>
-      <span class="col">Sans alcool<small>Chaque erreur se paie en gages. Tu les relèves, tu marques des points.</small></span>
+      <span class="col">Sans alcool<small>Chaque erreur, c'est un gage. Tu refuses ? La sentence tombe.</small></span>
     </button>
     <div class="spacer"></div>
-    <p class="prevention" style="margin:0 0 12px"><span>🔥</span><span>En mode sans alcool, les mêmes jeux tournent à l'identique : à la place de boire, tu tires un défi. Relevé, il rapporte des 🔥 ; refusé, il en coûte autant. Le compteur peut passer dans le rouge.</span></p>
+    <p class="prevention" style="margin:0 0 12px"><span>🎰</span><span>Dans les deux modes, une erreur te vaut un gage, tiré à la roulette. Avec alcool, le refuser se boit. Sans alcool, il te vaut une sentence — citron, moutarde, gainage… — et celle-là ne se refuse pas.</span></p>
     <div style="height:6px"></div>
   `);
 }
 function pickMode(m){
   state.mode = m;
-  state.players.forEach(p=>{ p.drinks=0; p.gages=0; p.reussis=0; p.refus=0; p.subies=0; p.defaites=0; p.donnees=0; });
+  state.players.forEach(p=>{ p.drinks=0; p.gages=0; p.reussis=0; p.releves=0; p.refus=0; p.subies=0; p.defaites=0; p.donnees=0; });
   resetStats();                            // chrono de la soirée + compteur de manches
   state.partyEnded=false;                  // nouvelle soirée → le classement "en cours" redevient visible
   resetPairDecks();                        // ...et les paires repartent à zéro pour la nouvelle soirée
@@ -2116,7 +2295,7 @@ function saveHangoverName(){
   state.partyEnded=true;
   // fige la soirée : photos + classement final, et l'ajoute à la liste Hangover
   const ranking=classer(state.players,state.mode)
-    .map(p=>({name:p.name,drinks:p.drinks||0,gages:p.gages||0,reussis:p.reussis||0,refus:p.refus||0,
+    .map(p=>({name:p.name,drinks:p.drinks||0,gages:p.gages||0,reussis:p.reussis||0,releves:p.releves||0,refus:p.refus||0,
               subies:p.subies||0,defaites:p.defaites||0,donnees:p.donnees||0}));
   const st=state.stats||{};
   const rec={
@@ -2128,6 +2307,7 @@ function saveHangoverName(){
     stats: { duree: st.debut ? Date.now()-st.debut : 0, manches: {...(st.manches||{})} },
     players: state.players.length,
     date: Date.now(),
+    v: 2,               // « un gage d'abord » : le récap ne se lit plus pareil (voir statsBlock)
   };
   state.albums.unshift(rec);
   saveAlbums();
@@ -2140,7 +2320,6 @@ function saveHangoverName(){
 function gameSelect(){
   render(`
     <div class="topbar"><div class="back" onclick="home()">‹</div><div><div class="eyebrow">Soirée en cours</div><h2>Choisis un jeu</h2></div></div>
-    ${counterBar()}
     <div class="gap"></div>
     <button class="btn game g1" onclick="qarConfig()">
       <span class="ico">🕵️</span><span class="col">QUI A LA REF ?<small>REF, SCAMERS et PNJ : qui bluffe ?</small></span>
@@ -2193,7 +2372,6 @@ function qarConfig(){
   if(state.ratio.ref+state.ratio.scam+state.ratio.pnj!==n){ state.ratio={ref:Math.max(1,n-1),scam:1,pnj:0}; }
   render(`
     <div class="topbar"><div class="back" onclick="gameSelect()">‹</div><div><div class="eyebrow">Qui a la ref · étape 1</div><h2>Les rôles</h2></div></div>
-    ${counterBar()}
     <div class="gap"></div>
     <div id="ratios"></div>
     <div class="gap"></div>
@@ -2371,7 +2549,6 @@ function qarVote(){
   const alive=qar.players.filter(p=>p.alive);
   render(`
     <div class="topbar"><div class="back" onclick="qarOrder()">‹</div><h2>Qui éliminer ?</h2></div>
-    ${counterBar()}
     <div class="gap"></div>
     <p class="muted">Sélectionnez le joueur que le groupe veut éliminer.</p>
     <div class="gap"></div>
@@ -2384,9 +2561,9 @@ function qarVote(){
 }
 function qarEliminate(i){
   const p=qar.players[i]; if(!p.alive)return; p.alive=false;
-  if(p.role==='scam'){ const n=coup(2); addDrinks(p.name,n);
+  if(p.role==='scam'){ const n=coup(2); faute(p.name,n);
     resultScreen('Scamer démasqué !',`${p.name} était un scamer. Sanction : ${unite(2)}. Bien joué au groupe.`,'b-scam',gagesAfter([[p.name,n]],qarCheckEnd)); }
-  else if(p.role==='ref'){ addDrinks(p.name,1);
+  else if(p.role==='ref'){ faute(p.name,1);
     resultScreen('Raté…',`${p.name} avait la ref ! Sanction : ${unite(1)}. Le groupe perd un allié.`,'b-ref',gagesAfter([[p.name,1]],qarCheckEnd)); }
   else { qarPnjGuess(p); }
 }
@@ -2413,7 +2590,7 @@ function qarPnjCheck(name){
     qarPnjVote(name);
   }else{
     const n=pnjRate();
-    addDrinks(name,n);
+    faute(name,n);
     resultScreen('❌ Mauvais mot',`Le mot était « ${qar.word.ref} ». Sanction pour ${name} : ${unite(n)}.`,'b-pnj',gagesAfter([[name,n]],qarCheckEnd));
   }
 }
@@ -2430,12 +2607,12 @@ function qarPnjVote(name){
 function qarPnjVoteDone(pnjName,target){
   const t=qar.players.find(p=>p.name===target);
   if(t.role==='scam'){
-    addDrinks(pnjName,1); addDrinks(target,1,pnjName);   // c'est le PNJ qui a désigné la cible
+    faute(pnjName,1); faute(target,1,pnjName);   // c'est le PNJ qui a désigné la cible
     resultScreen('🎯 Touché !',`${target} était bien un scamer. ${unite(1)} pour ${pnjName} et autant pour ${target}.`,'b-scam',
       gagesAfter([[pnjName,1],[target,1]],qarCheckEnd));
   }else{
     const n=pnjRate();
-    addDrinks(pnjName,n);
+    faute(pnjName,n);
     resultScreen('😬 Loupé',`${target} n'était pas un scamer. Sanction pour ${pnjName} : ${unite(n)}.`,'b-pnj',
       gagesAfter([[pnjName,n]],qarCheckEnd));
   }
@@ -2464,9 +2641,9 @@ function qarBloque(impos,refs){
        ${impos.length>1?'Les imposteurs':(impos[0].role==='scam'?'Le scamer':'Le PNJ')} rafle${impos.length>1?'nt':''} la manche.
        ${noms(refs)} ${refs.length>1?'se sont fait avoir':'s\'est fait avoir'} jusqu'au bout : ${unite(QAR_BLOC)}${refs.length>1?' chacun·e':''}.`
     : `Plus personne n'avait la ref. ${roles(impos)} ${impos.length>1?'ont tenu':'a tenu'} jusqu'au bout : la manche est à ${impos.length>1?'eux':'lui/elle'}.`;
-  refs.forEach(p=>addDrinks(p.name,coup(QAR_BLOC)));
+  refs.forEach(p=>faute(p.name,coup(QAR_BLOC)));
   const fin=()=>qarEndRound(txt);
-  if(sansAlcool() && refs.length)
+  if(refs.length)
     resultScreen('🕵️ Les imposteurs gagnent', txt, 'b-scam',
                  gagesAfter(refs.map(p=>[p.name,coup(QAR_BLOC)]), fin));
   else fin();
@@ -2474,7 +2651,6 @@ function qarBloque(impos,refs){
 function qarEndRound(bloc){
   render(`
     <div class="topbar"><h2 style="margin:auto">Manche terminée 🏁</h2></div>
-    ${counterBar()}
     <div class="gap"></div>
     <div class="card ${bloc?'tint-coral':'tint-violet'} center stamp">
       <div class="big">${bloc?'🕵️':'🏁'}</div>
@@ -2501,7 +2677,6 @@ function resultScreen(title,desc,badge,next){
       <p style="font-size:16.5px;font-weight:600">${desc}</p>
     </div>
     <div class="gap"></div>
-    ${counterBar()}
     <div class="spacer"></div>
     <button class="btn good" onclick="suivreResultat()">Continuer →</button>
     <div style="height:6px"></div>
@@ -2515,7 +2690,6 @@ function sniperRound(){
   const q=drawSniperQ();
   render(`
     <div class="topbar"><div class="back" onclick="gameSelect()">‹</div><h2>🎯 Sniper</h2></div>
-    ${counterBar()}
     <div class="gap"></div>
     <div class="card tint-coral center" style="padding:30px 20px">
       <p class="muted">À 3, pointez du doigt…</p>
@@ -2541,7 +2715,7 @@ function sniperPicked(name){
       <div class="big">🎯</div>
       <p><b>${name}</b> a été désigné. Tu peux assumer… ou tenter ta revanche.</p>
       <div class="gap-s"></div>
-      <p class="muted">La revanche, c'est une question de culture générale en ${QUIZ_SEC} secondes. Réussie, quelqu'un d'autre paie ${unite(SNIPER_MISE)} à ta place. Ratée, c'est ${sansAlcool()?'un gage corsé':unite(sniperRate())} pour toi.</p>
+      <p class="muted">La revanche, c'est une question de culture générale. Réussie, tu désignes qui prend le gage à ta place. Ratée, la roulette ne tombe que sur un gage corsé${sansAlcool()?'':` — ${gorgees(sniperRate())} si tu le refuses`}.</p>
     </div>
     <div class="spacer"></div>
     <button class="btn accent" onclick="sniperRevanche('${name.replace(/'/g,"\\'")}')">🧠 Question Culture Générale</button>
@@ -2552,19 +2726,18 @@ function sniperPicked(name){
 }
 function sniperAssume(name){
   compteManche('sniper');   // la question est tranchée : une manche de plus
-  addDrinks(name,1); toast(sanction(name,1));
+  faute(name,1); toast(sanction(name));
   gagesAfter([[name,1]],sniperRound)();
 }
 /* ---------- la revanche : une question de culture générale ----------
-   Le visé récupère le téléphone, lit la question, a 10 secondes pour
-   choisir, et la bonne réponse s'affiche. S'il l'a, il désigne quelqu'un
-   qui prend sa place ; sinon la sanction reste pour lui. La mise est la
-   même dans les deux sens : c'est un pile ou face qu'il a demandé. */
-const QUIZ_SEC = 10;
+   Le visé récupère le téléphone, lit la question, prend le temps qu'il veut
+   — pas de chrono, c'est voulu : à cette heure-là, dix secondes pour lire
+   quatre réponses, c'était trop court — et la bonne réponse s'affiche. S'il
+   l'a, il désigne quelqu'un qui prend sa place ; sinon la sanction reste pour
+   lui. La mise est la même dans les deux sens. */
 const SNIPER_MISE = 2;
-/* Rater sa revanche coûte plus cher qu'assumer tout de suite. Avec alcool, la
-   mise reste la même. Sans alcool, le gage vaut toujours 1 🔥 comme les autres —
-   mais il est pioché parmi les plus corsés : c'est le risque de la revanche. */
+/* Rater sa revanche coûte plus cher qu'assumer tout de suite : la roulette ne
+   tombe que sur un gage corsé. Avec alcool, le refuser coûte la mise entière. */
 function sniperRate(){ return sansAlcool() ? 1 : SNIPER_MISE; }
 let snip={};
 function sniperRevanche(name){
@@ -2573,14 +2746,13 @@ function sniperRevanche(name){
          opts: shuffle(q.slice(1).map((t,i)=>({t, ok:i===0}))) };
   render(`
     <div class="topbar"><h2 style="margin:auto">⚔️ Revanche de ${name}</h2></div>
-    ${counterBar()}
     <div class="spacer"></div>
     <div class="card tint-violet center">
       <div class="big">🧠</div>
       <div class="gap"></div>
-      <p style="font-size:16px"><b>${name}</b>, passe-toi le téléphone.<br>Une question de culture générale, <b>${QUIZ_SEC} secondes</b> pour répondre.</p>
+      <p style="font-size:16px"><b>${name}</b>, passe-toi le téléphone.<br>Une question de culture générale, prends ton temps.</p>
       <div class="gap-s"></div>
-      <p class="muted">Bonne réponse : tu désignes qui prend ta place (${unite(SNIPER_MISE)}). Mauvaise, ou hors délai : ${sansAlcool()?'un gage corsé':unite(sniperRate())} pour toi.</p>
+      <p class="muted">Bonne réponse : tu désignes qui prend le gage à ta place. Mauvaise : un gage corsé pour toi${sansAlcool()?'':` (${gorgees(sniperRate())} si tu le refuses)`}.</p>
     </div>
     <div class="spacer"></div>
     <button class="btn accent" onclick="sniperQuizGo()">Je suis prêt·e →</button>
@@ -2590,15 +2762,10 @@ function sniperRevanche(name){
   `, true);
 }
 function sniperQuizGo(){
-  mimeAudioUnlock();                 // les bips des 5 dernières secondes : ça part d'un geste
-  snip.endAt=Date.now()+QUIZ_SEC*1000; snip.lastSec=-1; snip.done=false;
+  mimeAudioUnlock();                 // le son du verdict : ça part d'un geste
+  snip.done=false;
   render(`
     <div class="topbar"><h2 style="margin:auto">🧠 ${snip.name}</h2></div>
-    <div class="gap-s"></div>
-    <div class="row">
-      <div class="quizsec" id="quizSec">${QUIZ_SEC}</div>
-      <div class="quizbar" id="quizBar"><i style="width:100%"></i></div>
-    </div>
     <div class="spacer"></div>
     <div class="card tint-violet center" style="padding:24px 18px">
       <p style="font-size:19px;font-weight:800;line-height:1.32">${snip.q[0]}</p>
@@ -2609,35 +2776,17 @@ function sniperQuizGo(){
     </div>
     <div style="height:74px"></div>
   `, true);
-  clearInterval(snip.timer);
-  snip.timer=setInterval(sniperQuizTick,100);
 }
-function sniperQuizTick(){
-  const el=$('#quizSec');
-  if(!el || snip.done){ clearInterval(snip.timer); return; }   // écran quitté : on coupe le chrono
-  const left=Math.max(0,snip.endAt-Date.now());
-  const s=Math.ceil(left/1000);
-  el.textContent=s; el.classList.toggle('hot',s<=5);
-  const bar=$('#quizBar');
-  if(bar){
-    bar.classList.toggle('hot',s<=5);
-    const i=bar.firstElementChild;
-    if(i) i.style.width=Math.max(0,Math.min(100,left/(QUIZ_SEC*10)))+'%';
-  }
-  if(s!==snip.lastSec){ snip.lastSec=s; if(s>0&&s<=5) mimeBip(760,.09,'square',.18); }
-  if(left<=0){ clearInterval(snip.timer); sniperQuizReveal(-1); }
-}
-function sniperQuizRep(i){ if(!snip.done){ clearInterval(snip.timer); sniperQuizReveal(i); } }
+function sniperQuizRep(i){ if(!snip.done) sniperQuizReveal(i); }
 function sniperQuizReveal(i){
   snip.done=true;
   const bon=snip.opts.findIndex(o=>o.ok);
-  const ok=(i===bon), tempsEcoule=(i<0);
+  const ok=(i===bon);
   compteManche('sniper');            // la question est tranchée : une manche de plus
   if(ok) mimeDing(true); else mimeBuzz();
-  if(!ok) addDrinks(snip.name, sniperRate());
+  if(!ok) faute(snip.name, sniperRate());
   render(`
-    <div class="topbar"><h2 style="margin:auto">${ok?'✅ Bien joué':(tempsEcoule?'⏱️ Trop tard':'❌ Raté')}</h2></div>
-    ${counterBar()}
+    <div class="topbar"><h2 style="margin:auto">${ok?'✅ Bien joué':'❌ Raté'}</h2></div>
     <div class="gap"></div>
     <p class="muted center">${snip.q[0]}</p>
     <div class="gap-s"></div>
@@ -2647,9 +2796,9 @@ function sniperQuizReveal(i){
     <div class="gap"></div>
     <p class="center ${ok?'':'shakeko'}" style="font-size:16px">${ok
       ? `<b>${snip.name}</b> s'en sort. À toi de désigner qui prend ta place.`
-      : `${sansAlcool()?`${snip.name} prend un gage corsé`:sanction(snip.name,sniperRate())} ${sansAlcool()?'🔥':'🍺'}`}</p>
+      : `${snip.name} prend un gage corsé 🌶️`}</p>
     <div class="spacer"></div>
-    ${autoBar(ok?3000:4200, ok ? 'À toi de désigner…' : (sansAlcool()?'Le gage corsé arrive…':'Manche suivante…'))}
+    ${autoBar(ok?3000:4200, ok ? 'À toi de désigner…' : 'La roulette arrive…')}
     <div style="height:6px"></div>
   `, true);
   // le verdict se lit, il ne se valide pas : la suite vient toute seule
@@ -2661,7 +2810,6 @@ function sniperQuizFin(){
 function sniperQuizWin(){
   render(`
     <div class="topbar"><h2 style="margin:auto">✅ Réussi !</h2></div>
-    ${counterBar()}
     <div class="gap"></div>
     <p class="center muted"><b>${snip.name}</b> désigne qui prend sa place : ${unite(SNIPER_MISE)} pour l'élu·e.</p>
     <div class="gap"></div>
@@ -2673,8 +2821,8 @@ function sniperQuizWin(){
   `, true);
 }
 function sniperQuizGive(autre){
-  addDrinks(autre, coup(SNIPER_MISE), snip.name);   // c'est le gagnant de la revanche qui l'inflige
-  toast(sanction(autre,SNIPER_MISE));
+  faute(autre, coup(SNIPER_MISE), snip.name);   // c'est le gagnant de la revanche qui l'inflige
+  toast(sanction(autre));
   gagesAfter([[autre,coup(SNIPER_MISE)]], sniperRound)();
 }
 
@@ -2731,7 +2879,6 @@ function bjAsk(){
   const e=BJ_ETAPES[bj.step];
   render(`
     <div class="topbar"><div class="back" onclick="gameSelect()">‹</div><h2>🃏 Black(out) Jack</h2></div>
-    ${counterBar()}
     <div class="spacer"></div>
     <p class="center"><b style="font-size:18px">${bj.player}</b> · étape ${bj.step+1} sur 4</p>
     <div class="gap-s"></div>
@@ -2775,7 +2922,7 @@ function bjAnswer(rep){
   bj.cards.push(c);
   if(bjJuge(c)) return bjReveal(true,0);
   const n=bj.step+1;                       // 1ʳᵉ étape ratée = 1, 2ᵉ = 2, 3ᵉ = 3, 4ᵉ = 4
-  addDrinks(bj.player,coup(n));
+  faute(bj.player,coup(n));
   bj.pending=coup(n);
   bjReveal(false,n);
 }
@@ -2792,11 +2939,9 @@ function bjDit(){
 function bjReveal(ok,n){
   const fini = ok && bj.step===3;
   const ms   = ok ? 1500 : 2800;
-  const suite = ok ? `Étape ${bj.step+2} sur 4…`
-                   : (sansAlcool() ? 'Le gage arrive…' : 'Joueur suivant…');
+  const suite = ok ? `Étape ${bj.step+2} sur 4…` : 'La roulette arrive…';
   render(`
     <div class="topbar"><h2 style="margin:auto">${fini?'🎰 SANS-FAUTE':(ok?'✅ Bien vu':'❌ Perdu')}</h2></div>
-    ${counterBar()}
     <div class="spacer"></div>
     ${bjDots(ok?'ok':'ko')}
     <div class="gap"></div>
@@ -2804,7 +2949,7 @@ function bjReveal(ok,n){
     <div class="gap"></div>
     <p class="center" style="font-size:16px">${ok
       ? `<b>${bj.player}</b> annonçait <b>${bjDit()}</b>. C'était bon.`
-      : `<b>${bj.player}</b> annonçait <b>${bjDit()}</b>. Raté à l'étape ${bj.step+1} — <b style="color:var(--gold)">${unite(n)}</b> ${sansAlcool()?'🔥':'🍺'}`}</p>
+      : `<b>${bj.player}</b> annonçait <b>${bjDit()}</b>. Raté à l'étape ${bj.step+1} — <b style="color:var(--gold)">${unite(n)}</b>`}</p>
     ${fini?`<div class="gap"></div><div class="card tint-gold center stamp">
       <p style="font-size:16px;font-weight:750">Quatre paris, quatre fois juste. À toi de distribuer ${uniteN(bjCadeau())} 🎁</p></div>`:''}
     <div class="spacer"></div>
@@ -2830,9 +2975,12 @@ function bjDistribute(){
   render(`
     <div class="topbar"><h2 style="margin:auto">🎰 Sans-faute !</h2></div>
     <p class="center muted"><b>${bj.player}</b> place <b style="color:var(--gold)">${uniteN(bjCadeau())}</b> comme il/elle veut. Reste : <b style="color:var(--gold)">${left}</b></p>
+    <p class="center muted" style="font-size:12.5px;margin-top:4px">${sansAlcool()
+      ? 'Chaque gage placé passera à la roulette.'
+      : 'Chacun de tes élus tire un gage, et ne boit sa part que s\'il le refuse.'}</p>
     <div class="gap"></div>
     <div class="list-pick">
-      ${state.players.map(p=>`<div class="pick" onclick="bjGive('${p.name.replace(/'/g,"\\'")}')">${p.name}<span style="color:var(--gold)">${bj.give[p.name]||0} ${sansAlcool()?'🔥':'🍺'}</span></div>`).join('')}
+      ${state.players.map(p=>`<div class="pick" onclick="bjGive('${p.name.replace(/'/g,"\\'")}')">${p.name}<span style="color:var(--gold)">${bj.give[p.name]||0} ${sansAlcool()?'🎲':'🍺'}</span></div>`).join('')}
     </div>
     <div class="gap-s"></div>
     ${given?`<button class="btn ghost sm" onclick="bj.give={};bjDistribute()"><span class="ico">↺</span>Recommencer le partage</button>`:''}
@@ -2848,8 +2996,8 @@ function bjGive(name){
 }
 function bjJackpotDone(){
   const parts=Object.entries(bj.give);
-  parts.forEach(([n,v])=>addDrinks(n,v,bj.player));    // le sans-faute : c'est lui qui distribue
-  toast('Partage enregistré '+(sansAlcool()?'🔥':'🍺'));
+  parts.forEach(([n,v])=>faute(n,v,bj.player));    // le sans-faute : c'est lui qui distribue
+  toast('Partage enregistré 🎲');
   compteManche('bj');
   gagesAfter(parts, ()=>{ bj.turn++; bjPlayer(); }, {multi:true})();
 }
@@ -3395,9 +3543,8 @@ function mimesNext(){
 
 /* ---------- classement de la manche : le dernier paie ---------- */
 function listeFr(a){ return a.length<2 ? (a[0]||'') : a.slice(0,-1).join(', ')+' & '+a[a.length-1]; }
-function sanctionGroupe(noms,n){
-  const v = sansAlcool() ? (noms.length>1?'prennent':'prend') : (noms.length>1?'boivent':'boit');
-  return `${listeFr(noms)} ${v} ${unite(n)}`;
+function sanctionGroupe(noms){
+  return `${listeFr(noms)} ${noms.length>1?'prennent':'prend'} un gage`;
 }
 function mimesResults(){
   compteManche('mimes');
@@ -3406,19 +3553,17 @@ function mimesResults(){
   const min=rows[rows.length-1].pts;
   const perdants=rows.filter(r=>r.pts===min);
   const egalite=perdants.length===rows.length;
-  /* Avec alcool : le perdant boit autant de gorgées qu'il a fait deviner de mots —
-     moins il en place, moins il boit, mais il boit toujours au moins un coup. Sans
-     alcool, c'est un gage, un seul, comme partout ailleurs.
-     Égalité générale : tout le monde trinque un coup. */
+  /* Le perdant prend un gage, comme partout ailleurs. Avec alcool, le refuser lui
+     coûte autant de gorgées qu'il a fait deviner de mots — un coup minimum.
+     Égalité générale : tout le monde y passe, pour un coup. */
   const n = (egalite || sansAlcool()) ? 1 : Math.max(1,min);
   const punis=[];
-  perdants.forEach(r=>r.membres.forEach(m=>{ addDrinks(m,n); punis.push([m,n]); }));
+  perdants.forEach(r=>r.membres.forEach(m=>{ faute(m,n); punis.push([m,n]); }));
   const noms=punis.map(p=>p[0]);
-  const gages = sansAlcool() && punis.length;
+  const gages = punis.length>0;
   if(gages) _suite = gagesAfter(punis, mimesReplay);
   render(`
     <div class="topbar"><h2 style="margin:auto">🎭 Fin de la manche</h2></div>
-    ${counterBar()}
     <div class="gap"></div>
     ${rows.map((r,i)=>`
       <div class="rank${i<3?' p'+(i+1):''}">
@@ -3429,14 +3574,16 @@ function mimesResults(){
     <div class="gap"></div>
     <div class="card tint-coral center">
       <p style="font-size:16px;font-weight:750">${egalite
-        ? `Égalité parfaite — ${sanctionGroupe(noms,n)} 😐`
-        : sanctionGroupe(noms,n)}</p>
-      ${(egalite || sansAlcool()) ? ''
-        : `<div class="gap-s"></div><p class="muted">Une gorgée par mot qu'il a fait deviner${min===0?' — et un coup minimum, même à zéro':''}.</p>`}
+        ? `Égalité parfaite — ${sanctionGroupe(noms)} 😐`
+        : sanctionGroupe(noms)}</p>
+      <div class="gap-s"></div>
+      <p class="muted">${sansAlcool()
+        ? 'Le refuser, c\'est la sentence.'
+        : `Le refuser coûte ${gorgees(n)}${egalite?'':' : une par mot fait deviner, un coup minimum'}.`}</p>
     </div>
     <div class="spacer"></div>
     ${gages
-      ? `<button class="btn good" onclick="suivreResultat()">Passer aux gages 🔥 →</button>`
+      ? `<button class="btn good" onclick="suivreResultat()">Passer aux gages 🎲 →</button>`
       : `<button class="btn good" onclick="mimesNewRound()">↻ Nouvelle manche</button>
          <div class="gap-s"></div>
          <button class="btn ghost sm" onclick="mimesConfig()">⚙️ Changer les réglages</button>
@@ -3448,7 +3595,6 @@ function mimesResults(){
 function mimesReplay(){
   render(`
     <div class="topbar"><h2 style="margin:auto">🎭 Manche terminée</h2></div>
-    ${counterBar()}
     <div class="spacer"></div>
     <div class="card tint-cyan center">
       <div class="big">🎭</div>
@@ -3496,7 +3642,6 @@ function hangoverHome(){
     <p class="muted">Toutes tes soirées, leurs photos et leur classement final.</p>
     <div class="gap"></div>
     ${live}
-    ${state.players.length && !state.partyEnded ? `<button class="btn alt" onclick="rankingView()"><span class="ico">🏆</span><span class="col">${sansAlcool()?'Classement des gages':'Classement des gorgées'}<small>Soirée en cours</small></span></button><div class="gap"></div>`:''}
     ${soirees}
     <div class="spacer"></div>
     <div style="height:10px"></div>
@@ -3631,20 +3776,6 @@ function albumView(){
       <button class="btn gold sm" onclick="camPurpose='album';openCam()">📸 Ajouter une photo</button>
       <button class="btn ghost sm" onclick="shareAlbum()">↗ Partager</button>
     </div>
-    ${!state.partyEnded ? `
-    <div class="gap"></div>
-    <h3>${sansAlcool()?'🔥 Podium des gages':'🏆 Classement de la soirée'}</h3>
-    <div class="gap-s"></div>
-    ${rankingList()}` : ''}
-    <div style="height:20px"></div>
-  `, true);
-}
-function rankingView(){
-  render(`
-    <div class="topbar"><div class="back" onclick="hangoverHome()">‹</div><h2>${sansAlcool()?'🔥 Podium des gages':'🏆 Classement'}</h2></div>
-    <p class="muted">${state.album.name||'Soirée en cours'}</p>
-    <div class="gap"></div>
-    ${rankingList()}
     <div style="height:20px"></div>
   `, true);
 }
@@ -3666,7 +3797,6 @@ function titreGage(rang,pts,degonf){
   if(rang===2)        return '😎 solide';
   return '💪 n\'a jamais reculé';
 }
-function rankingList(){ return rankingListFrom(classer(state.players,state.mode),state.mode); }
 function rankingListFrom(list,mode='alcool'){
   const sober = mode==='sans', medals=['🥇','🥈','🥉'];
   if(!list || !list.length) return '<p class="muted">Aucun joueur.</p>';
@@ -3706,6 +3836,13 @@ function tuile(label,ex,phrase){
     <div class="stat__v">${nomsCourts(ex.noms)}</div>
     <div class="stat__s">${phrase(ex.val,ex.noms.length>1)}</div></div>`;
 }
+// le plus de gages relevés ; à égalité, celui qui a le moins refusé passe devant
+function plusCourageux(list){
+  const top=extreme(list,p=>p.releves||0,'max');
+  if(!top || !top.val) return top;
+  const ex=extreme(list.filter(p=>top.noms.includes(p.name)),p=>p.refus||0,'min');
+  return { noms:ex.noms, val:top.val };
+}
 function statsBlock(a){
   const list=a.ranking||[]; if(!list.length) return '';
   const sober=(a.mode||'alcool')==='sans';
@@ -3715,32 +3852,43 @@ function statsBlock(a){
   const acc=(part,n)=>`${part}${e}${n>1?'s':''}`;
   const exaequo=m=>m?' (ex æquo)':'';
 
-  const mvp     = sober ? extreme(list,p=>p.reussis||0,'max') : extreme(list,p=>p.drinks||0,'min');
-  const victime = extreme(list,p=>p.subies||0,'max');
+  /* v2 = soirées jouées avec la règle « un gage d'abord ». Avec alcool, le MVP n'est
+     plus celui qui a le moins bu mais celui qui a relevé le plus de gages ; la
+     « victime » (gages tirés) doublonnait le perdant, elle laisse la place au
+     dégonflé. Les albums d'avant gardent leur lecture d'origine. */
+  const v2=(a.v||1)>=2;
+  const g=(n,acc)=>`${n} gage${n>1?'s':''} ${acc}${n>1?'s':''}`;
+  const mvp     = sober ? extreme(list,p=>p.reussis||0,'max')
+                : (v2 ? plusCourageux(list) : extreme(list,p=>p.drinks||0,'min'));
+  const victime = v2 ? null : extreme(list,p=>p.subies||0,'max');
   const distrib = extreme(list,p=>p.donnees||0,'max');
   const perdant = extreme(list,p=>p.defaites||0,'max');
+  const degonfle= v2 ? extreme(list,p=>p.refus||0,'max') : null;
 
   const total   = list.reduce((s,p)=>s+(sober?(p.reussis||0):(p.drinks||0)),0);
-  const encaisse= list.reduce((s,p)=>s+(p.subies||0),0);
+  const encaisse= list.reduce((s,p)=>s+(v2?(p.gages||0):(p.subies||0)),0);
   // les manches restent comptées et enregistrées dans l'album, mais ne sont plus
   // affichées : ça faisait trop de lignes après le classement.
   return `
     <h3>📊 Les chiffres de la soirée</h3>
     <div class="gap-s"></div>
     <div class="stats">
-      ${tuile('🏅 MVP de la soirée', mvp,
-              (v,eq)=>sober?`${v} 🔥 au compteur${exaequo(eq)}`:`${u(v)} seulement${exaequo(eq)}`)}
+      ${(sober || !v2 || (mvp && mvp.val>0)) ? tuile('🏅 MVP de la soirée', mvp,
+              (v,eq)=>sober?`${v} 🔥 au compteur${exaequo(eq)}`
+                     :(v2?`${g(v,'relevé')}${exaequo(eq)}`:`${u(v)} seulement${exaequo(eq)}`)) : ''}
       ${victime && victime.val>0 ? tuile('🩹 Victime de la soirée', victime,
               (v,eq)=>`${u(v)} ${acc('encaissé',v)}${exaequo(eq)}`) : ''}
-      ${distrib && distrib.val>0 ? tuile('🎯 Plus grand distributeur', distrib,
-              (v,eq)=>`${u(v)} ${acc('infligé',v)} aux autres${exaequo(eq)}`) : ''}
       ${perdant && perdant.val>0 ? tuile('💀 Plus grand perdant', perdant,
               (v,eq)=>`${v} fois sanctionné·e${exaequo(eq)}`) : ''}
+      ${distrib && distrib.val>0 ? tuile('🎯 Plus grand distributeur', distrib,
+              (v,eq)=>v2?`${g(v,'infligé')} aux autres${exaequo(eq)}`:`${u(v)} ${acc('infligé',v)} aux autres${exaequo(eq)}`) : ''}
+      ${degonfle && degonfle.val>0 ? tuile('🐔 Le dégonflé', degonfle,
+              (v,eq)=>`${g(v,'refusé')}${exaequo(eq)}`) : ''}
     </div>
     <div class="gap"></div>
     <div class="statline"><span>${sober?'🔥':'🍺'}</span>
       <span>${sober?'Solde de 🔥 du groupe':'Total bu par le groupe'}</span><b>${total}</b></div>
-    ${sober?`<div class="statline"><span>🎲</span><span>Gages tirés en tout</span><b>${encaisse}</b></div>`:''}
+    ${(sober||v2)?`<div class="statline"><span>🎲</span><span>Gages tirés en tout</span><b>${encaisse}</b></div>`:''}
     ${st.duree>0?`<div class="statline"><span>⏱️</span><span>Durée de la soirée</span><b>${dureeTxt(st.duree)}</b></div>`:''}
   `;
 }

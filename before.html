@@ -762,10 +762,18 @@
   .selcard.off{opacity:.32;}
   /* trois boutons côte à côte : ils doivent tenir sur une ligne */
   /* les cinq durées doivent tenir sur une seule ligne, même sur un petit écran */
-  #mimeDurees .chipf{padding:7px 10px;}
+  #mimeDurees .chipf, #mimeNb .chipf{padding:7px 10px;}
   .teamacts .btn{white-space:nowrap;justify-content:center;gap:7px;padding-left:10px;padding-right:10px;}
   /* les trois sources de mots doivent tenir sur une ligne */
   .wordlog{display:flex;flex-wrap:wrap;gap:7px;}
+  /* sans alcool : les trois jokers de la soirée, grisés une fois grillés */
+  .jokers{display:flex;justify-content:center;gap:10px;font-size:22px;}
+  .jokers i{font-style:normal;opacity:.2;filter:grayscale(1);}
+  .jokers i.on{opacity:1;filter:none;}
+  .gagenom{color:var(--gold);}
+  .dette{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 14px;margin-bottom:7px;
+    border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.03);font-size:14.5px;}
+  .dette span{color:var(--gold);font-weight:700;font-size:13px;text-align:right;}
   .wchip{
     display:flex;align-items:center;gap:7px;padding:8px 12px;border-radius:999px;cursor:pointer;
     font-size:13px;font-weight:650;border:1px solid var(--line);
@@ -813,7 +821,7 @@
    si elle est plus récente, on recharge. Uniquement tant qu'aucune partie
    n'a commencé : les joueurs ne sont pas sauvegardés, un rechargement en
    pleine soirée les effacerait. BUILD est tamponné par publier.sh. */
-const BUILD='20261015111416';
+const BUILD='20261103151043';
 (function(){
   try{
     fetch('version.txt?t='+Date.now(),{cache:'no-store'})
@@ -830,8 +838,9 @@ const BUILD='20261015111416';
 })();
 
 const state = {
-  players: [],            // {name, drinks, gages, reussis, refus}
-  mode:'alcool',          // une faute = un gage ; refusé : gorgées ('alcool') ou sentence ('sans')
+  players: [],            // {name, drinks, gages, reussis, refus, jokers}
+  exclus: [],             // virés de la soirée (sans alcool, plus de joker) : ils ne jouent plus, mais restent au récap
+  mode:'alcool',          // une faute = un gage ; refusé : gorgées ('alcool') ou joker ('sans')
   stats:null,             // {debut, manches:{qar,sniper,bj}} — voir resetStats
   album: { name:null, photos:[] },
   albums: [],             // soirées terminées : {id, name, photos:[{src,label}], ranking:[{name,drinks}], date}
@@ -842,8 +851,6 @@ const state = {
   pairDecks:null,         // paquets de paires mélangés, un par thème (voir drawPair)
   cultureDeck:null,       // questions de culture G déjà posées (voir drawCulture)
   gageDecks:null,         // gages et vérités déjà tombés (voir tireGage)
-  mimeDecks:null,         // idem pour les mots du jeu des mimes (voir drawMime)
-  mimeJokes:[],           // private jokes des joueurs : {w, by} — voir mimesJokes
   roleHist:null,          // qui a été scamer/PNJ récemment (voir pickRole)
   partyEnded:false,       // true quand la soirée est terminée (masque le classement "en cours")
   after:{city:'paris',type:'all',theme:'all',price:'all',openOnly:'open',sort:'dist'},
@@ -1259,77 +1266,81 @@ function drawCulture(){
    Dans les deux modes, une faute se paie d'abord en gage. Un seul paquet, sans
    niveaux : n'importe lequel peut tomber à n'importe quel moment, quel que soit
    le jeu. Aucun ne demande de boire. Le refuser reste possible, mais ça se paie :
-   en gorgées avec alcool, par une sentence sans alcool (voir SENTENCES).
+   en gorgées avec alcool, en joker sans alcool (voir JOKERS).
    Un peu moins d'une fois sur cinq, le gage laisse la place à une vérité :
-   ça doit rester le coup de chance de la soirée. */
+   ça doit rester le coup de chance de la soirée.
+   Les gages se jouent entre les joueurs, même quand on n'est que tous les
+   deux sur un canapé : jamais « quelqu'un dans la soirée ». {J} est remplacé
+   au tirage par le prénom d'un autre joueur (voir remplirGage). Les messages
+   à un contact du téléphone restent possibles : ils se font de n'importe où. */
 const VERITE_CHANCE = .18;
 
 /* Les gages ordinaires. */
 const GAGES_NORMAUX = [
   "Faire 10 squats en criant le prénom de son crush.",
-  "Faire une déclaration d'amour dramatique à la personne de son choix.",
+  "Faire une déclaration d'amour dramatique à la personne de son choix parmi nous.",
   "Envoyer « tu me manques » à la 5e personne de ses DM.",
-  "Parler avec un accent choisi par le groupe pendant 2 minutes.",
+  "Parler avec un accent choisi par {J} pendant 2 minutes.",
   "Faire une imitation de quelqu'un du groupe et les autres doivent deviner.",
-  "Faire un compliment sincère à la personne à sa gauche.",
+  "Faire un compliment sincère à {J}.",
   "Lire son dernier message reçu à voix haute.",
-  "Laisser le groupe choisir sa photo de profil pendant 10 minutes.",
-  "Faire un compliment à quelqu'un que tu connais à peine.",
+  "Laisser {J} choisir sa photo de profil pendant 10 minutes.",
+  "Faire à {J} un compliment qu'on ne lui a jamais fait.",
   "À chaque fin de phrase, faire un tour sur toi-même pendant 3 minutes.",
-  "Appelle la personne à ta droite par le prénom de ton ex pendant 5 minutes.",
+  "Appelle {J} par le prénom de ton ex pendant 5 minutes.",
   "Pendant 5 minutes, terminer chaque phrase par « chef ».",
   "Pendant 3 minutes, parler de toi à la troisième personne.",
   "Pendant 5 minutes, interdiction de dire « oui ».",
   "Faire un discours de 30 secondes expliquant pourquoi tu es la personne la plus importante de la soirée.",
   "Pendant 3 minutes, applaudir chaque fois que quelqu'un finit une phrase.",
-  "Choisir quelqu'un et lui inventer un surnom que tu dois utiliser pendant 10 minutes.",
-  "Envoyer « t'es réveillé(e) ? » à quelqu'un de choisi par le groupe.",
+  "Inventer un surnom à {J} et l'appeler comme ça pendant 10 minutes.",
+  "Envoyer « t'es réveillé(e) ? » à un contact choisi par {J}.",
   "Montrer la dernière photo enregistrée dans ton téléphone.",
-  "Laisser quelqu'un écrire un message que tu dois envoyer à un ami.",
-  "Demander à quelqu'un dans la soirée de noter ton style sur 10.",
-  "Envoyer « j'ai une question mais j'ose pas te la poser » à quelqu'un choisi par le groupe.",
-  "Demander à quelqu'un dans la soirée quelle est sa première impression de toi.",
-  "Pendant 10 minutes, appeler la personne à ta gauche « mon amour ».",
+  "Laisser {J} écrire un message que tu dois envoyer à un ami.",
+  "Demander à {J} de noter ton style sur 10.",
+  "Envoyer « j'ai une question mais j'ose pas te la poser » à un contact choisi par {J}.",
+  "Demander à {J} quelle a été sa première impression de toi.",
+  "Pendant 10 minutes, appeler {J} « mon amour ».",
   "Pendant 10 minutes, répondre à toutes les questions par une autre question.",
   "Faire semblant de ne connaître personne dans la pièce pendant 5 minutes.",
-  "Laisser le groupe choisir ton prochain verre.",
-  "Demander son Instagram à quelqu'un que tu trouves attirant dans la soirée.",
+  "Laisser {J} choisir ton prochain verre.",
+  "Demander son numéro à {J}, comme si vous vous rencontriez pour la première fois.",
   "Montrer ton temps d'écran.",
-  "Faire une déclaration d'amour totalement improvisée à quelqu'un dans la soirée.",
-  "Envoyer un vocal de 30 secondes à ton crush choisi par le groupe.",
-  "Faire une photo avec la personne que le groupe pense être ton meilleur match dans la soirée.",
-  "Faire un compliment à la personne la plus attirante de la soirée selon toi.",
-  "Aller voir quelqu'un et lui demander : « Sur 10, tu me notes combien ? »",
-  "Laisser le groupe choisir quelqu'un à qui tu dois offrir un verre.",
-  "Demander à quelqu'un de te présenter la personne qu'il trouve la plus attirante dans la soirée.",
+  "Faire une déclaration d'amour totalement improvisée à {J}.",
+  "Envoyer un vocal de 30 secondes à un crush choisi par {J}.",
+  "Faire une photo avec la personne que le groupe pense être ton meilleur match parmi nous.",
+  "Faire un compliment à la personne la plus attirante parmi nous selon toi.",
+  "Demander à {J} : « Sur 10, tu me notes combien ? »",
+  "Offrir un verre à {J}.",
+  "Demander à {J} qui, parmi nous, ferait le meilleur couple avec toi.",
   "Pendant 30 minutes, chaque fois que quelqu'un prononce ton prénom, tu dois répondre : « Présent, monsieur le président. »",
-  "Le groupe choisit ton nouveau prénom. Tu dois te présenter uniquement avec celui-ci pendant les 30 prochaines minutes.",
+  "{J} choisit ton nouveau prénom. Tu ne réponds qu'à celui-ci pendant les 30 prochaines minutes.",
   "Pendant 30 minutes, tu dois appeler chaque personne par un surnom différent. Interdiction d'utiliser son vrai prénom.",
-  "Aller voir quelqu'un et lui demander de te donner le prénom de la personne qu'il trouve la plus attirante dans la soirée.",
+  "Demander à {J} le prénom de la personne qu'il/elle trouve la plus attirante parmi nous.",
 ];
 /* Les plus corsés : ceux qui demandent le plus de cran. Ils tombent comme les
    autres, au hasard — mais c'est aussi là-dedans qu'on pioche quand le Sniper
    rate sa revanche. Ils valent 1 🔥 comme tous les autres. */
 const GAGES_DURS = [
-  "Envoyer « faut qu'on parle » à quelqu'un puis ne rien expliquer pendant 5 minutes.",
-  "Demander à quelqu'un dans la soirée de te donner ton plus gros red flag.",
-  "Envoyer « j'ai fait une connerie » à quelqu'un choisi par le groupe.",
-  "Demander à quelqu'un de la soirée de te faire une passe D.",
-  "Demander à quelqu'un dans la soirée : « Tu penses que je suis ton style ? »",
+  "Envoyer « faut qu'on parle » à un contact choisi par {J}, puis ne rien expliquer pendant 5 minutes.",
+  "Demander à {J} ton plus gros red flag.",
+  "Envoyer « j'ai fait une connerie » à un contact choisi par {J}.",
+  "Demander à {J} de te faire une passe D.",
+  "Demander à {J} : « Tu penses que je suis ton style ? »",
   "Appeler ton ex et lui demander « tu penses encore à moi ? »",
   "Envoyer « j'ai quelque chose à t'avouer » à ton ex.",
   "Montrer ton historique de likes TikTok.",
-  "Demander à quelqu'un quel est son type, puis lui dire lequel de ses critères tu remplis.",
+  "Demander à {J} quel est son type, puis lui dire lequel de ses critères tu remplis.",
   "Faire un discours improvisé d'une minute expliquant pourquoi tu es célibataire.",
-  "Dire à quelqu'un : « Mes potes pensent qu'on ferait un beau couple. T'en penses quoi ? »",
+  "Dire à {J} : « Les autres pensent qu'on ferait un beau couple. T'en penses quoi ? »",
   "Révéler au groupe quelque chose que personne ici ne sait sur toi.",
-  "Pendant 30 minutes, la personne à ta droite devient ton manager. Tu dois lui demander son autorisation avant toute décision importante.",
-  "Aller voir la personne que tu trouves la plus attirante dans la soirée et fais-lui un bisou sur la joue.",
-  "Faire croire pendant 15 minutes que la personne choisie par le groupe est ton/ta partenaire.",
-  "Smack la personne de ton choix.",
+  "Pendant 30 minutes, {J} devient ton manager. Tu dois lui demander son autorisation avant toute décision importante.",
+  "Faire un bisou sur la joue à la personne que tu trouves la plus attirante parmi nous.",
+  "Pendant 15 minutes, {J} est ton/ta partenaire : tu dois te comporter comme tel.",
+  "Smack la personne de ton choix parmi nous.",
   "Le groupe doit choisir la personne sur qui tu vas faire un strip-tease.",
-  "Lèche le cou de la personne la plus fraîche de la soirée pour toi.",
-  "Bande-toi les yeux et la personne en face de toi te fera deviner une partie de son corps.",
+  "Lèche le cou de la personne la plus fraîche parmi nous, selon toi.",
+  "Bande-toi les yeux : {J} te fait deviner une partie de son corps.",
 ];
 const GAGES = GAGES_NORMAUX.concat(GAGES_DURS);
 const EST_DUR = new Set(GAGES_DURS);
@@ -1382,27 +1393,7 @@ const VERITES = [
   "Dis la vérité, tu as ramené des capotes avec toi ce soir ?",
 ];
 
-/* ---- les sentences : le prix d'un gage refusé, sans alcool ----
-   Ce n'est pas un gage de plus : c'est court, physique, un peu désagréable,
-   et ça ne se refuse pas. Elles tiennent le rôle des gorgées du mode alcool.
-   Rien de dangereux, de petites quantités, et une seule relance permise quand
-   il manque l'ingrédient ou en cas d'allergie (voir sentenceScreen). */
-const SENTENCES = [
-  "Croquer dans un quartier de citron et le garder 5 secondes en bouche.",
-  "Une cuillère à café de moutarde, sans rien à côté.",
-  "Un grand verre d'eau, cul sec.",
-  "Une goutte de sauce piquante sur le bout de la langue.",
-  "Le groupe te prépare un mélange sans alcool avec ce qu'il trouve dans le frigo. Tu en bois une gorgée.",
-  "Gainage pendant 45 secondes. Le groupe compte à voix haute.",
-  "La chaise contre le mur pendant 40 secondes — sans la chaise.",
-  "15 squats, en comptant à voix haute.",
-  "Tenir un glaçon dans le poing pendant 60 secondes.",
-  "Assis par terre jusqu'à la fin de la prochaine manche.",
-  "Tu deviens le serveur : tu ressers tout le groupe jusqu'à la fin de la prochaine manche.",
-  "Le groupe choisit ton fond d'écran. Tu le gardes jusqu'à demain midi.",
-];
-
-/* ---- tirage sans doublon : gages, vérités et sentences ont chacun leur paquet ---- */
+/* ---- tirage sans doublon : gages et vérités ont chacun leur paquet ---- */
 function resetGageDecks(){ state.gageDecks={}; }
 function gagePioche(cle, source){
   if(!state.gageDecks) state.gageDecks={};
@@ -1428,378 +1419,6 @@ function gageDur(){
     d.length=0;                       // le paquet n'a plus de gage corsé : on le refait
   }
   return GAGES_DURS[0];
-}
-
-/* ---------- mots du jeu des mimes ----------
-   Un seul paquet, tiré au hasard : plus de catégories à choisir, on lance
-   et c'est parti. Un mot (ou une situation) par ligne — pour en ajouter,
-   colle une nouvelle ligne, rien d'autre à toucher. Les « private jokes »
-   des joueurs vivent ailleurs, dans state.mimeJokes (voir mimesJokes). */
-function parseWords(txt){ return txt.split('\n').map(l=>l.trim()).filter(Boolean); }
-const MOTS_MIMES = parseWords(`
-Se brosser les dents
-Éternuer très fort
-Accoucher
-Marcher sur la Lune
-Se noyer dans 20 cm d'eau
-Faire un selfie raté
-Ronfler comme un tracteur
-Trébucher dans l'escalier
-Se réveiller en retard
-Se cogner l'orteil
-Attraper un moustique
-Manger trop épicé
-Se faire arracher une dent
-Chercher ses clés partout
-Marcher contre le vent
-Sentir un truc louche
-Ouvrir un bocal impossible
-Monter un meuble IKEA
-Faire semblant d'écouter
-Se prendre une porte vitrée
-Glisser sur une peau de banane
-Faire semblant de dormir
-Se faire piquer par une guêpe
-Enfiler un jean trop serré
-Sortir d'une piscine glacée
-Rater une marche
-Se gratter le dos avec une règle
-Courir après le bus
-Souffler ses bougies
-Faire le poirier
-Faire des pompes en tremblant
-Éplucher une banane
-Ramer dans une barque
-Sauter en parachute
-Escalader une falaise
-Nager le crawl
-Faire du hula hoop
-Jongler
-Faire du karaté
-Tirer un penalty et le rater
-Danser la salsa tout seul
-Jouer de la batterie
-Taper à l'ordinateur très vite
-Compter une liasse de billets
-Passer l'aspirateur
-Repasser une chemise
-Tondre la pelouse
-Peindre un plafond
-Monter une tente
-Se faire tatouer
-Se raser en tremblant
-Se maquiller dans le noir
-Se couper les ongles
-Mettre des chaussettes mouillées
-Faire la queue depuis deux heures
-Repousser un chien qui saute
-Pêcher et ne rien attraper
-Conduire avec un GPS qui bugue
-Chercher du réseau
-Envoyer un vocal de huit minutes
-Faire semblant d'aimer un cadeau
-Rire à une blague pas drôle
-Se prendre en photo quarante fois
-Lire un message et ne pas répondre
-Faire le mort
-Draguer et se prendre un vent
-Attendre quelqu'un qui ne vient pas
-Remonter un escalator qui descend
-Ouvrir un paquet de chips en silence
-Manger une glace qui fond trop vite
-Boire un café brûlant
-Bâiller de façon contagieuse
-Diriger un orchestre
-Faire un discours de mariage
-Pleurer devant un film
-Se perdre dans un parking
-Porter quinze sacs de courses
-Rater son créneau dix fois
-Sortir de chez le coiffeur trop court
-Marcher pieds nus sur du Lego
-Se faire klaxonner au feu vert
-Retenir un fou rire à un enterrement
-Sourire sur une photo trop longtemps
-Régler une chaise de bureau
-Essayer d'ouvrir la mauvaise voiture
-Michael Jackson
-Charlie Chaplin
-Mr Bean
-Elvis Presley
-Napoléon
-Cristiano Ronaldo
-Lionel Messi
-Kylian Mbappé
-Zinédine Zidane
-Usain Bolt
-Mike Tyson
-Rafael Nadal
-Elon Musk
-Donald Trump
-Emmanuel Macron
-Albert Einstein
-Mozart
-Beyoncé
-Rihanna
-Lady Gaga
-Aya Nakamura
-Jul
-Booba
-Orelsan
-Squeezie
-MrBeast
-Cyril Hanouna
-Omar Sy
-Kev Adams
-Teddy Riner
-Gims
-Michael Jordan
-LeBron James
-Jean-Claude Van Damme
-Bruce Lee
-Céline Dion
-Stromae
-Angèle
-Tibo InShape
-Léna Situations
-Le Père Noël
-Shakira
-Dua Lipa
-Ronaldinho
-Zlatan Ibrahimović
-Dark Vador
-Titanic
-Le Roi Lion
-Harry Potter
-Spider-Man
-Batman
-Fast and Furious
-Jurassic Park
-Star Wars
-Avatar
-Shrek
-La Reine des Neiges
-Les Dents de la mer
-Matrix
-E.T.
-Pirates des Caraïbes
-Indiana Jones
-Toy Story
-Le Seigneur des Anneaux
-Les Visiteurs
-Intouchables
-Astérix et Obélix
-La Casa de Papel
-Squid Game
-Game of Thrones
-Stranger Things
-Breaking Bad
-Prison Break
-Friends
-Vaiana
-Kung Fu Panda
-Les Minions
-Ratatouille
-Le Monde de Nemo
-Alien
-King Kong
-Terminator
-Mission Impossible
-James Bond
-Joker
-Gladiator
-Forrest Gump
-Le Loup de Wall Street
-Bienvenue chez les Ch'tis
-Koh-Lanta
-Top Chef
-Wednesday
-Emily in Paris
-Naruto
-Dragon Ball Z
-One Piece
-Pokémon
-Les Simpson
-Girafe
-Kangourou boxeur
-Pingouin
-Éléphant
-Serpent
-Crabe
-Papillon
-Gorille
-Escargot
-Autruche
-Requin
-Poulpe
-Flamant rose
-Chauve-souris
-Grenouille
-Coq
-Hérisson
-Paresseux
-Dauphin
-Araignée
-Taureau
-Chameau
-Hibou
-Abeille
-Tortue sur le dos
-Perroquet
-Panda
-Crocodile
-Mouette qui vole une frite
-Cafard
-Écureuil
-Pigeon boiteux
-Méduse
-Poule qui pond
-Chat qui se lèche
-Chien qui creuse
-Lama qui crache
-Vache qui rumine
-Cochon dans la boue
-Parapluie retourné
-Aspirateur
-Tire-bouchon
-Guitare
-Trampoline
-Micro-ondes
-Menottes
-Perceuse
-Balançoire
-Échelle
-Trottinette
-Machine à laver en essorage
-Sèche-cheveux
-Marteau
-Ciseaux
-Appareil photo
-Extincteur
-Chirurgien
-Pompier
-Coiffeur
-Serveur débordé
-Policier
-Boulanger
-Dentiste
-Pilote d'avion
-Prof de sport
-Magicien
-Clown
-DJ
-Chauffeur de taxi
-Astronaute
-Plombier
-Vétérinaire
-Juge
-Facteur
-Barman
-Videur de boîte
-Steward qui montre les issues
-Jardinier
-Caissière
-Cascadeur
-Arbitre de foot
-Statue vivante
-Livreur à vélo
-Photographe de mariage
-Prof de maths qui s'énerve
-Guide touristique
-Un shot de tequila
-Le sol qui tourne
-Un karaoké raté
-Le dernier métro
-La gueule de bois
-Un fou rire incontrôlable
-Un slow gênant
-Le vigile qui refuse l'entrée
-Un kebab à quatre heures du matin
-Le pote qui dort sur le canapé
-Commander un Uber
-Danser sur la table
-Le message qu'on regrette
-Le réveil du lendemain
-Une bataille de coussins
-Le selfie de groupe
-Le blind test
-Le beer pong
-La queue aux toilettes
-Le voisin qui tape au mur
-Renverser son verre sur quelqu'un
-Perdre son téléphone
-Le pote qui raconte sa vie
-Le premier sur la piste
-La playlist qu'on coupe
-Le jeu de la bouteille
-Ranger l'appart au petit matin
-Arriver en retard au before
-Le pote qui ne paie jamais
-Chanter faux à tue-tête
-Le shot de trop
-Le taxi qui annule
-Un pot de Nutella à trois heures
-Retrouver sa veste
-L'ascenseur bondé
-Le pote qui veut rentrer à 22h
-Faire semblant d'être sobre
-Le mec qui bloque le frigo
-Chercher son chargeur
-Le dernier morceau de pizza
-`);
-
-/* ---------- private jokes ----------
-   Une seule par joueur, et elle garde le nom de son auteur. En solo, c'est lui
-   qui la mime. En équipe, c'est à l'équipe adverse de s'y coller : son camp
-   sait très bien de quoi il s'agit, l'autre doit se débrouiller.
-   Elles entrent directement dans le paquet avec les mots du jeu : rien à
-   régler, et pas de partie « jokes seulement ». Elles survivent d'une soirée à
-   l'autre — si l'auteur n'est pas là ce soir, le mot redevient ordinaire. */
-const JOKES_KEY='before.jokes';
-function loadJokes(){
-  try{ const raw=localStorage.getItem(JOKES_KEY); state.mimeJokes = raw ? (JSON.parse(raw)||[]) : []; }
-  catch(e){ state.mimeJokes=[]; }
-}
-function saveJokes(){
-  try{ localStorage.setItem(JOKES_KEY, JSON.stringify(state.mimeJokes||[])); }catch(e){}
-}
-
-/* ---------- tirage des mots, sans doublon dans la soirée ----------
-   Un seul paquet mélangé : les mots de BEFORE plus les private jokes. On
-   pioche dedans ; quand il est vide (soirée marathon) on remélange tout.
-   Une joke qui n'est pas pour le joueur en cours retourne sous la pile. */
-function mimePool(){
-  const jokes=(state.mimeJokes||[]).map(j=>({w:j.w, by:j.by}));
-  return MOTS_MIMES.map(w=>({w, by:null})).concat(jokes);
-}
-function resetMimeDecks(){ state.mimeDecks={ deck:shuffle(mimePool()) }; }
-/* `camp` = le mimeur et ceux qui devinent avec lui. En solo, une joke est pour
-   son auteur. En équipe, elle est pour le camp d'en face : celui qui l'a
-   écrite regarde son adversaire se débattre avec sa propre vanne. */
-function mimeJouable(c, mimeur, camp, presents){
-  if(!c.by) return true;                   // mot classique : pour tout le monde
-  if(presents.indexOf(c.by)<0) return true;// son auteur n'est pas de la soirée
-  return mimes.format==='team'
-    ? camp.indexOf(c.by)<0                 // en équipe : à l'adversaire de la mimer
-    : c.by===mimeur;                       // en solo : son auteur la mime
-}
-function drawMime(mimeur, camp){
-  const presents=state.players.map(p=>p.name);
-  camp = (camp && camp.length) ? camp : [mimeur];
-  if(!state.mimeDecks || !state.mimeDecks.deck) resetMimeDecks();
-  for(let essai=0; essai<2; essai++){
-    const d=state.mimeDecks.deck, garde=[];
-    let pris=null;
-    while(d.length){
-      const c=d.pop();
-      if(mimeJouable(c,mimeur,camp,presents)){ pris=c; break; }
-      garde.push(c);                       // pas pour ce camp : elle retourne sous la pile
-    }
-    state.mimeDecks.deck = garde.concat(d);
-    if(pris) return pris;
-    resetMimeDecks();                      // paquet vide : on remélange et on retente
-  }
-  return { w: rnd(MOTS_MIMES), by:null };  // filet
 }
 
 /* ---------- utils ---------- */
@@ -1871,7 +1490,7 @@ function toast(msg){
 }
 /* ---------- sanctions : un gage d'abord, dans les deux modes ----------
    Toute faute vaut un gage. Ce qui change d'un mode à l'autre, c'est le prix
-   du refus : n gorgées avec alcool, une sentence sans alcool. n reste donc la
+   du refus : n gorgées avec alcool, un joker sans alcool. n reste donc la
    « mise » de la faute, et elle ne se boit que si le gage est refusé. */
 const sansAlcool = () => state.mode==='sans';
 function gorgees(n){ return `${n} gorgée${n>1?'s':''}`; }
@@ -1908,7 +1527,7 @@ function floatCam(){ return `<div class="floatCam" onclick="openCam()">📸</div
    gagesAfter([[nom,mise],…], suite) rend une fonction à passer en « suite » d'un
    écran de résultat : elle enchaîne un gage par joueur sanctionné, puis reprend
    le jeu. La roulette tourne d'abord, le gage tombe ensuite ; le refuser coûte
-   la mise en gorgées avec alcool, une sentence sans alcool. */
+   la mise en gorgées avec alcool, un joker sans alcool. */
 let _gage=null;
 /* `opt.dur` : la roulette ne peut tomber que sur un corsé (revanche ratée du Sniper).
    `opt.multi` : sans alcool, la mise est un nombre de gages à relever (le sans-faute
@@ -1924,6 +1543,8 @@ function gagesAfter(list, next, opt){
       else file.push([nom,v]);
     });
     const suivant=()=>{
+      // un joueur viré de la soirée en plein partage ne tire plus ses gages restants
+      while(file.length && !state.players.some(p=>p.name===file[0][0])) file.shift();
       if(!file.length) return next();
       const [nom,v]=file.shift();
       gageScreen(nom, v, suivant, opt.dur);
@@ -1989,9 +1610,29 @@ function roueArrivee(){
   setTimeout(gageReveal, 420);
 }
 
+/* {J} → le prénom d'un autre joueur, tiré au sort. Jamais le même deux gages de
+   suite quand on a le choix : sinon c'est toujours le même qui trinque avec. */
+let _dernierJ=null;
+function remplirGage(txt, name){
+  if(txt.indexOf('{J}')<0) return txt;
+  const autres=state.players.map(p=>p.name).filter(n=>n!==name);
+  const pool=autres.length>1 ? autres.filter(n=>n!==_dernierJ) : autres;
+  const j=rnd(pool.length?pool:autres);
+  if(!j) return txt.split('{J}').join('quelqu\'un du groupe');
+  _dernierJ=j;
+  return txt.split('{J}').join(`<b class="gagenom">${j}</b>`);
+}
+/* ---------- sans alcool : les jokers ----------
+   Pas de sanction de rechange : refuser un gage coûte un joker, et chacun en a
+   trois pour la soirée. Le quatrième refus, c'est la porte : le joueur est viré
+   de la soirée, il ne joue plus à rien jusqu'à la fin (il reste au récap). */
+const JOKERS = 3;
+function jokersRestants(p){ return Math.max(0, JOKERS-((p&&p.jokers)||0)); }
+
 function gageScreen(name,v,next,dur){
   const g=tireGage(dur);
   g.type = g.verite ? 'verite' : ((g.dur || EST_DUR.has(g.txt)) ? 'dur' : 'gage');
+  g.aff = remplirGage(g.txt, name);
   _gage={name,v,next,g,pret:false};
   const p=state.players.find(p=>p.name===name); if(p) p.gages=(p.gages||0)+1;
   render(`
@@ -2020,28 +1661,40 @@ function gageReveal(){
     verite: { titre:`🍀 Vérité pour ${name}`,      badge:'b-ref',  tint:'tint-cyan',  lab:'Coup de chance · une vérité' },
   }[g.type];
   const h=$('#gageTitre'); if(h) h.textContent=T.titre;
+  const p=state.players.find(p=>p.name===name);
+  const jk=jokersRestants(p);
   const sous=$('#gageSous'); if(sous) sous.textContent = g.verite
     ? 'Pas de gage cette fois : réponds honnêtement, ça suffira.'
-    : (sansAlcool() ? 'Tu le relèves, ou c\'est la sentence.' : `Tu le relèves, ou tu bois ${gorgees(v)}.`);
+    : (sansAlcool()
+        ? (jk ? `Tu le relèves, ou tu grilles un joker.` : 'Plus de joker : tu le relèves, ou tu quittes la soirée.')
+        : `Tu le relèves, ou tu bois ${gorgees(v)}.`);
   zone.innerHTML=`
     <div class="card ${T.tint} center stamp" style="padding:24px 20px">
       <div class="badge ${T.badge}">${T.lab}${sansAlcool()?' · 1 🔥':''}</div>
       <div class="gap"></div>
-      <p style="font-size:19px;font-weight:800;line-height:1.35">${g.txt}</p>
+      <p style="font-size:19px;font-weight:800;line-height:1.35">${g.aff}</p>
       ${g.dur?`<div class="gap-s"></div><p class="muted">Revanche ratée : la roulette ne pouvait tomber que sur un corsé.</p>`:''}
+      ${sansAlcool()?`<div class="gap-s"></div><div class="jokers" aria-label="${jk} joker${jk>1?'s':''} sur ${JOKERS}">${
+        Array.from({length:JOKERS},(_,i)=>`<i class="${i<jk?'on':''}">🃏</i>`).join('')}</div>`:''}
     </div>`;
   btns.className='gagebtns';
+  const non = g.verite?'Je ne réponds pas':'Je refuse';
   btns.innerHTML=`
     <button class="btn mint" onclick="gageDone(true)">✅ ${g.verite?'Répondu':'Relevé'}${sansAlcool()?' (+1 🔥)':''}</button>
     <div class="gap-s"></div>
-    <button class="btn ghost sm" onclick="gageDone(false)">🙅 ${g.verite?'Je ne réponds pas':'Je refuse'} · ${sansAlcool()?'la sentence':gorgees(v)+' 🍺'}</button>`;
+    <button class="btn ghost sm" onclick="gageDone(false)">${sansAlcool()
+      ? (jk ? `🃏 ${non} · joker (il t'en reste ${jk})` : `🚪 ${non} · je quitte la soirée`)
+      : `🙅 ${non} · ${gorgees(v)} 🍺`}</button>`;
 }
 /* Relever passe à la suite. Refuser se paie : la mise en gorgées avec alcool,
-   une sentence sans alcool — et 1 🔥 de moins, le compteur peut passer sous zéro. */
+   un joker sans alcool. Sans joker, refuser c'est quitter la soirée — on le
+   fait confirmer, un doigt qui glisse ne doit pas suffire. */
 function gageDone(ok){
   if(!_gage || !_gage.pret) return;
-  const {name,v,next}=_gage; _gage=null;
+  const {name,v,next}=_gage;
   const p=state.players.find(p=>p.name===name);
+  if(!ok && sansAlcool() && !jokersRestants(p)) return virerConfirm();
+  _gage=null;
   if(ok){
     if(p){ p.releves=(p.releves||0)+1; if(sansAlcool()) p.reussis=(p.reussis||0)+1; }
     toast(sansAlcool() ? `${name} : +1 🔥` : `${name} a relevé son gage 💪`);
@@ -2049,8 +1702,10 @@ function gageDone(ok){
   }
   if(p) p.refus=(p.refus||0)+1;
   if(sansAlcool()){
-    if(p) p.reussis=(p.reussis||0)-1;
-    return sentenceScreen(name,next);
+    if(p) p.jokers=(p.jokers||0)+1;
+    const r=jokersRestants(p);
+    toast(r ? `🃏 ${name} grille un joker · plus que ${r}` : `🃏 ${name} grille son dernier joker`);
+    return next();
   }
   if(p) p.drinks=(p.drinks||0)+v;
   boireScreen(name,v,next);
@@ -2078,32 +1733,73 @@ function boireScreen(name,v,next){
   `, true);
 }
 
-/* ---------- le refus, sans alcool : la sentence ----------
-   Une seule relance, pour l'allergie ou l'ingrédient qui manque : au-delà,
-   ce serait un menu, plus une sentence. */
-let _sentence=null;
-function sentenceScreen(name,next,relance){
-  _apres=next;
-  _sentence={name, relance:!!relance};
-  const txt=gagePioche('sentence', SENTENCES);
-  if(!relance) mimeBuzz();
+/* ---------- sans alcool, plus de joker : refuser, c'est partir ---------- */
+function virerConfirm(){
+  if(!_gage) return;
+  const {name}=_gage;
+  mimeBuzz();
   render(`
-    <div class="topbar"><h2 style="margin:auto">⚖️ La sentence</h2></div>
-    <p class="muted center">${name} a refusé son gage. Celle-ci ne se refuse pas.</p>
+    <div class="topbar"><h2 style="margin:auto">🚪 Dernier mot ?</h2></div>
     <div class="spacer"></div>
-    <div class="card tint-gold center stamp" style="padding:28px 20px">
-      <div class="badge b-pnj">Sans appel · −1 🔥</div>
+    <div class="card tint-coral center stamp" style="padding:28px 20px">
+      <div class="jokers"><i>🃏</i><i>🃏</i><i>🃏</i></div>
       <div class="gap"></div>
-      <p style="font-size:20px;font-weight:800;line-height:1.35">${txt}</p>
+      <p style="font-size:20px;font-weight:800;line-height:1.35">${name}, tes ${JOKERS} jokers sont grillés.</p>
+      <div class="gap-s"></div>
+      <p class="muted">Refuser ce gage, c'est quitter la soirée : plus aucun jeu jusqu'à la fin. Tu resteras quand même au récap… à la place que tu mérites.</p>
     </div>
-    <div class="gap-s"></div>
-    ${relance ? '' : `<button class="btn ghost sm" onclick="sentenceRelance()">🔄 Allergie, ou on n'a pas ça : une autre</button>`}
     <div class="spacer"></div>
-    <button class="btn gold" onclick="apres()">⚖️ Sentence exécutée</button>
+    <button class="btn mint" onclick="virerRetour()">💪 Bon, je le fais</button>
+    <div class="gap-s"></div>
+    <button class="btn ghost sm" onclick="virer()">🚪 Je préfère partir</button>
     <div style="height:8px"></div>
   `, true);
 }
-function sentenceRelance(){ if(_sentence && !_sentence.relance) sentenceScreen(_sentence.name, _apres, true); }
+// il se ravise : on revient sur la même carte, le gage ne change pas
+function virerRetour(){
+  if(!_gage) return;
+  const {name,v,next,g}=_gage;
+  const keep=_gage;
+  render(`
+    <div class="topbar"><h2 style="margin:auto" id="gageTitre"></h2></div>
+    <p class="muted center" id="gageSous"></p>
+    <div class="gap"></div>
+    <div id="gageZone"></div>
+    <div class="spacer"></div>
+    <div id="gageBtns"></div>
+    <div style="height:8px"></div>
+  `, true);
+  _gage=keep; _gage.pret=false;
+  gageReveal();
+}
+function virer(){
+  if(!_gage) return;
+  const {name,next}=_gage; _gage=null;
+  const i=state.players.findIndex(p=>p.name===name);
+  if(i>=0){
+    const p=state.players.splice(i,1)[0];
+    p.refus=(p.refus||0)+1; p.vire=true;
+    (state.exclus=state.exclus||[]).push(p);
+  }
+  _apres=()=>{
+    if(state.players.length<3){ toast('Il faut au moins 3 joueurs pour continuer 🙃'); return drawSetup('gameSelect'); }
+    next();
+  };
+  render(`
+    <div class="topbar"><h2 style="margin:auto">🚪 ${name} quitte la soirée</h2></div>
+    <div class="spacer"></div>
+    <div class="card tint-gold center stamp" style="padding:30px 20px">
+      <div class="big">🚪</div>
+      <div class="gap"></div>
+      <p style="font-size:20px;font-weight:800;line-height:1.35">Trois jokers, et toujours pas de gage.</p>
+      <div class="gap-s"></div>
+      <p class="muted">${name} ne joue plus ce soir. Le jeu continue sans lui/elle.</p>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn gold" onclick="apres()">On continue sans ${name} →</button>
+    <div style="height:8px"></div>
+  `, true);
+}
 
 /* ---------- l'enchaînement automatique ----------
    Après un verdict, le joueur n'a rien à valider : on lui laisse le temps de
@@ -2161,7 +1857,7 @@ function home(){
     <div class="prevention">
       ${sansAlcool()
         ? `<span style="font-size:22px">🔥</span>
-           <span style="font-weight:700">Mode sans alcool : ce soir, une erreur, c'est un gage. Le refuser, c'est la sentence — et elle, elle ne se refuse pas.</span>`
+           <span style="font-weight:700">Mode sans alcool : ce soir, une erreur, c'est un gage. Tu as 3 jokers pour en refuser. Au quatrième refus, tu quittes la soirée.</span>`
         : `<span style="font-size:22px">🍻</span>
            <span style="font-weight:700">L'abus d'alcool est dangereux pour ta dignité (et ta santé). Bois de l'eau, garde tes potes en vie, et appelle un taxi — ton lit t'attend, pas le caniveau.</span>`}
     </div>
@@ -2171,6 +1867,10 @@ function home(){
 
 /* ---------- PLAYER SETUP ---------- */
 function setup(){
+  // une nouvelle soirée commence : ceux qui avaient été virés la dernière fois reviennent dans la liste
+  const ex=(state.exclus||[]).filter(x=>!state.players.some(p=>p.name.toLowerCase()===x.name.toLowerCase()));
+  if(ex.length) state.players=state.players.concat(ex.map(p=>({name:p.name,drinks:0})));
+  state.exclus=[];
   if(!state.players.length) state.players=[{name:'',drinks:0},{name:'',drinks:0},{name:'',drinks:0}];
   drawSetup();
 }
@@ -2200,7 +1900,15 @@ function drawPlist(){
 function addPlayer(){ state.players.push({name:'',drinks:0}); drawPlist(); }
 function rmPlayer(i){ if(state.players.length>1){state.players.splice(i,1);drawPlist();} }
 function confirmPlayers(returnTo){
-  state.players=state.players.filter(p=>p.name.trim()!=='').map(p=>({name:p.name.trim(),drinks:p.drinks||0}));
+  // on garde tout ce qui a été compté pendant la soirée (gages, jokers…), pas seulement les gorgées
+  state.players=state.players.filter(p=>p.name.trim()!=='').map(p=>Object.assign({},p,{name:p.name.trim(),drinks:p.drinks||0}));
+  // en pleine soirée, celui qui a été viré ne revient pas en se réinscrivant
+  const exclu=n=>(state.exclus||[]).find(x=>x.name.toLowerCase()===n.toLowerCase());
+  const vire=returnTo && state.players.map(p=>exclu(p.name)).find(Boolean);
+  if(vire){
+    state.players=state.players.filter(p=>!exclu(p.name));
+    toast(`${vire.name} a quitté la soirée : pas de retour ce soir 🚪`);
+  }
   if(state.players.length<3){ toast('Il faut au moins 3 joueurs 🙃'); if(state.players.length<1)state.players=[{name:'',drinks:0},{name:'',drinks:0},{name:'',drinks:0}]; drawSetup(returnTo); return; }
   if(returnTo){ gameSelect(); return; }   // édition des joueurs en cours de partie → retour au hub
   modeSelect();                            // étape 2 : avec ou sans alcool
@@ -2217,20 +1925,20 @@ function modeSelect(){
     <div class="gap-s"></div>
     <button class="btn alt" onclick="pickMode('sans')">
       <span class="ico">🔥</span>
-      <span class="col">Sans alcool<small>Chaque erreur, c'est un gage. Tu refuses ? La sentence tombe.</small></span>
+      <span class="col">Sans alcool<small>Chaque erreur, c'est un gage. 3 jokers pour refuser, pas un de plus.</small></span>
     </button>
     <div class="spacer"></div>
-    <p class="prevention" style="margin:0 0 12px"><span>🎰</span><span>Dans les deux modes, une erreur te vaut un gage, tiré à la roulette. Avec alcool, le refuser se boit. Sans alcool, il te vaut une sentence — citron, moutarde, gainage… — et celle-là ne se refuse pas.</span></p>
+    <p class="prevention" style="margin:0 0 12px"><span>🎰</span><span>Dans les deux modes, une erreur te vaut un gage, tiré à la roulette. Avec alcool, le refuser se boit. Sans alcool, chacun a 3 jokers pour la soirée : au quatrième refus, il est viré et ne rejoue plus avant la fin.</span></p>
     <div style="height:6px"></div>
   `);
 }
 function pickMode(m){
   state.mode = m;
-  state.players.forEach(p=>{ p.drinks=0; p.gages=0; p.reussis=0; p.releves=0; p.refus=0; p.subies=0; p.defaites=0; p.donnees=0; });
+  state.exclus=[];                         // nouvelle soirée : les jokers repartent à trois
+  state.players.forEach(p=>{ p.drinks=0; p.gages=0; p.reussis=0; p.releves=0; p.refus=0; p.subies=0; p.defaites=0; p.donnees=0; p.jokers=0; delete p.vire; });
   resetStats();                            // chrono de la soirée + compteur de manches
   state.partyEnded=false;                  // nouvelle soirée → le classement "en cours" redevient visible
   resetPairDecks();                        // ...et les paires repartent à zéro pour la nouvelle soirée
-  resetMimeDecks();                        // ...ainsi que les mots des mimes
   resetCultureDeck();                      // ...et les questions de culture générale
   resetGageDecks();                        // ...et les gages du mode sans alcool
   resetRoleHist();                         // ...ainsi que l'historique des rôles
@@ -2294,9 +2002,10 @@ function saveHangoverName(){
   state.album.name='Hangover Chez '+v;
   state.partyEnded=true;
   // fige la soirée : photos + classement final, et l'ajoute à la liste Hangover
-  const ranking=classer(state.players,state.mode)
+  // ceux qui ont quitté la soirée gardent leurs chiffres, tout en bas du classement
+  const ranking=classer(state.players,state.mode).concat(state.exclus||[])
     .map(p=>({name:p.name,drinks:p.drinks||0,gages:p.gages||0,reussis:p.reussis||0,releves:p.releves||0,refus:p.refus||0,
-              subies:p.subies||0,defaites:p.defaites||0,donnees:p.donnees||0}));
+              subies:p.subies||0,defaites:p.defaites||0,donnees:p.donnees||0,jokers:p.jokers||0,vire:!!p.vire}));
   const st=state.stats||{};
   const rec={
     id: 'sr'+Date.now(),
@@ -2305,9 +2014,9 @@ function saveHangoverName(){
     ranking,
     mode: state.mode,   // les albums d'avant n'ont pas ce champ : ils retombent sur « alcool »
     stats: { duree: st.debut ? Date.now()-st.debut : 0, manches: {...(st.manches||{})} },
-    players: state.players.length,
+    players: ranking.length,
     date: Date.now(),
-    v: 2,               // « un gage d'abord » : le récap ne se lit plus pareil (voir statsBlock)
+    v: 3,               // 2 = « un gage d'abord » ; 3 = sans alcool, des jokers au lieu d'un −1 (voir statsBlock)
   };
   state.albums.unshift(rec);
   saveAlbums();
@@ -2484,6 +2193,7 @@ function qarBuild(){
     players: state.players.map((p,i)=>({name:p.name,role:roles[i],alive:true})),
     word:{ref:pair.ref,scam:pair.scam},
     themeKey, idx:0, revealMode:true,
+    dettes:{},     // les gages de la manche, réglés tous ensemble à la fin (voir qarDoit)
   };
   qarReveal();
 }
@@ -2559,12 +2269,21 @@ function qarVote(){
     <div style="height:14px"></div>
   `, true);
 }
+/* Les gages ne tombent pas pendant la manche : un éliminé qui part faire sa
+   roulette, c'est tout le débat qui retombe. On note, et tout se règle à la
+   fin (voir qarEndRound). Deux fautes du même joueur font un seul gage, dont
+   le refus coûte la somme des deux. */
+function qarDoit(name,n,par){
+  faute(name,n,par);
+  qar.dettes[name]=(qar.dettes[name]||0)+n;
+}
+const QAR_PLUS_TARD = '<span class="muted">· à la fin de la manche</span>';
 function qarEliminate(i){
   const p=qar.players[i]; if(!p.alive)return; p.alive=false;
-  if(p.role==='scam'){ const n=coup(2); faute(p.name,n);
-    resultScreen('Scamer démasqué !',`${p.name} était un scamer. Sanction : ${unite(2)}. Bien joué au groupe.`,'b-scam',gagesAfter([[p.name,n]],qarCheckEnd)); }
-  else if(p.role==='ref'){ faute(p.name,1);
-    resultScreen('Raté…',`${p.name} avait la ref ! Sanction : ${unite(1)}. Le groupe perd un allié.`,'b-ref',gagesAfter([[p.name,1]],qarCheckEnd)); }
+  if(p.role==='scam'){ qarDoit(p.name,coup(2));
+    resultScreen('Scamer démasqué !',`${p.name} était un scamer. Sanction : ${unite(2)} ${QAR_PLUS_TARD}. Bien joué au groupe.`,'b-scam',qarCheckEnd); }
+  else if(p.role==='ref'){ qarDoit(p.name,1);
+    resultScreen('Raté…',`${p.name} avait la ref ! Sanction : ${unite(1)} ${QAR_PLUS_TARD}. Le groupe perd un allié.`,'b-ref',qarCheckEnd); }
   else { qarPnjGuess(p); }
 }
 function qarPnjGuess(p){
@@ -2590,8 +2309,8 @@ function qarPnjCheck(name){
     qarPnjVote(name);
   }else{
     const n=pnjRate();
-    faute(name,n);
-    resultScreen('❌ Mauvais mot',`Le mot était « ${qar.word.ref} ». Sanction pour ${name} : ${unite(n)}.`,'b-pnj',gagesAfter([[name,n]],qarCheckEnd));
+    qarDoit(name,n);
+    resultScreen('❌ Mauvais mot',`Le mot était « ${qar.word.ref} ». Sanction pour ${name} : ${unite(n)} ${QAR_PLUS_TARD}.`,'b-pnj',qarCheckEnd);
   }
 }
 function qarPnjVote(name){
@@ -2607,14 +2326,14 @@ function qarPnjVote(name){
 function qarPnjVoteDone(pnjName,target){
   const t=qar.players.find(p=>p.name===target);
   if(t.role==='scam'){
-    faute(pnjName,1); faute(target,1,pnjName);   // c'est le PNJ qui a désigné la cible
-    resultScreen('🎯 Touché !',`${target} était bien un scamer. ${unite(1)} pour ${pnjName} et autant pour ${target}.`,'b-scam',
-      gagesAfter([[pnjName,1],[target,1]],qarCheckEnd));
+    qarDoit(pnjName,1); qarDoit(target,1,pnjName);   // c'est le PNJ qui a désigné la cible
+    resultScreen('🎯 Touché !',`${target} était bien un scamer. ${unite(1)} pour ${pnjName} et autant pour ${target} ${QAR_PLUS_TARD}.`,'b-scam',
+      qarCheckEnd);
   }else{
     const n=pnjRate();
-    faute(pnjName,n);
-    resultScreen('😬 Loupé',`${target} n'était pas un scamer. Sanction pour ${pnjName} : ${unite(n)}.`,'b-pnj',
-      gagesAfter([[pnjName,n]],qarCheckEnd));
+    qarDoit(pnjName,n);
+    resultScreen('😬 Loupé',`${target} n'était pas un scamer. Sanction pour ${pnjName} : ${unite(n)} ${QAR_PLUS_TARD}.`,'b-pnj',
+      qarCheckEnd);
   }
 }
 /* ---------- la fin d'une manche ----------
@@ -2641,14 +2360,13 @@ function qarBloque(impos,refs){
        ${impos.length>1?'Les imposteurs':(impos[0].role==='scam'?'Le scamer':'Le PNJ')} rafle${impos.length>1?'nt':''} la manche.
        ${noms(refs)} ${refs.length>1?'se sont fait avoir':'s\'est fait avoir'} jusqu'au bout : ${unite(QAR_BLOC)}${refs.length>1?' chacun·e':''}.`
     : `Plus personne n'avait la ref. ${roles(impos)} ${impos.length>1?'ont tenu':'a tenu'} jusqu'au bout : la manche est à ${impos.length>1?'eux':'lui/elle'}.`;
-  refs.forEach(p=>faute(p.name,coup(QAR_BLOC)));
-  const fin=()=>qarEndRound(txt);
-  if(refs.length)
-    resultScreen('🕵️ Les imposteurs gagnent', txt, 'b-scam',
-                 gagesAfter(refs.map(p=>[p.name,coup(QAR_BLOC)]), fin));
-  else fin();
+  refs.forEach(p=>qarDoit(p.name,coup(QAR_BLOC)));
+  qarEndRound(txt);
 }
+/* La manche est jouée : on règle tous les gages d'un coup, puis on rejoue. */
 function qarEndRound(bloc){
+  qar.fin=bloc;
+  const dettes=Object.entries(qar.dettes||{}).filter(([nom])=>state.players.some(p=>p.name===nom));
   render(`
     <div class="topbar"><h2 style="margin:auto">Manche terminée 🏁</h2></div>
     <div class="gap"></div>
@@ -2658,12 +2376,23 @@ function qarEndRound(bloc){
       <div class="gap-s"></div>
       <p class="muted">Le mot ref était : <b>${qar.word.ref}</b> · scamer : <b>${qar.word.scam}</b></p>
     </div>
+    ${dettes.length?`
+      <div class="gap"></div>
+      <div class="flabel">Les gages de la manche</div>
+      ${dettes.map(([nom,v])=>`<div class="dette"><b>${nom}</b><span>${unite(v)}</span></div>`).join('')}`:''}
     <div class="spacer"></div>
-    <button class="btn" onclick="qarConfig()">↻ Nouvelle manche</button>
-    <div class="gap-s"></div>
-    <button class="btn ghost sm" onclick="gameSelect()">Changer de jeu</button>
+    ${dettes.length
+      ? `<button class="btn good" onclick="qarGages()">🎰 Place aux gages (${dettes.length}) →</button>`
+      : `<button class="btn" onclick="qarConfig()">↻ Nouvelle manche</button>
+         <div class="gap-s"></div>
+         <button class="btn ghost sm" onclick="gameSelect()">Changer de jeu</button>`}
     <div style="height:6px"></div>
   `, true);
+}
+function qarGages(){
+  const l=Object.entries(qar.dettes||{});
+  qar.dettes={};
+  gagesAfter(l, ()=>qarEndRound(qar.fin))();
 }
 let _suite=null;
 function suivreResultat(){ const f=_suite; _suite=null; if(f) f(); }
@@ -2715,7 +2444,7 @@ function sniperPicked(name){
       <div class="big">🎯</div>
       <p><b>${name}</b> a été désigné. Tu peux assumer… ou tenter ta revanche.</p>
       <div class="gap-s"></div>
-      <p class="muted">La revanche, c'est une question de culture générale. Réussie, tu désignes qui prend le gage à ta place. Ratée, la roulette ne tombe que sur un gage corsé${sansAlcool()?'':` — ${gorgees(sniperRate())} si tu le refuses`}.</p>
+      <p class="muted">La revanche, c'est une question de culture générale. Réussie, tu t'en sors sans rien. Ratée, la roulette ne tombe que sur un gage corsé${sansAlcool()?'':` — ${gorgees(sniperRate())} si tu le refuses`}.</p>
     </div>
     <div class="spacer"></div>
     <button class="btn accent" onclick="sniperRevanche('${name.replace(/'/g,"\\'")}')">🧠 Question Culture Générale</button>
@@ -2733,8 +2462,9 @@ function sniperAssume(name){
    Le visé récupère le téléphone, lit la question, prend le temps qu'il veut
    — pas de chrono, c'est voulu : à cette heure-là, dix secondes pour lire
    quatre réponses, c'était trop court — et la bonne réponse s'affiche. S'il
-   l'a, il désigne quelqu'un qui prend sa place ; sinon la sanction reste pour
-   lui. La mise est la même dans les deux sens. */
+   l'a, il s'en sort sans gage et on passe directement au tour suivant (le
+   faire désigner quelqu'un d'autre rallongeait chaque tour) ; sinon c'est un
+   gage corsé pour lui. */
 const SNIPER_MISE = 2;
 /* Rater sa revanche coûte plus cher qu'assumer tout de suite : la roulette ne
    tombe que sur un gage corsé. Avec alcool, le refuser coûte la mise entière. */
@@ -2752,7 +2482,7 @@ function sniperRevanche(name){
       <div class="gap"></div>
       <p style="font-size:16px"><b>${name}</b>, passe-toi le téléphone.<br>Une question de culture générale, prends ton temps.</p>
       <div class="gap-s"></div>
-      <p class="muted">Bonne réponse : tu désignes qui prend le gage à ta place. Mauvaise : un gage corsé pour toi${sansAlcool()?'':` (${gorgees(sniperRate())} si tu le refuses)`}.</p>
+      <p class="muted">Bonne réponse : pas de gage, on passe au tour suivant. Mauvaise : un gage corsé pour toi${sansAlcool()?'':` (${gorgees(sniperRate())} si tu le refuses)`}.</p>
     </div>
     <div class="spacer"></div>
     <button class="btn accent" onclick="sniperQuizGo()">Je suis prêt·e →</button>
@@ -2795,37 +2525,18 @@ function sniperQuizReveal(i){
     </div>
     <div class="gap"></div>
     <p class="center ${ok?'':'shakeko'}" style="font-size:16px">${ok
-      ? `<b>${snip.name}</b> s'en sort. À toi de désigner qui prend ta place.`
+      ? `<b>${snip.name}</b> s'en sort : pas de gage cette fois 😎`
       : `${snip.name} prend un gage corsé 🌶️`}</p>
     <div class="spacer"></div>
-    ${autoBar(ok?3000:4200, ok ? 'À toi de désigner…' : 'La roulette arrive…')}
+    ${autoBar(ok?3000:4200, ok ? 'Question suivante…' : 'La roulette arrive…')}
     <div style="height:6px"></div>
   `, true);
   // le verdict se lit, il ne se valide pas : la suite vient toute seule
-  autoNext(ok?3000:4200, ok ? sniperQuizWin : sniperQuizFin);
+  autoNext(ok?3000:4200, ok ? sniperRound : sniperQuizFin);
 }
 function sniperQuizFin(){
   gagesAfter([[snip.name,sniperRate()]], sniperRound, {dur:true})();
 }
-function sniperQuizWin(){
-  render(`
-    <div class="topbar"><h2 style="margin:auto">✅ Réussi !</h2></div>
-    <div class="gap"></div>
-    <p class="center muted"><b>${snip.name}</b> désigne qui prend sa place : ${unite(SNIPER_MISE)} pour l'élu·e.</p>
-    <div class="gap"></div>
-    <div class="list-pick">
-      ${state.players.filter(p=>p.name!==snip.name).map(p=>`<div class="pick" onclick="sniperQuizGive('${p.name.replace(/'/g,"\\'")}')">${p.name}<span>›</span></div>`).join('')}
-    </div>
-    <div class="spacer"></div>
-    <div style="height:6px"></div>
-  `, true);
-}
-function sniperQuizGive(autre){
-  faute(autre, coup(SNIPER_MISE), snip.name);   // c'est le gagnant de la revanche qui l'inflige
-  toast(sanction(autre));
-  gagesAfter([[autre,coup(SNIPER_MISE)]], sniperRound)();
-}
-
 /* ============================================================
    JEU 3 — BLACK(OUT) JACK
    ============================================================ */
@@ -3005,16 +2716,22 @@ function bjJackpotDone(){
 /* ============================================================
    JEU 4 — LE JEU DES MIMES
    ------------------------------------------------------------
+   Pas de liste toute faite : avant chaque manche, ce sont les joueurs
+   qui écrivent les mots (voir mimesEcriture). En solo, chacun écrit
+   pour les autres, et les mots sont distribués au hasard ; en équipe,
+   chaque binôme écrit pour le binôme d'en face.
    C'est le mimeur qui tient le téléphone : il lit le mot, le fait
    deviner, et appuie sur « Trouvé » dès que quelqu'un a dit le mot.
-   Bloqué ? « Passer », et le mot suivant arrive. On compte les mots
-   qu'il a réussi à faire deviner avant la fin du chrono.
+   Bloqué ? « Passer » : le mot repart sous la pile et reviendra.
+   On compte les mots qu'il a réussi à faire deviner avant la fin
+   du chrono — ou avant d'avoir vidé sa pile.
    Le téléphone reste droit dans la main, à l'endroit : plus de front,
    plus d'inclinaison à lire, plus rien à verrouiller avant de jouer.
    ============================================================ */
 const MIME_DUREES = [90,120,150,180,210];   // 1m30 · 2min · 2m30 · 3min · 3m30
-let mimes = { format:'solo', duree:120, manche:0, swap:{}, scores:{}, teams:null,
-              turn:0, log:[], order:null, mimeur:'', camp:[] };
+const MIME_NB = [5,8,10,12];                 // mots à écrire, par joueur (ou par binôme)
+let mimes = { format:'solo', duree:120, nb:8, manche:0, swap:{}, scores:{}, teams:null,
+              turn:0, log:[], order:null, mimeur:'', camp:[], piles:{} };
 
 /* ---------- son : le mimeur a les yeux sur le groupe, pas sur le chrono ---------- */
 let mimeAC=null;
@@ -3063,7 +2780,6 @@ function mimesConfig(){
   if(n<3) return mimesTooFew();
   // les binômes demandent un nombre pair, et au moins deux équipes
   if(mimes.format==='team' && (n%2 || n<4)) mimes.format='solo';
-  const nj=(state.mimeJokes||[]).length;
   const pair=(n%2===0 && n>=4);
   render(`
     <div class="topbar"><div class="back" onclick="gameSelect()">‹</div><div><div class="eyebrow">Le jeu des mimes</div><h2>Les réglages</h2></div></div>
@@ -3080,7 +2796,11 @@ function mimesConfig(){
     </div>
     <p class="muted" id="mimeTot">${mimesTotal()}</p>
     <div class="gap"></div>
-    <button class="btn gold sm" onclick="mimesJokes()"><span class="ico">🔒</span><span class="col">Private jokes<small>${nj?`${nj} en réserve · elles sont dans le paquet`:'Un mot maison par joueur'}</small></span></button>
+    <div class="flabel" id="mimeNbLab">${mimesNbLab()}</div>
+    <div class="filters" id="mimeNb">
+      ${MIME_NB.map(k=>`<div class="chipf${mimes.nb===k?' on':''}" data-k="${k}" onclick="mimesNb(${k})">${k} mots</div>`).join('')}
+    </div>
+    <p class="muted" id="mimeNbTxt">${mimesNbTxt()}</p>
     <div class="spacer"></div>
     <button class="btn good" onclick="mimesStart()">Commencer →</button>
     <div style="height:10px"></div>
@@ -3114,6 +2834,20 @@ function mimesFormat(f){
   mimes.format=f;
   document.querySelectorAll('#mimeFmt .selcard').forEach(c=>c.classList.toggle('on',c.dataset.f===f));
   const t=$('#mimeTot'); if(t) t.textContent=mimesTotal();
+  const l=$('#mimeNbLab'); if(l) l.textContent=mimesNbLab();
+  const x=$('#mimeNbTxt'); if(x) x.textContent=mimesNbTxt();
+}
+function mimesNb(k){
+  mimes.nb=k;
+  document.querySelectorAll('#mimeNb .chipf').forEach(c=>c.classList.toggle('on',+c.dataset.k===k));
+  const x=$('#mimeNbTxt'); if(x) x.textContent=mimesNbTxt();
+}
+function mimesNbLab(){ return mimes.format==='team' ? 'Mots à écrire par binôme' : 'Mots à écrire par joueur'; }
+function mimesNbTxt(){
+  if(mimes.format!=='team') return `Chacun écrit ${mimes.nb} mots ou actions. Ils sont distribués au hasard aux autres : personne ne mime les siens.`;
+  return state.players.length===4
+    ? `Chaque binôme écrit ${mimes.nb} mots ou actions pour l'équipe d'en face.`
+    : `Chaque binôme écrit ${mimes.nb} mots ou actions pour le binôme suivant.`;
 }
 function mimesDur(d){
   mimes.duree=d;
@@ -3126,116 +2860,138 @@ function mimesTotal(){
   const n = mimes.format==='team' ? state.players.length/2 : state.players.length;
   return `${n} tours de ${dureeMime(mimes.duree)} · environ ${Math.round(n*mimes.duree/60)} min de jeu`;
 }
-/* ---------- les private jokes ----------
-   Un mot par joueur, pas deux : c'est ce qui en fait un bon mot. En solo son
-   auteur le mime ; en équipe c'est l'équipe adverse qui doit le faire deviner.
-   Gardées d'une soirée à l'autre ; si l'auteur n'est pas là ce soir, le mot
-   redevient ordinaire et peut tomber sur n'importe qui. */
-let jokeBy=null;
 // « de Karim », mais « d'Inès » : sans l'élision, chaque écran pique un peu
 function dDe(n){ return /^[aeiouyàâäéèêëîïôöûü]/i.test(n||'') ? "d'"+n : 'de '+n; }
-function jokeDe(nom){ return (state.mimeJokes||[]).find(j=>j.by===nom)||null; }
-function mimesJokes(){
-  const noms=state.players.map(p=>p.name);
-  if(jokeBy && noms.indexOf(jokeBy)<0) jokeBy=null;
-  if(!jokeBy) jokeBy = noms.find(n=>!jokeDe(n)) || noms[0] || null;
-  const list=state.mimeJokes||[];
-  const sienne=jokeBy?jokeDe(jokeBy):null;
-  const orphelines=list.filter(j=>noms.indexOf(j.by)<0).length;
-  const manquants=noms.filter(n=>!jokeDe(n));
-  const ecrits=noms.filter(n=>jokeDe(n)).length;
+
+/* ---------- les mots : ce sont les joueurs qui les écrivent ----------
+   Avant chaque manche, le téléphone fait le tour : en solo, chaque joueur
+   écrit ses mots, qui sont ensuite distribués au hasard aux autres (jamais
+   à leur auteur) ; en équipe, chaque binôme écrit pour le binôme suivant —
+   à quatre, c'est simplement l'équipe d'en face. Chaque pile a la même
+   taille : personne n'a plus de mots que les autres à faire deviner. */
+function mimesAuteurs(){
+  if(mimes.format==='team' && mimesTeamsOk()){
+    const T=mimes.teams.length;
+    return mimes.teams.map((t,i)=>{
+      const c=(i+1)%T;
+      return { key:'t'+i, label:t[0]+' & '+t[1], equipe:true,
+               pour:'t'+c, pourLabel:mimes.teams[c][0]+' & '+mimes.teams[c][1] };
+    });
+  }
+  return state.players.map(p=>({ key:p.name, label:p.name, equipe:false }));
+}
+function mimesEcriture(){
+  mimes.ecr={ auteurs:mimesAuteurs(), idx:0, mots:{} };
+  mimesEcrMain();
+}
+// on passe le téléphone : rien de ce qui a été écrit avant ne s'affiche ici
+function mimesEcrMain(){
+  const E=mimes.ecr, a=E.auteurs[E.idx];
   render(`
-    <div class="topbar"><div class="back" onclick="mimesJokesDone()">‹</div><div><div class="eyebrow">Le jeu des mimes</div><h2>Private jokes</h2></div></div>
-    <p class="muted">Un mot par joueur, et toi seul vois le tien 🤫 ${mimes.format==='team'
-      ? "C'est l'équipe d'en face qui devra le mimer 😈"
-      : "Tu le mimeras à ton tour."}</p>
-    <div class="gap"></div>
-    <div class="flabel">Qui écrit ?</div>
-    <div class="filters" id="jokeWho">
-      ${noms.map(n=>`<div class="chipf${jokeBy===n?' on':''}" data-n="${n}" onclick="mimesJokeBy('${n.replace(/'/g,"\\'")}')">${jokeDe(n)?'🔒 ':''}${n}</div>`).join('')}
-    </div>
-    <div class="card">
-      <div class="row"><input id="jokeIn" placeholder="Un souvenir, un surnom, une phrase culte…" autocomplete="off" maxlength="42"
-        onkeydown="if(event.key==='Enter'){event.preventDefault();mimesAddJoke();}"></div>
-    </div>
-    <div class="gap-s"></div>
-    <button class="btn accent sm" onclick="mimesAddJoke()"><span class="ico">＋</span>${sienne?`Remplacer celui ${dDe(jokeBy)}`:(jokeBy?`C'est le mot ${dDe(jokeBy)}`:'Ajouter')}</button>
-    ${ecrits?`
-      <div class="gap"></div>
-      <div class="flabel">${ecrits} mot${ecrits>1?'s':''} sous clé</div>
-      <div class="wordlog" id="jokeLog">${jokeLogHTML()}</div>
-      <div class="gap-s"></div>
-      <p class="muted">Touche un nom pour effacer son mot.${manquants.length?` Il manque ${listeFr(manquants)}.`:''}</p>
-    `:`
-      <div class="gap"></div>
-      <div class="card center"><p class="muted">Rien pour l'instant. Une bonne vanne par personne et la manche part en fumée 😈</p></div>
-    `}
-    ${orphelines?`
-      <div class="gap-s"></div>
-      <button class="btn ghost sm" onclick="mimesOublierOrphelines()"><span class="ico">🗑</span>Oublier ${orphelines} mot${orphelines>1?'s':''} d'anciennes soirées</button>
-      <div class="gap-s"></div>
-      <p class="muted">Leur auteur n'est pas là ce soir : ils sont dans le paquet et peuvent tomber sur n'importe qui.</p>
-    `:''}
+    <div class="topbar">${E.idx===0?`<div class="back" onclick="mimesConfig()">‹</div>`:''}<div><div class="eyebrow">Les mots · ${E.idx+1} sur ${E.auteurs.length}</div><h2>✍️ ${a.equipe?a.label:'Au tour '+dDe(a.label)}</h2></div></div>
     <div class="spacer"></div>
-    <button class="btn good" onclick="mimesJokesDone()">Terminé →</button>
+    <div class="card tint-cyan center">
+      <div class="big">✍️</div>
+      <div class="gap"></div>
+      <p style="font-size:16px">${a.equipe?'Prenez':'Prends'} le téléphone et ${a.equipe?'écrivez':'écris'} <b>${mimes.nb} mots ou actions</b> à mimer.</p>
+      <div class="gap-s"></div>
+      <p class="muted">${a.equipe
+        ? `C'est <b>${a.pourLabel}</b> qui devront les mimer 😈 Qu'ils ne regardent pas.`
+        : 'Ils iront aux autres, au hasard : toi, tu ne les mimeras pas. Personne ne regarde 🙈'}</p>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn good" onclick="mimesEcrire()">${a.equipe?"C'est nous, on écrit →":"C'est moi, j'écris →"}</button>
     <div style="height:8px"></div>
   `, true);
-  const i=$('#jokeIn'); if(i) i.focus();
 }
-/* le mot n'apparaît nulle part : seulement le nom de celui qui l'a déposé */
-function jokeLogHTML(){
-  const noms=state.players.map(p=>p.name);
-  return (state.mimeJokes||[]).map((j,i)=>({j,i}))
-    .filter(x=>noms.indexOf(x.j.by)>=0)
-    .map(x=>`<div class="wchip ok" onclick="mimesDelJoke(${x.i})">🔒 ${x.j.by} ✕</div>`).join('');
+function mimesEcrire(){
+  const E=mimes.ecr, a=E.auteurs[E.idx];
+  const dernier=E.idx>=E.auteurs.length-1;
+  render(`
+    <div class="topbar"><div><div class="eyebrow">Les mots ${dDe(a.label)}</div><h2>✍️ ${mimes.nb} à mimer</h2></div></div>
+    <p class="muted">Un mot, une action, un personnage, une private joke… tout ce qui se mime.</p>
+    <div class="gap"></div>
+    <div class="card">
+      <div class="row"><input id="ecrIn" placeholder="Ex. : faire la vaisselle en colère" autocomplete="off" autocapitalize="sentences" maxlength="42"
+        onkeydown="if(event.key==='Enter'){event.preventDefault();mimesEcrAdd();}"></div>
+    </div>
+    <div class="gap-s"></div>
+    <button class="btn accent sm" id="ecrAdd" onclick="mimesEcrAdd()"><span class="ico">＋</span>Ajouter</button>
+    <div class="gap"></div>
+    <div class="flabel" id="ecrCompte"></div>
+    <div class="wordlog" id="ecrLog"></div>
+    <p class="muted" id="ecrAide" style="margin-top:8px"></p>
+    <div class="spacer"></div>
+    <button class="btn good" id="ecrFini" onclick="mimesEcrFini()">${dernier?'Terminé · on joue →':'Terminé · je passe le téléphone →'}</button>
+    <div style="height:8px"></div>
+  `, true);
+  mimesEcrMaj();
+  const i=$('#ecrIn'); if(i) i.focus();
 }
-function mimesJokeBy(n){
-  jokeBy=n;
-  mimesJokes();   // le bouton et l'état se remettent d'équerre, et le champ repart vide
+// on ne redessine que la liste : le clavier reste ouvert entre deux mots
+function mimesEcrMaj(){
+  const E=mimes.ecr, a=E.auteurs[E.idx], l=E.mots[a.key]||[];
+  const reste=mimes.nb-l.length;
+  const c=$('#ecrCompte'); if(c) c.textContent=`${l.length} / ${mimes.nb}`;
+  const g=$('#ecrLog'); if(g) g.innerHTML=l.map((w,k)=>`<div class="wchip ok" onclick="mimesEcrDel(${k})">${w} ✕</div>`).join('');
+  const h=$('#ecrAide'); if(h) h.textContent = l.length ? 'Touche un mot pour l\'effacer.' : '';
+  const b=$('#ecrFini'); if(b) b.disabled=reste>0;
+  const ad=$('#ecrAdd'); if(ad) ad.disabled=reste<=0;
+  const i=$('#ecrIn'); if(i){ i.disabled=reste<=0; i.placeholder = reste>0 ? (l.length?`Encore ${reste}…`:'Ex. : faire la vaisselle en colère') : 'Liste complète ✅'; }
 }
-/* Enregistre ce qu'il y a dans le champ. Un seul mot par joueur : le nouveau
-   remplace l'ancien. Les toasts ne répètent jamais le mot — le téléphone est
-   peut-être déjà dans la main du suivant. */
-function jokeSave(){
-  const i=$('#jokeIn'); if(!i) return false;
+function mimesEcrAdd(){
+  const E=mimes.ecr, a=E.auteurs[E.idx];
+  const i=$('#ecrIn'); if(!i) return;
   const v=i.value.trim().replace(/\s+/g,' ');
-  if(!v) return false;
-  if(!jokeBy){ toast('Choisis qui écrit'); return false; }
-  if(!state.mimeJokes) state.mimeJokes=[];
-  const k=state.mimeJokes.findIndex(j=>j.by===jokeBy);
-  if(k<0) state.mimeJokes.push({w:v, by:jokeBy}); else state.mimeJokes[k]={w:v, by:jokeBy};
-  saveJokes();
-  state.mimeDecks=null;                    // le paquet change : on le refera au prochain tirage
+  const l=E.mots[a.key]=(E.mots[a.key]||[]);
+  if(!v){ toast('Écris quelque chose 🙂'); i.focus(); return; }
+  if(l.length>=mimes.nb){ toast(`${mimes.nb} mots, c'est complet`); return; }
+  if(l.some(w=>w.toLowerCase()===v.toLowerCase())){ toast('Celui-là est déjà dans ta liste'); i.select(); return; }
+  l.push(v);
   i.value='';
-  toast(k<0 ? `${jokeBy} : c'est noté 🔒` : `${jokeBy} : nouveau mot enregistré 🔒`);
-  return true;
+  mimesEcrMaj();
+  if(!i.disabled) i.focus();
 }
-function mimesAddJoke(){
-  const i=$('#jokeIn');
-  if(i && !i.value.trim()){ toast('Écris quelque chose 🙂'); return; }
-  if(!jokeSave()) return;
-  // et on passe la main au premier qui n'a rien écrit
-  jokeBy = state.players.map(p=>p.name).find(n=>!jokeDe(n)) || jokeBy;
-  mimesJokes();
+function mimesEcrDel(k){
+  const E=mimes.ecr, l=E.mots[E.auteurs[E.idx].key]||[];
+  l.splice(k,1);
+  mimesEcrMaj();
 }
-// « Terminé » (ou la flèche retour) enregistre ce qui est encore dans le champ
-function mimesJokesDone(){ jokeSave(); mimesConfig(); }
-function mimesOublierOrphelines(){
+function mimesEcrFini(){
+  const E=mimes.ecr, a=E.auteurs[E.idx];
+  const i=$('#ecrIn');
+  if(i && i.value.trim()) mimesEcrAdd();              // le dernier mot tapé, pas encore ajouté
+  if((E.mots[a.key]||[]).length<mimes.nb){ toast(`Il en manque ${mimes.nb-(E.mots[a.key]||[]).length}`); return; }
+  E.idx++;
+  if(E.idx<E.auteurs.length) return mimesEcrMain();
+  mimes.piles=mimesDistribue();
+  mimesTurnIntro();
+}
+/* les piles de la manche, rangées par tour (mimesEnts : 'p'+i en solo, 't'+i en équipe) */
+function mimesDistribue(){
+  const E=mimes.ecr, piles={};
+  if(mimes.format==='team' && mimesTeamsOk()){
+    E.auteurs.forEach(a=>{ piles[a.pour]=shuffle((E.mots[a.key]||[]).map(w=>({w, by:a.label}))); });
+    return piles;
+  }
   const noms=state.players.map(p=>p.name);
-  const n=(state.mimeJokes||[]).length;
-  state.mimeJokes=(state.mimeJokes||[]).filter(j=>noms.indexOf(j.by)>=0);
-  saveJokes(); state.mimeDecks=null;
-  toast(`${n-state.mimeJokes.length} mot(s) oublié(s)`);
-  mimesJokes();
-}
-function mimesDelJoke(i){
-  const j=(state.mimeJokes||[])[i]; if(!j) return;
-  state.mimeJokes.splice(i,1);
-  saveJokes();
-  state.mimeDecks=null;
-  jokeBy=j.by;                             // on rouvre sur celui dont on vient d'effacer le mot
-  toast(`Le mot ${dDe(j.by)} est effacé`);
-  mimesJokes();
+  const tous=[];
+  E.auteurs.forEach(a=>(E.mots[a.key]||[]).forEach(w=>tous.push({w, by:a.label})));
+  let par={};
+  // on remplit toujours la pile la plus courte parmi les non-auteurs ; si le hasard
+  // laisse un déséquilibre à la fin, on recommence (quelques essais suffisent)
+  for(let essai=0; essai<60; essai++){
+    par={}; noms.forEach(n=>par[n]=[]);
+    shuffle(tous).forEach(c=>{
+      const cands=noms.filter(n=>n!==c.by);
+      const min=Math.min(...cands.map(n=>par[n].length));
+      par[rnd(cands.filter(n=>par[n].length===min))].push(c);
+    });
+    const t=noms.map(n=>par[n].length);
+    if(Math.max(...t)===Math.min(...t)) break;
+  }
+  noms.forEach((n,i)=>{ piles['p'+i]=par[n]; });
+  return piles;
 }
 function mimesStart(){
   const n=state.players.length;
@@ -3309,8 +3065,13 @@ function mimesTeamsView(){
     <div style="height:8px"></div>
   `, true);
 }
-function mimesLaunch(){ mimes.manche=0; mimes.scores={}; mimes.turn=0; mimes.order=null; mimesOrdre(); mimesTurnIntro(); }
-function mimesNewRound(){ mimes.manche++; mimes.scores={}; mimes.turn=0; mimesOrdre(); mimesTurnIntro(); }
+function mimesLaunch(){ mimes.manche=0; mimes.scores={}; mimes.turn=0; mimes.order=null; mimesOrdre(); mimesEcriture(); }
+// nouvelle manche, nouveaux mots ; si un binôme a perdu un joueur entre-temps, on refait les équipes
+function mimesNewRound(){
+  if(state.players.length<3) return mimesTooFew();
+  if(mimes.format==='team' && !mimesTeamsOk()){ toast('Un binôme est incomplet : on refait les équipes'); return mimesStart(); }
+  mimes.manche++; mimes.scores={}; mimes.turn=0; mimesOrdre(); mimesEcriture();
+}
 
 /* ---------- ordre de passage ----------
    Il change à chaque manche, et jamais le dernier d'une manche ne rouvre
@@ -3377,9 +3138,10 @@ function mimesTurnIntro(){
       <div class="gap-s"></div>
       <div class="row"><span style="font-size:21px">✅</span><span style="font-size:13.5px"><b style="color:var(--good)">Trouvé</b> — dès que ${team?'ton binôme dit':'quelqu\'un dit'} le mot, tu appuies : +1 et au suivant.</span></div>
       <div class="gap-s"></div>
-      <div class="row"><span style="font-size:21px">⏭</span><span style="font-size:13.5px"><b style="color:var(--gold)">Passer</b> — bloqué ? Mot suivant. Ça ne coûte rien, ça ne rapporte rien.</span></div>
+      <div class="row"><span style="font-size:21px">⏭</span><span style="font-size:13.5px"><b style="color:var(--gold)">Passer</b> — bloqué ? Mot suivant. Il repart sous la pile et reviendra plus tard.</span></div>
     </div>`:`
     <p class="muted center">📱 dans ta main · 🤐 pas un mot · ✅ trouvé · ⏭ passer</p>`}
+    <p class="muted center" style="margin-top:6px">${(mimes.piles[e.key]||[]).length} mots t'attendent, écrits par ${team?'le binôme '+((mimes.piles[e.key]||[])[0]||{}).by:'les autres'}.</p>
     <div class="gap"></div>
     ${team?`<button class="btn ghost sm" onclick="mimesSwap()"><span class="ico">🔄</span>Inverser : ${e.devineurs[0]} mime</button><div class="gap-s"></div>`:''}
     <button class="btn good" onclick="mimesGo()">C'est parti · ${mimes.duree} s →</button>
@@ -3418,7 +3180,11 @@ function mimesPlay(){
   const e=mimesEnts()[mimes.turn];
   mimes.mimeur = e ? e.mimeur : '';
   mimes.camp   = e ? e.membres.slice() : [];
-  mimes.word=drawMime(mimes.mimeur, mimes.camp);
+  // une copie : un tour annulé rend sa pile intacte
+  mimes.pile = ((e && mimes.piles[e.key]) || []).slice();
+  mimes.tot  = mimes.pile.length;
+  mimes.toutTrouve=false;
+  mimes.word = mimes.pile.shift() || {w:'—', by:''};
   mimes.endAt=Date.now()+mimes.duree*1000;
   paintMime();
   clearInterval(mimes.timer);
@@ -3439,7 +3205,7 @@ function paintMime(){
       </div>
       <div class="mimebar" id="mimeBar"><i style="width:${left/(mimes.duree*10)}%"></i></div>
       <div class="mimeword" id="mimeWord"><div>${mimes.word.w}${mimes.word.by
-        ? `<span class="mimeby">🔒 ${mimes.word.by===mimes.mimeur?'ta joke':'la joke '+dDe(mimes.word.by)}</span>` : ''}</div></div>
+        ? `<span class="mimeby">✍️ écrit par ${mimes.word.by}</span>` : ''}</div></div>
       <div class="mimeacts">
         <div class="mimebtn no" onclick="mimesHit(false)"><b>⏭</b>Passer</div>
         <div class="mimebtn ok" onclick="mimesHit(true)"><b>✅</b>Trouvé</div>
@@ -3465,7 +3231,10 @@ function mimesHit(ok){
   if(!mimes.running || mimes.flash || t-mimes.lastAct<400) return;
   mimes.lastAct=t; mimes.flash=true;
   const mot=mimes.word;
-  mimes.log.push({w:mot.w, by:mot.by, ok});
+  // un mot passé puis retrouvé ne compte qu'une fois dans le récap
+  const deja=mimes.log.find(x=>x.c===mot);
+  if(deja) deja.ok=ok; else mimes.log.push({w:mot.w, by:mot.by, ok, c:mot});
+  if(!ok) mimes.pile.push(mot);            // passé : il repart sous la pile
   mimeDing(ok);
   const sc=$('#mimeScreen'), w=$('#mimeWord');
   if(sc) sc.classList.add(ok?'ok':'no');
@@ -3473,7 +3242,9 @@ function mimesHit(ok){
   setTimeout(()=>{
     mimes.flash=false;
     if(!mimes.running) return;
-    mimes.word=drawMime(mimes.mimeur, mimes.camp);
+    const suivant=mimes.pile.shift();
+    if(!suivant){ mimes.toutTrouve=true; return mimesEndTurn(); }   // pile vidée avant la fin du chrono
+    mimes.word=suivant;
     paintMime();
   },460);
 }
@@ -3488,7 +3259,8 @@ function mimesAbort(){
   mimesTurnIntro();
 }
 function mimesEndTurn(){
-  mimesStop(); mimeBuzz(); mimeOn(false);
+  mimes.reste = mimes.toutTrouve ? Math.max(0,Math.ceil((mimes.endAt-Date.now())/1000)) : 0;
+  mimesStop(); if(mimes.toutTrouve) mimeDing(true); else mimeBuzz(); mimeOn(false);
   const e=mimesEnts()[mimes.turn];
   if(e) mimes.scores[e.key]=mimes.log.filter(x=>x.ok).length;
   mimesRecap();
@@ -3509,16 +3281,16 @@ function mimesFix(i){
   const s=$('#mimePtsSub'); if(s) s.textContent=mimePtsSub(pts);
 }
 function mimePtsSub(pts){
-  const n=mimes.log.length;
-  return `mot${pts>1?'s':''} deviné${pts>1?'s':''} sur ${n} tiré${n>1?'s':''}`;
+  const n=mimes.tot||0;
+  return `mot${pts>1?'s':''} deviné${pts>1?'s':''} sur ${n}`;
 }
 function mimesRecap(){
   const ents=mimesEnts(), e=ents[mimes.turn];
   const pts=mimes.scores[e?e.key:'']||0;
   const dernier=mimes.turn>=ents.length-1;
   render(`
-    <div class="topbar"><h2 style="margin:auto">⏱️ Temps écoulé</h2></div>
-    <p class="muted center">Passe le téléphone au suivant 🙂</p>
+    <div class="topbar"><h2 style="margin:auto">${mimes.toutTrouve?'🎉 Pile vidée !':'⏱️ Temps écoulé'}</h2></div>
+    <p class="muted center">${mimes.toutTrouve?`Tout trouvé, avec ${mimes.reste} s d'avance. `:''}Passe le téléphone au suivant 🙂</p>
     <div class="gap"></div>
     <div class="card tint-cyan center">
       <div class="eyebrow">${e?e.label:''}</div>
@@ -3578,7 +3350,7 @@ function mimesResults(){
         : sanctionGroupe(noms)}</p>
       <div class="gap-s"></div>
       <p class="muted">${sansAlcool()
-        ? 'Le refuser, c\'est la sentence.'
+        ? 'Le refuser coûte un joker.'
         : `Le refuser coûte ${gorgees(n)}${egalite?'':' : une par mot fait deviner, un coup minimum'}.`}</p>
     </div>
     <div class="spacer"></div>
@@ -3599,7 +3371,7 @@ function mimesReplay(){
     <div class="card tint-cyan center">
       <div class="big">🎭</div>
       <div class="gap-s"></div>
-      <p class="muted">On remet une manche ?${mimes.format==='team'?" Les rôles s'inversent dans chaque équipe.":''}</p>
+      <p class="muted">On remet une manche ? Nouveaux mots à écrire.${mimes.format==='team'?" Les rôles s'inversent dans chaque équipe.":''}</p>
     </div>
     <div class="spacer"></div>
     <button class="btn good" onclick="mimesNewRound()">↻ Nouvelle manche</button>
@@ -3679,7 +3451,7 @@ function soireeView(id){
     <div class="gap"></div>
     <h3>${(a.mode||'alcool')==='sans'?'🔥 Podium des gages':'🏆 Classement final'}</h3>
     <div class="gap-s"></div>
-    ${rankingListFrom(a.ranking, a.mode||'alcool')}
+    ${rankingListFrom(a.ranking, a.mode||'alcool', a.v||1)}
     <div class="gap"></div>
     ${statsBlock(a)}
     <div class="gap"></div>
@@ -3797,18 +3569,20 @@ function titreGage(rang,pts,degonf){
   if(rang===2)        return '😎 solide';
   return '💪 n\'a jamais reculé';
 }
-function rankingListFrom(list,mode='alcool'){
+function rankingListFrom(list,mode='alcool',v=1){
   const sober = mode==='sans', medals=['🥇','🥈','🥉'];
   if(!list || !list.length) return '<p class="muted">Aucun joueur.</p>';
-  const legende = sober
-    ? `<p class="muted" style="font-size:12.5px;margin:0 0 10px">🔥 = gages relevés moins gages refusés. Reculer coûte autant que relever rapporte : le compteur peut passer sous zéro.</p>`
-    : '';
+  const legende = !sober ? ''
+    : (v>=3
+      ? `<p class="muted" style="font-size:12.5px;margin:0 0 10px">🔥 = gages relevés. Chacun avait 3 jokers pour en refuser ; au quatrième refus, c'est la porte.</p>`
+      : `<p class="muted" style="font-size:12.5px;margin:0 0 10px">🔥 = gages relevés moins gages refusés. Reculer coûte autant que relever rapporte : le compteur peut passer sous zéro.</p>`);
   return legende + list.map((p,i)=>{
     const pts=sober?(p.reussis||0):(p.drinks||0);
     const degonf=sober?(p.refus||0):0;
-    return `<div class="rank${i<3?' p'+(i+1):''}">
-      <div class="pos">${medals[i]||i+1}</div>
-      <div class="rank__id"><h3>${p.name}</h3>${sober?`<div class="rank__t">${titreGage(i,pts,degonf)}</div>`:''}</div>
+    const titre = p.vire ? '🚪 a quitté la soirée' : (sober ? titreGage(i,pts,degonf) : '');
+    return `<div class="rank${(i<3&&!p.vire)?' p'+(i+1):''}">
+      <div class="pos">${p.vire?'🚪':(medals[i]||i+1)}</div>
+      <div class="rank__id"><h3>${p.name}</h3>${titre?`<div class="rank__t">${titre}</div>`:''}</div>
       <div class="g">${pts} ${sober?'🔥':'🍺'}</div></div>`;
   }).join('');
 }
@@ -3858,8 +3632,10 @@ function statsBlock(a){
      dégonflé. Les albums d'avant gardent leur lecture d'origine. */
   const v2=(a.v||1)>=2;
   const g=(n,acc)=>`${n} gage${n>1?'s':''} ${acc}${n>1?'s':''}`;
-  const mvp     = sober ? extreme(list,p=>p.reussis||0,'max')
-                : (v2 ? plusCourageux(list) : extreme(list,p=>p.drinks||0,'min'));
+  const restes  = list.filter(p=>!p.vire);    // on ne sacre pas MVP quelqu'un qui est parti
+  const vires   = list.filter(p=>p.vire).map(p=>p.name);
+  const mvp     = sober ? extreme(restes,p=>p.reussis||0,'max')
+                : (v2 ? plusCourageux(restes) : extreme(restes,p=>p.drinks||0,'min'));
   const victime = v2 ? null : extreme(list,p=>p.subies||0,'max');
   const distrib = extreme(list,p=>p.donnees||0,'max');
   const perdant = extreme(list,p=>p.defaites||0,'max');
@@ -3887,8 +3663,9 @@ function statsBlock(a){
     </div>
     <div class="gap"></div>
     <div class="statline"><span>${sober?'🔥':'🍺'}</span>
-      <span>${sober?'Solde de 🔥 du groupe':'Total bu par le groupe'}</span><b>${total}</b></div>
+      <span>${sober?((a.v||1)>=3?'Gages relevés par le groupe':'Solde de 🔥 du groupe'):'Total bu par le groupe'}</span><b>${total}</b></div>
     ${(sober||v2)?`<div class="statline"><span>🎲</span><span>Gages tirés en tout</span><b>${encaisse}</b></div>`:''}
+    ${vires.length?`<div class="statline"><span>🚪</span><span>${vires.length>1?'Ont quitté':'A quitté'} la soirée</span><b>${listeFr(vires)}</b></div>`:''}
     ${st.duree>0?`<div class="statline"><span>⏱️</span><span>Durée de la soirée</span><b>${dureeTxt(st.duree)}</b></div>`:''}
   `;
 }
@@ -4142,7 +3919,6 @@ function afterShare(name){
 
 /* ---------- boot ---------- */
 loadAlbums();
-loadJokes();
 home();
 
 /* retire le splash d'ouverture une fois l'animation terminée */

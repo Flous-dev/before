@@ -821,7 +821,7 @@
    si elle est plus récente, on recharge. Uniquement tant qu'aucune partie
    n'a commencé : les joueurs ne sont pas sauvegardés, un rechargement en
    pleine soirée les effacerait. BUILD est tamponné par publier.sh. */
-const BUILD='20261103151043';
+const BUILD='20261103204120';
 (function(){
   try{
     fetch('version.txt?t='+Date.now(),{cache:'no-store'})
@@ -1090,10 +1090,6 @@ const THEMES = {
     L'Attaque des Titans / Death Note
   `)},
 };
-/* Le PNJ a une chance de se racheter : trouver le mot, puis démasquer un
-   scamer. S'il la gâche, c'est le plus gros raté de la manche — sans alcool
-   son gage vaut plus cher. */
-function pnjRate(){ return sansAlcool() ? 1 : 2; }
 const SNIPER_Q = [
   "Qui est le plus capable d'aimer les pieds ?",
   "Qui est le plus capable de croire aux théories du complot ?",
@@ -1403,23 +1399,35 @@ function gagePioche(cle, source){
 }
 /* `dur` : on veut un gage corsé (la revanche ratée du Sniper). On le prend dans
    le paquet en cours pour qu'aucun gage ne revienne avant que le paquet soit
-   vide, et jamais de vérité dans ce cas-là : c'est une sanction, pas un cadeau. */
-function tireGage(dur){
+   vide, et jamais de vérité dans ce cas-là : c'est une sanction, pas un cadeau.
+   `corse` (de 0 à 1) dose la sévérité à la place du hasard habituel : la chance
+   que ce soit un corsé (le Black(out) Jack, plus dur quand on rate tôt). À 1,
+   corsé à coup sûr et pas de vérité ; à 0, jamais de corsé. */
+function tireGage(dur, corse){
   if(dur) return { verite:false, dur:true, txt:gageDur() };
+  if(typeof corse==='number'){
+    if(corse>=1 || Math.random()<corse) return { verite:false, txt:gageDur() };
+    return Math.random()<VERITE_CHANCE
+      ? { verite:true,  txt:gagePioche('verite', VERITES) }
+      : { verite:false, txt:gageLeger() };
+  }
   return Math.random()<VERITE_CHANCE
     ? { verite:true,  txt:gagePioche('verite', VERITES) }
     : { verite:false, txt:gagePioche('gage',   GAGES)   };
 }
-function gageDur(){
+// un gage du paquet en cours qui passe le filtre : corsé, ou au contraire ordinaire
+function gageFiltre(ok, secours){
   if(!state.gageDecks) state.gageDecks={};
   for(let essai=0; essai<2; essai++){
     let d=state.gageDecks.gage;
     if(!d || !d.length) d=state.gageDecks.gage=shuffle(GAGES);
-    for(let i=d.length-1; i>=0; i--) if(EST_DUR.has(d[i])) return d.splice(i,1)[0];
-    d.length=0;                       // le paquet n'a plus de gage corsé : on le refait
+    for(let i=d.length-1; i>=0; i--) if(ok(d[i])) return d.splice(i,1)[0];
+    d.length=0;                       // le paquet n'en a plus : on le refait
   }
-  return GAGES_DURS[0];
+  return secours;
 }
+function gageDur(){   return gageFiltre(t=>EST_DUR.has(t),  GAGES_DURS[0]); }
+function gageLeger(){ return gageFiltre(t=>!EST_DUR.has(t), GAGES_NORMAUX[0]); }
 
 /* ---------- utils ---------- */
 const $ = (s,el=document)=>el.querySelector(s);
@@ -1530,6 +1538,7 @@ function floatCam(){ return `<div class="floatCam" onclick="openCam()">📸</div
    la mise en gorgées avec alcool, un joker sans alcool. */
 let _gage=null;
 /* `opt.dur` : la roulette ne peut tomber que sur un corsé (revanche ratée du Sniper).
+   `opt.corse` : la chance d'un corsé, dosée par le jeu (voir tireGage).
    `opt.multi` : sans alcool, la mise est un nombre de gages à relever (le sans-faute
    du Black(out) Jack). Avec alcool, c'est toujours un seul gage par joueur, et la
    mise devient le prix du refus. */
@@ -1547,7 +1556,7 @@ function gagesAfter(list, next, opt){
       while(file.length && !state.players.some(p=>p.name===file[0][0])) file.shift();
       if(!file.length) return next();
       const [nom,v]=file.shift();
-      gageScreen(nom, v, suivant, opt.dur);
+      gageScreen(nom, v, suivant, opt.dur, opt.corse);
     };
     suivant();
   };
@@ -1629,8 +1638,8 @@ function remplirGage(txt, name){
 const JOKERS = 3;
 function jokersRestants(p){ return Math.max(0, JOKERS-((p&&p.jokers)||0)); }
 
-function gageScreen(name,v,next,dur){
-  const g=tireGage(dur);
+function gageScreen(name,v,next,dur,corse){
+  const g=tireGage(dur,corse);
   g.type = g.verite ? 'verite' : ((g.dur || EST_DUR.has(g.txt)) ? 'dur' : 'gage');
   g.aff = remplirGage(g.txt, name);
   _gage={name,v,next,g,pret:false};
@@ -2278,63 +2287,17 @@ function qarDoit(name,n,par){
   qar.dettes[name]=(qar.dettes[name]||0)+n;
 }
 const QAR_PLUS_TARD = '<span class="muted">· à la fin de la manche</span>';
+/* La règle est simple : un scamer ou un PNJ démasqué prend un gage, à régler
+   à la fin de la manche. Quelqu'un qui avait la ref et que le groupe a sorti
+   par erreur n'a rien : il s'est fait éliminer, c'est déjà assez. */
 function qarEliminate(i){
   const p=qar.players[i]; if(!p.alive)return; p.alive=false;
   if(p.role==='scam'){ qarDoit(p.name,coup(2));
     resultScreen('Scamer démasqué !',`${p.name} était un scamer. Sanction : ${unite(2)} ${QAR_PLUS_TARD}. Bien joué au groupe.`,'b-scam',qarCheckEnd); }
-  else if(p.role==='ref'){ qarDoit(p.name,1);
-    resultScreen('Raté…',`${p.name} avait la ref ! Sanction : ${unite(1)} ${QAR_PLUS_TARD}. Le groupe perd un allié.`,'b-ref',qarCheckEnd); }
-  else { qarPnjGuess(p); }
-}
-function qarPnjGuess(p){
-  render(`
-    <div class="topbar"><h2 style="margin:auto">PNJ démasqué</h2></div>
-    <div class="gap"></div>
-    <div class="card center"><div class="badge b-pnj">${p.name} était un PNJ</div>
-      <div class="gap"></div>
-      <p>Devine le mot de ceux qui ont la ref pour te racheter :</p>
-      <div class="gap"></div>
-      <input id="guess" placeholder="Tape le mot…" autocomplete="off">
-    </div>
-    <div class="spacer"></div>
-    <button class="btn good" onclick="qarPnjCheck('${p.name.replace(/'/g,"\\'")}')">Valider ma réponse</button>
-    <div style="height:8px"></div>
-  `);
-}
-function qarPnjCheck(name){
-  const g=$('#guess').value.trim().toLowerCase();
-  const ok = g && g===qar.word.ref.toLowerCase();
-  if(ok){
-    // peut voter pour un scamer
-    qarPnjVote(name);
-  }else{
-    const n=pnjRate();
-    qarDoit(name,n);
-    resultScreen('❌ Mauvais mot',`Le mot était « ${qar.word.ref} ». Sanction pour ${name} : ${unite(n)} ${QAR_PLUS_TARD}.`,'b-pnj',qarCheckEnd);
-  }
-}
-function qarPnjVote(name){
-  render(`
-    <div class="topbar"><h2 style="margin:auto">✅ Bon mot !</h2></div>
-    <p class="center muted">Bien vu ${name}. Maintenant, démasque un scamer :</p>
-    <div class="gap"></div>
-    <div class="list-pick">
-      ${qar.players.filter(p=>p.name!==name).map(p=>`<div class="pick" onclick="qarPnjVoteDone('${name.replace(/'/g,"\\'")}','${p.name.replace(/'/g,"\\'")}')">${p.name}<span>›</span></div>`).join('')}
-    </div>
-  `);
-}
-function qarPnjVoteDone(pnjName,target){
-  const t=qar.players.find(p=>p.name===target);
-  if(t.role==='scam'){
-    qarDoit(pnjName,1); qarDoit(target,1,pnjName);   // c'est le PNJ qui a désigné la cible
-    resultScreen('🎯 Touché !',`${target} était bien un scamer. ${unite(1)} pour ${pnjName} et autant pour ${target} ${QAR_PLUS_TARD}.`,'b-scam',
-      qarCheckEnd);
-  }else{
-    const n=pnjRate();
-    qarDoit(pnjName,n);
-    resultScreen('😬 Loupé',`${target} n'était pas un scamer. Sanction pour ${pnjName} : ${unite(n)} ${QAR_PLUS_TARD}.`,'b-pnj',
-      qarCheckEnd);
-  }
+  else if(p.role==='pnj'){ qarDoit(p.name,coup(2));
+    resultScreen('PNJ démasqué !',`${p.name} était un PNJ : aucun mot, que du bluff. Sanction : ${unite(2)} ${QAR_PLUS_TARD}.`,'b-pnj',qarCheckEnd); }
+  else {
+    resultScreen('Raté…',`${p.name} avait la ref ! Pas de gage pour ${p.name}, mais le groupe perd un allié.`,'b-ref',qarCheckEnd); }
 }
 /* ---------- la fin d'une manche ----------
    Éliminer quelqu'un demande une majorité : le groupe doit tomber d'accord.
@@ -2546,6 +2509,20 @@ const RANKS=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 /* Le pactole du sans-faute. En mode sans alcool on descend à 3 : trois gages
    d'affilée sur la même personne, c'est déjà une éternité pour le groupe. */
 function bjCadeau(){ return sansAlcool() ? 3 : 5; }
+/* Rater tôt coûte plus cher que rater tard : un seul gage dans tous les cas,
+   mais la roulette penche vers le corsé à la première carte et plus du tout
+   à la dernière. Avec alcool, le refus suit la même pente : 4 gorgées à la
+   première carte, 1 à la dernière. */
+const BJ_PEINE=[
+  { corse:1,   gorgees:4, lab:'un gage corsé 🌶️' },
+  { corse:.65, gorgees:3, lab:'un gage, sûrement corsé' },
+  { corse:.35, gorgees:2, lab:'un gage, peut-être corsé' },
+  { corse:0,   gorgees:1, lab:'un petit gage' },
+];
+function bjPeine(i){
+  const p=BJ_PEINE[i];
+  return sansAlcool() ? p.lab : `${p.lab} · ${gorgees(p.gorgees)} si tu le refuses`;
+}
 const BJ_ETAPES=[
   { t:'Rouge ou noir ?',    s:'Ta première carte, à l\'aveugle.' },
   { t:'Plus ou moins ?',    s:'La deuxième, comparée à la première.' },
@@ -2603,8 +2580,8 @@ function bjAsk(){
     ${bjChoix()}
     <div class="gap-s"></div>
     <p class="muted center">${bj.step===3
-      ? `Sans-faute : tu distribues ${uniteN(bjCadeau())}. Raté : ${unite(4)} pour toi.`
-      : `Erreur ici : ${unite(bj.step+1)}.`}</p>
+      ? `Sans-faute : tu distribues ${uniteN(bjCadeau())}. Raté : ${bjPeine(3)}.`
+      : `Erreur ici : ${bjPeine(bj.step)}.`}</p>
     <div class="spacer"></div>
     <div class="spacer"></div>
     <button class="btn ghost sm" onclick="gameSelect()">Arrêter le jeu</button>
@@ -2632,9 +2609,9 @@ function bjAnswer(rep){
   const c=bj.deck[bj.idx++];
   bj.cards.push(c);
   if(bjJuge(c)) return bjReveal(true,0);
-  const n=bj.step+1;                       // 1ʳᵉ étape ratée = 1, 2ᵉ = 2, 3ᵉ = 3, 4ᵉ = 4
+  const n=BJ_PEINE[bj.step].gorgees;       // 1ʳᵉ carte ratée = 4, 2ᵉ = 3, 3ᵉ = 2, 4ᵉ = 1
   faute(bj.player,coup(n));
-  bj.pending=coup(n);
+  bj.pending=coup(n); bj.rate=bj.step;
   bjReveal(false,n);
 }
 function bjDit(){
@@ -2660,7 +2637,7 @@ function bjReveal(ok,n){
     <div class="gap"></div>
     <p class="center" style="font-size:16px">${ok
       ? `<b>${bj.player}</b> annonçait <b>${bjDit()}</b>. C'était bon.`
-      : `<b>${bj.player}</b> annonçait <b>${bjDit()}</b>. Raté à l'étape ${bj.step+1} — <b style="color:var(--gold)">${unite(n)}</b>`}</p>
+      : `<b>${bj.player}</b> annonçait <b>${bjDit()}</b>. Raté à l'étape ${bj.step+1} — <b style="color:var(--gold)">${bjPeine(bj.step)}</b>`}</p>
     ${fini?`<div class="gap"></div><div class="card tint-gold center stamp">
       <p style="font-size:16px;font-weight:750">Quatre paris, quatre fois juste. À toi de distribuer ${uniteN(bjCadeau())} 🎁</p></div>`:''}
     <div class="spacer"></div>
@@ -2674,8 +2651,9 @@ function bjReveal(ok,n){
 function bjSuite(){ bj.step++; bjAsk(); }
 function bjNextPlayer(){
   const n=bj.pending||0, joueur=bj.player; bj.pending=0;
+  const corse=BJ_PEINE[bj.rate||0].corse;
   compteManche('bj');                      // le passage du joueur s'arrête ici : une manche de plus
-  gagesAfter([[joueur,n]], ()=>{ bj.turn++; bjPlayer(); })();
+  gagesAfter([[joueur,n]], ()=>{ bj.turn++; bjPlayer(); }, {corse})();
 }
 
 /* ---------- le sans-faute : cinq à placer où il veut ---------- */

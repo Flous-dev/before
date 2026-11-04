@@ -821,7 +821,7 @@
    si elle est plus récente, on recharge. Uniquement tant qu'aucune partie
    n'a commencé : les joueurs ne sont pas sauvegardés, un rechargement en
    pleine soirée les effacerait. BUILD est tamponné par publier.sh. */
-const BUILD='20261103204120';
+const BUILD='20261104111129';
 (function(){
   try{
     fetch('version.txt?t='+Date.now(),{cache:'no-store'})
@@ -2288,16 +2288,44 @@ function qarDoit(name,n,par){
 }
 const QAR_PLUS_TARD = '<span class="muted">· à la fin de la manche</span>';
 /* La règle est simple : un scamer ou un PNJ démasqué prend un gage, à régler
-   à la fin de la manche. Quelqu'un qui avait la ref et que le groupe a sorti
-   par erreur n'a rien : il s'est fait éliminer, c'est déjà assez. */
+   à la fin de la manche. Le PNJ garde une chance de se racheter : s'il devine
+   le mot de la ref, il s'en sort sans rien. Quelqu'un qui avait la ref et que
+   le groupe a sorti par erreur n'a rien : se faire éliminer, c'est déjà assez. */
+const QAR_PNJ=2;
 function qarEliminate(i){
   const p=qar.players[i]; if(!p.alive)return; p.alive=false;
   if(p.role==='scam'){ qarDoit(p.name,coup(2));
     resultScreen('Scamer démasqué !',`${p.name} était un scamer. Sanction : ${unite(2)} ${QAR_PLUS_TARD}. Bien joué au groupe.`,'b-scam',qarCheckEnd); }
-  else if(p.role==='pnj'){ qarDoit(p.name,coup(2));
-    resultScreen('PNJ démasqué !',`${p.name} était un PNJ : aucun mot, que du bluff. Sanction : ${unite(2)} ${QAR_PLUS_TARD}.`,'b-pnj',qarCheckEnd); }
+  else if(p.role==='pnj') qarPnjGuess(p);
   else {
     resultScreen('Raté…',`${p.name} avait la ref ! Pas de gage pour ${p.name}, mais le groupe perd un allié.`,'b-ref',qarCheckEnd); }
+}
+function qarPnjGuess(p){
+  render(`
+    <div class="topbar"><h2 style="margin:auto">PNJ démasqué</h2></div>
+    <div class="gap"></div>
+    <div class="card center"><div class="badge b-pnj">${p.name} était un PNJ</div>
+      <div class="gap"></div>
+      <p>Une chance de te racheter : devine le mot de ceux qui ont la ref. Trouvé, pas de gage. Raté, ${unite(QAR_PNJ)} à la fin de la manche.</p>
+      <div class="gap"></div>
+      <input id="guess" placeholder="Tape le mot…" autocomplete="off" autocapitalize="off" enterkeyhint="done"
+        onkeydown="if(event.key==='Enter') qarPnjCheck(${qar.players.indexOf(p)})">
+    </div>
+    <div class="spacer"></div>
+    <button class="btn good" onclick="qarPnjCheck(${qar.players.indexOf(p)})">Valider ma réponse</button>
+    <div style="height:8px"></div>
+  `);
+}
+// « Crème brûlée » = « creme brulee » : ni les accents ni les majuscules ne comptent
+function motNu(t){ return (t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim(); }
+function qarPnjCheck(i){
+  const p=qar.players[i]; if(!p) return;
+  const g=motNu($('#guess') && $('#guess').value);
+  if(!g){ toast('Tape un mot'); return; }
+  if(g===motNu(qar.word.ref))
+    return resultScreen('✅ Racheté !',`${p.name} a trouvé le mot « ${qar.word.ref} » : pas de gage.`,'b-pnj',qarCheckEnd);
+  qarDoit(p.name,coup(QAR_PNJ));
+  resultScreen('❌ Mauvais mot',`Le mot était « ${qar.word.ref} ». Sanction pour ${p.name} : ${unite(QAR_PNJ)} ${QAR_PLUS_TARD}.`,'b-pnj',qarCheckEnd);
 }
 /* ---------- la fin d'une manche ----------
    Éliminer quelqu'un demande une majorité : le groupe doit tomber d'accord.

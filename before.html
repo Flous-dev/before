@@ -266,6 +266,7 @@
   .btn.game.g2{--tint:var(--rgb-coral);}
   .btn.game.g3{--tint:var(--rgb-cyan);}
   .btn.game.g4{--tint:var(--rgb-mint);}
+  .btn.game.g5{--tint:var(--rgb-gold);}
 
   /* état désactivé — après toutes les variantes pour les neutraliser */
   .btn:disabled,.btn:disabled:active{
@@ -767,6 +768,45 @@
   /* les trois sources de mots doivent tenir sur une ligne */
   .wordlog{display:flex;flex-wrap:wrap;gap:7px;}
   /* sans alcool : les trois jokers de la soirée, grisés une fois grillés */
+  /* ===== Action ou Vérité : deux cartes face cachée, on en retourne une ===== */
+  .av-qui{text-align:center;}
+  .av-qui small{display:block;color:var(--muted);font-size:12.5px;letter-spacing:2.5px;text-transform:uppercase;}
+  .av-qui b{display:block;margin-top:4px;font-size:34px;font-weight:850;letter-spacing:-1px;line-height:1.1;text-wrap:balance;}
+  .av-duo{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .av-choix{
+    --tint:var(--rgb-coral);
+    position:relative;aspect-ratio:3/4;border-radius:var(--r-xl);cursor:pointer;font-family:inherit;color:var(--txt);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:14px;
+    border:1px solid rgba(var(--tint),.38);overflow:hidden;
+    background:radial-gradient(120% 70% at 50% 0%,rgba(var(--tint),.30),transparent 70%),
+               linear-gradient(165deg,rgba(var(--tint),.16),rgba(var(--tint),.03)),#100f24;
+    box-shadow:0 22px 40px -26px rgba(var(--tint),.9),inset 0 1px 0 rgba(255,255,255,.08);
+    transition:transform .18s ease,box-shadow .18s ease,opacity .2s ease;
+  }
+  .av-choix::after{content:"";position:absolute;inset:8px;border-radius:calc(var(--r-xl) - 7px);
+    border:1px dashed rgba(var(--tint),.28);pointer-events:none;}
+  .av-choix.v{--tint:var(--rgb-cyan);}
+  .av-choix .ic{font-size:46px;line-height:1;filter:drop-shadow(0 0 14px rgba(var(--tint),.55));}
+  .av-choix b{font-size:19px;font-weight:850;letter-spacing:2px;text-transform:uppercase;color:rgb(var(--tint));}
+  .av-choix small{font-size:12px;color:var(--muted);text-align:center;line-height:1.35;}
+  .av-choix:active{transform:scale(.96);}
+  .av-choix:focus-visible{outline:2px solid rgb(var(--tint));outline-offset:3px;}
+  .av-choix.lit{transform:translateY(-4px) scale(1.03);
+    box-shadow:0 0 0 2px rgba(var(--tint),.6),0 0 30px rgba(var(--tint),.55);}
+  .av-choix:disabled{opacity:.28;cursor:default;transform:none;box-shadow:none;filter:grayscale(.6);}
+  .av-note{text-align:center;font-size:13px;color:var(--gold);}
+  .av-carte{
+    --tint:var(--rgb-coral);
+    border-radius:var(--r-xl);padding:26px 20px 24px;text-align:center;
+    border:1px solid rgba(var(--tint),.4);
+    background:radial-gradient(120% 60% at 50% 0%,rgba(var(--tint),.24),transparent 70%),#100f24;
+    box-shadow:0 26px 50px -30px rgba(var(--tint),.95);
+    animation:flip .45s cubic-bezier(.16,1,.3,1) both;
+  }
+  .av-carte.v{--tint:var(--rgb-cyan);}
+  .av-carte .k{font-size:12px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:rgb(var(--tint));}
+  .av-carte p{margin:14px 0 0;font-size:20px;font-weight:800;line-height:1.38;text-wrap:balance;}
+  .av-score{display:flex;justify-content:center;gap:18px;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;}
   .jokers{display:flex;justify-content:center;gap:10px;font-size:22px;}
   .jokers i{font-style:normal;opacity:.2;filter:grayscale(1);}
   .jokers i.on{opacity:1;filter:none;}
@@ -821,7 +861,7 @@
    si elle est plus récente, on recharge. Uniquement tant qu'aucune partie
    n'a commencé : les joueurs ne sont pas sauvegardés, un rechargement en
    pleine soirée les effacerait. BUILD est tamponné par publier.sh. */
-const BUILD='20261104111129';
+const BUILD='20261105225715';
 (function(){
   try{
     fetch('version.txt?t='+Date.now(),{cache:'no-store'})
@@ -1523,7 +1563,7 @@ function faute(name,n,par){
   }
 }
 function resetStats(){
-  state.stats={ debut:Date.now(), manches:{qar:0,sniper:0,bj:0,mimes:0} };
+  state.stats={ debut:Date.now(), manches:{qar:0,sniper:0,bj:0,mimes:0,av:0} };
 }
 function compteManche(jeu){ if(state.stats) state.stats.manches[jeu]=(state.stats.manches[jeu]||0)+1; }
 function floatCam(){ return `<div class="floatCam" onclick="openCam()">📸</div>`; }
@@ -2054,6 +2094,10 @@ function gameSelect(){
     <button class="btn game g4" onclick="mimesConfig()">
       <span class="ico">🎭</span><span class="col">LES MIMES<small>Le mot dans ta main, à toi de le faire deviner.</small></span>
     </button>
+    <div class="gap"></div>
+    <button class="btn game g5" onclick="avStart()">
+      <span class="ico">🎲</span><span class="col">ACTION OU VÉRITÉ<small>Le classique. Choisis ta carte, assume la suite.</small></span>
+    </button>
     <div class="spacer"></div>
     <button class="btn gold sm" onclick="endGame()"><span class="ico">🏁</span>Fin de la partie</button>
     <div class="gap-s"></div>
@@ -2401,6 +2445,139 @@ function resultScreen(title,desc,badge,next){
     <button class="btn good" onclick="suivreResultat()">Continuer →</button>
     <div style="height:6px"></div>
   `, true);
+}
+
+/* ============================================================
+   JEU 5 — ACTION OU VÉRITÉ
+   Chacun son tour, dans un ordre tiré au sort qui change à chaque tour de table.
+   Les actions viennent de la liste des gages, les vérités de la liste des
+   vérités, sans doublon tant que le paquet n'est pas vide. Refuser une vérité
+   n'est pas gratuit : on prend une action à la place. Refuser une action se
+   paie comme un gage (gorgées avec alcool, un joker sans alcool).
+   ============================================================ */
+const AV_REFUS = 2;        // gorgées pour une action refusée
+const AV_MAX_VERITES = 2;  // deux vérités d'affilée, et la troisième fois c'est action
+let av={};
+function avStart(){
+  av={ file:[], tour:0, dernier:null, actions:0, verites:0, suite:{} };
+  avSuivant();
+}
+function avSuivant(){
+  if(!av.file || !av.file.length){
+    // nouveau tour de table : on remélange, sans que le dernier rejoue tout de suite
+    let o=shuffle(state.players.map(p=>p.name));
+    if(o.length>1 && o[0]===av.dernier) o.push(o.shift());
+    av.file=o; av.tour++;
+  }
+  // un joueur parti de la soirée entre-temps ne joue plus
+  while(av.file.length && !state.players.some(p=>p.name===av.file[0])) av.file.shift();
+  if(!av.file.length) return avSuivant();
+  av.joueur=av.file.shift(); av.dernier=av.joueur; av.carte=null;
+  avChoix();
+}
+function avChoix(){
+  const nom=av.joueur;
+  const force=(av.suite[nom]||0)>=AV_MAX_VERITES;
+  render(`
+    <div class="topbar"><div class="back" onclick="gameSelect()">‹</div><div><div class="eyebrow">Tour ${av.tour}</div><h2>🎲 Action ou Vérité</h2></div></div>
+    <div class="gap"></div>
+    <div class="av-qui"><small>À toi de jouer</small><b>${nom}</b></div>
+    <div class="gap"></div>
+    <div class="av-duo" id="avDuo">
+      <button class="av-choix" id="avA" onclick="avTire('action')">
+        <span class="ic">🔥</span><b>Action</b><small>Tu fais ce qu'on te dit.</small>
+      </button>
+      <button class="av-choix v" id="avV" onclick="avTire('verite')" ${force?'disabled':''}>
+        <span class="ic">🤫</span><b>Vérité</b><small>Tu réponds, et sans mentir.</small>
+      </button>
+    </div>
+    <div class="gap-s"></div>
+    ${force
+      ? `<p class="av-note">Deux vérités d'affilée : cette fois, c'est une action.</p>`
+      : `<button class="btn ghost sm" id="avHasard" onclick="avHasard()"><span class="ico">🎲</span>Laisse le hasard choisir</button>`}
+    <div class="spacer"></div>
+    ${(av.actions+av.verites)?`<div class="av-score"><span>🔥 ${av.actions} action${av.actions>1?'s':''}</span><span>🤫 ${av.verites} vérité${av.verites>1?'s':''}</span></div><div class="gap-s"></div>`:''}
+    <button class="btn ghost sm" onclick="gameSelect()">Arrêter le jeu</button>
+    <div style="height:6px"></div>
+  `, true);
+}
+// les deux cartes s'allument tour à tour, puis le sort tombe
+function avHasard(){
+  const a=$('#avA'), v=$('#avV'); if(!a || !v || av.roule) return;
+  av.roule=true;
+  const h=$('#avHasard'); if(h) h.disabled=true;
+  $('#avDuo').style.pointerEvents='none';          // pendant le tirage, on ne choisit plus soi-même
+  const choix=Math.random()<.5?'action':'verite';
+  const reduit=window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const n=reduit?1:9+(choix==='verite'?1:0);   // un nombre de flashs qui finit sur la bonne carte
+  let i=0;
+  const pas=()=>{
+    const cur=i%2===0?a:v;
+    a.classList.toggle('lit',cur===a); v.classList.toggle('lit',cur===v);
+    if(++i<n) setTimeout(pas, 70+i*16);
+    else setTimeout(()=>{ av.roule=false; avTire(choix); }, 420);
+  };
+  if(reduit){ (choix==='action'?a:v).classList.add('lit'); setTimeout(()=>{ av.roule=false; avTire(choix); }, 300); }
+  else pas();
+}
+function avTire(kind, aLaPlace){
+  const nom=av.joueur; if(!nom) return;
+  if(kind==='verite' && (av.suite[nom]||0)>=AV_MAX_VERITES) kind='action';
+  if(!aLaPlace){            // une vérité refusée puis une action : ça reste un seul tour
+    compteManche('av');
+    const p=state.players.find(p=>p.name===nom); if(p) p.gages=(p.gages||0)+1;
+  }
+  const txt = kind==='verite' ? gagePioche('verite', VERITES) : gagePioche('gage', GAGES);
+  av.carte={ kind, txt, aff:remplirGage(txt, nom), dur:kind==='action' && EST_DUR.has(txt), aLaPlace:!!aLaPlace };
+  av.suite[nom] = kind==='verite' ? (av.suite[nom]||0)+1 : 0;
+  avCarte();
+}
+function avCarte(){
+  const c=av.carte, nom=av.joueur, v=c.kind==='verite';
+  const p=state.players.find(p=>p.name===nom);
+  const jk=jokersRestants(p);
+  const lab = v ? 'Vérité' : (c.dur ? 'Action corsée 🌶️' : 'Action');
+  const refus = v
+    ? `🔁 Je ne réponds pas · une action à la place`
+    : (sansAlcool()
+        ? (jk ? `🃏 Je refuse · joker (il t'en reste ${jk})` : `🚪 Je refuse · je quitte la soirée`)
+        : `🙅 Je refuse · ${gorgees(AV_REFUS)} 🍺`);
+  render(`
+    <div class="topbar"><h2 style="margin:auto">${v?'🤫':'🔥'} ${nom}</h2></div>
+    <p class="muted center">${c.aLaPlace?'Pas de réponse ? Alors une action.':(v?'Réponds honnêtement, le groupe juge.':'Le groupe vérifie que c\'est bien fait.')}</p>
+    <div class="gap"></div>
+    <div class="av-carte ${v?'v':''}">
+      <div class="k">${lab}</div>
+      <p>${c.aff}</p>
+      ${sansAlcool() && !v?`<div class="gap"></div><div class="jokers" aria-label="${jk} joker${jk>1?'s':''} sur ${JOKERS}">${
+        Array.from({length:JOKERS},(_,i)=>`<i class="${i<jk?'on':''}">🃏</i>`).join('')}</div>`:''}
+    </div>
+    <div class="spacer"></div>
+    <div class="gagebtns">
+      <button class="btn mint" onclick="avFait()">✅ ${v?'Répondu':'Fait'}${sansAlcool()?' (+1 🔥)':''}</button>
+      <div class="gap-s"></div>
+      <button class="btn ghost sm" onclick="avRefuse()">${refus}</button>
+    </div>
+    <div style="height:8px"></div>
+  `, true);
+}
+function avFait(){
+  const c=av.carte, nom=av.joueur; if(!c) return;
+  const p=state.players.find(p=>p.name===nom);
+  if(p){ p.releves=(p.releves||0)+1; if(sansAlcool()) p.reussis=(p.reussis||0)+1; }
+  if(c.kind==='verite') av.verites++; else av.actions++;
+  av.carte=null;
+  toast(sansAlcool() ? `${nom} : +1 🔥` : (c.kind==='verite' ? `${nom} a tout dit 🤫` : `${nom} l'a fait 💪`));
+  avSuivant();
+}
+function avRefuse(){
+  const c=av.carte, nom=av.joueur; if(!c) return;
+  if(c.kind==='verite'){ toast(`${nom} se tait… action !`); return avTire('action', true); }
+  // une action refusée se paie exactement comme un gage refusé : on passe par gageDone
+  _gage={ name:nom, v:coup(AV_REFUS), next:avSuivant, pret:true,
+    g:{ verite:false, dur:c.dur, type:c.dur?'dur':'gage', txt:c.txt, aff:c.aff } };
+  av.carte=null; av.actions++;
+  gageDone(false);
 }
 
 /* ============================================================

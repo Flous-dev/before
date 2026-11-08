@@ -862,7 +862,7 @@
    si elle est plus récente, on recharge. Uniquement tant qu'aucune partie
    n'a commencé : les joueurs ne sont pas sauvegardés, un rechargement en
    pleine soirée les effacerait. BUILD est tamponné par publier.sh. */
-const BUILD='20261108232045';
+const BUILD='20261108232404';
 (function(){
   try{
     fetch('version.txt?t='+Date.now(),{cache:'no-store'})
@@ -2913,6 +2913,7 @@ function bjJackpotDone(){
    ============================================================ */
 const MIME_DUREE = 90;                // 1m30, pour tout le monde
 const MIME_NB = [0,1,2,3];            // private jokes à écrire, par joueur (ou par binôme)
+const MIME_MAX_GORGEES = 5;           // plafond du gage refusé en fin de manche
 const MIME_PILE = 30;                 // bien plus qu'on n'en trouve en 1m30
 const MOTS_3 = `
   Jeffrey Epstein
@@ -3594,9 +3595,9 @@ function mimesResults(){
   const perdants=rows.filter(r=>r.pts===min);
   const egalite=perdants.length===rows.length;
   /* Le perdant prend un gage, comme partout ailleurs. Avec alcool, le refuser lui
-     coûte autant de gorgées qu'il a fait deviner de mots — un coup minimum.
+     coûte autant de gorgées qu'il a fait deviner de mots — un coup minimum, 5 au plus.
      Égalité générale : tout le monde y passe, pour un coup. */
-  const n = (egalite || sansAlcool()) ? 1 : Math.max(1,min);
+  const n = (egalite || sansAlcool()) ? 1 : Math.min(MIME_MAX_GORGEES,Math.max(1,min));
   const punis=[];
   perdants.forEach(r=>r.membres.forEach(m=>{ faute(m,n); punis.push([m,n]); }));
   const noms=punis.map(p=>p[0]);
@@ -3619,7 +3620,7 @@ function mimesResults(){
       <div class="gap-s"></div>
       <p class="muted">${sansAlcool()
         ? 'Le refuser coûte un joker.'
-        : `Le refuser coûte ${gorgees(n)}${egalite?'':' : une par mot fait deviner, un coup minimum'}.`}</p>
+        : `Le refuser coûte ${gorgees(n)}${egalite?'':` : une par mot fait deviner, ${MIME_MAX_GORGEES} maximum`}.`}</p>
     </div>
     <div class="spacer"></div>
     ${gages

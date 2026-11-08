@@ -861,7 +861,7 @@
    si elle est plus récente, on recharge. Uniquement tant qu'aucune partie
    n'a commencé : les joueurs ne sont pas sauvegardés, un rechargement en
    pleine soirée les effacerait. BUILD est tamponné par publier.sh. */
-const BUILD='20261105225715';
+const BUILD='20261108161849';
 (function(){
   try{
     fetch('version.txt?t='+Date.now(),{cache:'no-store'})
@@ -1333,9 +1333,9 @@ const GAGES_NORMAUX = [
   "Envoyer « t'es réveillé(e) ? » à un contact choisi par {J}.",
   "Montrer la dernière photo enregistrée dans ton téléphone.",
   "Laisser {J} écrire un message que tu dois envoyer à un ami.",
-  "Demander à {J} de noter ton style sur 10.",
+  "Mettre à {J} une note de style sur 10, et la justifier devant tout le monde.",
   "Envoyer « j'ai une question mais j'ose pas te la poser » à un contact choisi par {J}.",
-  "Demander à {J} quelle a été sa première impression de toi.",
+  "Avouer à {J} ta toute première impression à son sujet.",
   "Pendant 10 minutes, appeler {J} « mon amour ».",
   "Pendant 10 minutes, répondre à toutes les questions par une autre question.",
   "Faire semblant de ne connaître personne dans la pièce pendant 5 minutes.",
@@ -1346,23 +1346,23 @@ const GAGES_NORMAUX = [
   "Envoyer un vocal de 30 secondes à un crush choisi par {J}.",
   "Faire une photo avec la personne que le groupe pense être ton meilleur match parmi nous.",
   "Faire un compliment à la personne la plus attirante parmi nous selon toi.",
-  "Demander à {J} : « Sur 10, tu me notes combien ? »",
+  "Regarder {J} droit dans les yeux et lui annoncer sa note sur 10.",
   "Offrir un verre à {J}.",
-  "Demander à {J} qui, parmi nous, ferait le meilleur couple avec toi.",
+  "Dire à {J} qui, parmi nous, ferait le meilleur couple avec toi.",
   "Pendant 30 minutes, chaque fois que quelqu'un prononce ton prénom, tu dois répondre : « Présent, monsieur le président. »",
   "{J} choisit ton nouveau prénom. Tu ne réponds qu'à celui-ci pendant les 30 prochaines minutes.",
   "Pendant 30 minutes, tu dois appeler chaque personne par un surnom différent. Interdiction d'utiliser son vrai prénom.",
-  "Demander à {J} le prénom de la personne qu'il/elle trouve la plus attirante parmi nous.",
+  "Dire à {J} le prénom de la personne que tu trouves la plus attirante parmi nous.",
 ];
 /* Les plus corsés : ceux qui demandent le plus de cran. Ils tombent comme les
    autres, au hasard — mais c'est aussi là-dedans qu'on pioche quand le Sniper
    rate sa revanche. Ils valent 1 🔥 comme tous les autres. */
 const GAGES_DURS = [
   "Envoyer « faut qu'on parle » à un contact choisi par {J}, puis ne rien expliquer pendant 5 minutes.",
-  "Demander à {J} ton plus gros red flag.",
+  "Dire à {J} son plus gros red flag.",
   "Envoyer « j'ai fait une connerie » à un contact choisi par {J}.",
-  "Demander à {J} de te faire une passe D.",
-  "Demander à {J} : « Tu penses que je suis ton style ? »",
+  "Faire une passe D à {J}.",
+  "Dire à {J}, les yeux dans les yeux : « Tu es mon style » ou « Tu n'es pas mon style », et expliquer pourquoi.",
   "Appeler ton ex et lui demander « tu penses encore à moi ? »",
   "Envoyer « j'ai quelque chose à t'avouer » à ton ex.",
   "Montrer ton historique de likes TikTok.",

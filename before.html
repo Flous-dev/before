@@ -861,7 +861,7 @@
    si elle est plus récente, on recharge. Uniquement tant qu'aucune partie
    n'a commencé : les joueurs ne sont pas sauvegardés, un rechargement en
    pleine soirée les effacerait. BUILD est tamponné par publier.sh. */
-const BUILD='20261109165857';
+const BUILD='20261109170745';
 (function(){
   try{
     fetch('version.txt?t='+Date.now(),{cache:'no-store'})
@@ -3178,7 +3178,10 @@ function mimesJokeSave(){
   const v=i.value.trim().replace(/\s+/g,' ');
   if(!v || jokesDe(jokeBy)>=MIME_JOKES_MAX) return false;
   // le toast ne répète pas le mot : le suivant a peut-être déjà le téléphone
-  if(mimes.jokes.some(j=>j.w.toLowerCase()===v.toLowerCase())){ toast('Ce mot est déjà dans la liste'); i.select(); return false; }
+  const nu=motNu(v);
+  const deja = MOTS_3.some(w=>motNu(w)===nu) ? 'Ce mot est déjà dans la liste du jeu : trouves-en un autre'
+             : mimes.jokes.some(j=>motNu(j.w)===nu) ? 'Quelqu\'un a déjà ajouté ce mot : trouves-en un autre' : '';
+  if(deja){ toast(deja); i.focus(); i.select(); return false; }
   mimes.jokes.push({w:v, by:jokeBy});
   i.value='';
   toast(`${jokeBy} : c'est noté 🔒`);
@@ -3197,7 +3200,11 @@ function mimesJokeDel(k){
   mimesJokesMaj();
 }
 // « Terminé » (ou la flèche retour) enregistre ce qui est encore dans le champ
-function mimesJokesFini(){ mimesJokeSave(); mimesConfig(); }
+function mimesJokesFini(){
+  const i=$('#jokeIn');
+  if(i && !i.disabled && i.value.trim() && !mimesJokeSave()) return;   // mot refusé : on reste, le message s'affiche
+  mimesConfig();
+}
 /* les piles de la manche, rangées par tour : on remplit toujours la plus courte
    parmi ceux qui peuvent recevoir le mot, pour que personne ne les ramasse toutes */
 function mimesDistribue(){
